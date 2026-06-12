@@ -17,6 +17,7 @@ class BasePage:
     @log_method("Open URL")
     def open_url(self, url: str) -> None:
         self.page.goto(url, wait_until="domcontentloaded")
+        # url login failed
         self.page.wait_for_timeout(5000)
         self.page.reload()
         self.wait_for_dom_content_loaded()
