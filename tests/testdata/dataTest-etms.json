@@ -1,22 +1,10 @@
 {
-    "test_login_efms": [
+    "test_login_etms": [
         {
-            "test_case_id": "EFMS-LOGIN-001",
-            "description": "Login eFMS Successfully",
-            "username": "henry.hieu",
-            "password": "123456",
-            "company": "LTH Demo JSC",
-            "title": "eFMS"
-        }
-    ],
-
-    "test_click_button_bay": [
-        {
-            "test_case_id": "EFMS-BAY-001",
-            "description": "Click Bay button",
-            "button_name": "Bay",
-            "expected_page": "Bay Management",
-            "title": "eFMS"
+            "test_case_id": "ETMS-LOGIN-001",
+            "description": "Login eTMS successfully",
+            "priority": "High",
+            "expected_url_contains": "staging-itllog-etms.logtechub.com"
         }
     ]
 }

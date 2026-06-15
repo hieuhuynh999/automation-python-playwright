@@ -9,7 +9,10 @@ from automation.reporting import attach_text
 
 class BaseApiClient:
     def __init__(self, base_url: str | None = None):
-        self.client = httpx.Client(base_url=base_url or settings.api_base_url, timeout=30)
+        self.client = httpx.Client(
+            base_url=base_url or settings.api_base_url,
+            timeout=settings.api_timeout / 1000,
+        )
 
     @log_method("API GET")
     def get(self, path: str, **kwargs: Any) -> httpx.Response:

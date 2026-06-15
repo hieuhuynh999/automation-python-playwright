@@ -71,10 +71,22 @@ def pytest_configure(config: pytest.Config) -> None:
     metadata["Headless"] = str(headless)
     metadata["Timeout"] = str(settings.browser_timeout)
     metadata["Base URL"] = settings.efms_base_url
-    config.addinivalue_line(
-        "markers",
-        "tc_id(id): Test Case ID"
-    )
+
+    for marker in (
+        "efms: eFMS application tests",
+        "etms: eTMS application tests",
+        "smoke: smoke test suite",
+        "login: login test suite",
+        "navigation: navigation test suite",
+        "regression: regression test suite",
+        "critical: Critical priority tests",
+        "high: High priority tests",
+        "medium: Medium priority tests",
+        "low: Low priority tests",
+        "tc_id(id): Test Case ID",
+        "description(text): Test case description",
+    ):
+        config.addinivalue_line("markers", marker)
 
 
 def pytest_html_report_title(report):
@@ -139,12 +151,30 @@ def browser(
     browser.close()
 
 
+def _is_headless(pytestconfig: pytest.Config) -> bool:
+    headless_option = pytestconfig.getoption("--browser-headless")
+    if headless_option is None:
+        return settings.browser_headless
+    return headless_option.lower() == "true"
+
+
 @pytest.fixture()
-def context(browser: Browser) -> Generator[BrowserContext, None, None]:
-    context = browser.new_context(
-        viewport=None,
-        no_viewport=True
-    )
+def context(
+    browser: Browser,
+    pytestconfig: pytest.Config,
+) -> Generator[BrowserContext, None, None]:
+    if _is_headless(pytestconfig):
+        context = browser.new_context(
+            viewport={
+                "width": settings.headless_viewport_width,
+                "height": settings.headless_viewport_height,
+            },
+        )
+    else:
+        context = browser.new_context(
+            viewport=None,
+            no_viewport=True,
+        )
 
     # Timeout cho element:
     # click, fill, locator, expect...
@@ -209,10 +239,14 @@ def pytest_runtest_makereport(
     # 1. Get from JSON data provider
     test_data = item.funcargs.get("data")
     if test_data:
-        tc_id = test_data.get(
-            "test_case_id",
-            ""
-        )
+        test_case_ids = test_data.get("test_case_ids")
+        if test_case_ids:
+            tc_id = " | ".join(test_case_ids)
+        else:
+            tc_id = test_data.get(
+                "test_case_id",
+                "",
+            )
 
         description = test_data.get(
             "description",
@@ -268,6 +302,25 @@ def pytest_runtest_makereport(
             name="Test Result"
         )
     )
+
+    if test_data and test_data.get("test_case_ids"):
+        scenario_lines = [
+            f"- {case['test_case_id']}: {case['description']}"
+            for case in test_data.get("scenarios", [])
+        ]
+        report.extras.append(
+            extras.text(
+                "\n".join(test_data["test_case_ids"]),
+                name="Test Case IDs",
+            )
+        )
+        if scenario_lines:
+            report.extras.append(
+                extras.text(
+                    "\n".join(scenario_lines),
+                    name="Scenarios",
+                )
+            )
 
     # ==========================
     # Method Logs
@@ -346,14 +399,9 @@ def pytest_runtest_makereport(
 
     screenshot_name = (
         report.test_name
-        .replace(
-            " ",
-            "_"
-        )
-        .replace(
-            "/",
-            "_"
-        )
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("|", "_")
     )
 
     screenshot_path = (

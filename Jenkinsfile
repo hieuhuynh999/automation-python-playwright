@@ -5,7 +5,7 @@ pipeline {
         choice(name: 'ENV', choices: ['UAT'], description: 'Target environment')
         choice(name: 'BROWSER', choices: ['chrome', 'edge'], description: 'Browser channel')
         choice(name: 'HEADLESS', choices: ['true', 'false'], description: 'Run browser in headless mode')
-        choice(name: 'MARKER', choices: ['smoke', 'login', 'regression'], description: 'Pytest marker')
+        choice(name: 'MARKER', choices: ['critical', 'high', 'login', 'navigation', 'smoke', 'regression'], description: 'Pytest marker')
         string(name: 'PYTEST_ARGS', defaultValue: '', description: 'Extra pytest arguments')
     }
 

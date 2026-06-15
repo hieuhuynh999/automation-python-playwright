@@ -4,6 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+PRIORITY_MARKERS = frozenset({"critical", "high", "medium", "low"})
+
 
 class DataProvider:
 
@@ -91,7 +95,24 @@ class DataProvider:
 
         return data[test_method]
 
+    @staticmethod
+    def _to_pytest_param(row: dict[str, Any], index: int) -> pytest.ParameterSet:
+        marks: list[Any] = []
+        priority = str(row.get("priority", "")).strip().lower()
 
+        if priority in PRIORITY_MARKERS:
+            marks.append(getattr(pytest.mark, priority))
+
+        param_id = row.get("test_case_id") or f"case{index + 1}"
+        return pytest.param(row, marks=marks, id=param_id)
+
+    @staticmethod
+    def parametrize(application: str, test_method: str) -> list[pytest.ParameterSet]:
+        rows = DataProvider.get_data(application, test_method)
+        return [
+            DataProvider._to_pytest_param(row, index)
+            for index, row in enumerate(rows)
+        ]
 
     # ======================
     # EFMS
@@ -99,15 +120,16 @@ class DataProvider:
 
     @staticmethod
     def efms(
-        test_method: str
+        test_method: str,
     ):
-
         return DataProvider.get_data(
             "efms",
-            test_method
+            test_method,
         )
 
-
+    @staticmethod
+    def efms_cases(test_method: str) -> list[pytest.ParameterSet]:
+        return DataProvider.parametrize("efms", test_method)
 
     # ======================
     # ETMS
@@ -115,10 +137,13 @@ class DataProvider:
 
     @staticmethod
     def etms(
-        test_method: str
+        test_method: str,
     ):
-
         return DataProvider.get_data(
             "etms",
-            test_method
+            test_method,
         )
+
+    @staticmethod
+    def etms_cases(test_method: str) -> list[pytest.ParameterSet]:
+        return DataProvider.parametrize("etms", test_method)

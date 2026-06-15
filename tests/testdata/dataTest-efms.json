@@ -3,14 +3,150 @@
         {
             "test_case_id": "EFMS-LOGIN-001",
             "description": "Login eFMS Successfully",
+            "priority": "High",
             "company": "LTH Demo JSC",
             "title": "eFMS"
-        },
+        }
+    ],
+    "test_smk_auth_001_login_success_efms": [
         {
-            "test_case_id": "EFMS-LOGIN-002",
-            "description": "Login eFMS Successfully",
-            "company": "hellllo",
-            "title": "eFMS"
+            "test_case_id": "SMK_AUTH_001",
+            "test_data_id": "LOGIN_ADMIN",
+            "description": "Login success - Dashboard displayed successfully",
+            "module": "Login",
+            "priority": "Critical",
+            "preconditions": "User active",
+            "company": "LTH Demo JSC"
+        }
+    ],
+    "test_smk_auth_002_logout_success_efms": [
+        {
+            "test_case_id": "SMK_AUTH_002",
+            "test_data_id": "N/A",
+            "description": "Logout success - Login page displayed after confirm Yes",
+            "module": "Login",
+            "priority": "Critical",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC"
+        }
+    ],
+    "test_smk_nav_verify_commercial_menu_efms": [
+        {
+            "test_case_ids": [
+                "SMK_NAV_001",
+                "SMK_NAV_002",
+                "SMK_NAV_003",
+                "SMK_NAV_004"
+            ],
+            "test_data_id": "N/A",
+            "description": "Verify Commercial Menu navigation",
+            "module": "Navigation",
+            "priority": "High",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC",
+            "scenarios": [
+                {
+                    "test_case_id": "SMK_NAV_001",
+                    "description": "Agent List displayed",
+                    "menu_action": "agent"
+                },
+                {
+                    "test_case_id": "SMK_NAV_002",
+                    "description": "Customer List displayed",
+                    "menu_action": "customer"
+                },
+                {
+                    "test_case_id": "SMK_NAV_003",
+                    "description": "Work Order List displayed",
+                    "menu_action": "work_order"
+                },
+                {
+                    "test_case_id": "SMK_NAV_004",
+                    "description": "Booking Receipt displayed",
+                    "menu_action": "booking_receipt"
+                }
+            ]
+        }
+    ],
+    "test_smk_nav_verify_logistics_menu_efms": [
+        {
+            "test_case_id": "SMK_NAV_005",
+            "test_data_id": "N/A",
+            "description": "Verify Logistics Menu navigation",
+            "module": "Navigation",
+            "priority": "High",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC",
+            "scenarios": [
+                {
+                    "step": 2,
+                    "description": "Job Management displayed",
+                    "menu_action": "job_management"
+                },
+                {
+                    "step": 3,
+                    "description": "Customs Clearance displayed",
+                    "menu_action": "custom_clearance"
+                },
+                {
+                    "step": 4,
+                    "description": "Trucking Inland displayed",
+                    "menu_action": "trucking_inland"
+                }
+            ]
+        }
+    ],
+    "test_smk_nav_verify_services_menu_efms": [
+        {
+            "test_case_id": "SMK_NAV_006",
+            "test_data_id": "N/A",
+            "description": "Verify Services Menu navigation",
+            "module": "Navigation",
+            "priority": "High",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC",
+            "scenarios": [
+                {
+                    "step": 2,
+                    "description": "Air Export displayed",
+                    "menu_action": "air_export"
+                },
+                {
+                    "step": 3,
+                    "description": "Air Import displayed",
+                    "menu_action": "air_import"
+                },
+                {
+                    "step": 4,
+                    "description": "Sea Consol Export displayed",
+                    "menu_action": "sea_consol_export"
+                },
+                {
+                    "step": 5,
+                    "description": "Sea Consol Import displayed",
+                    "menu_action": "sea_consol_import"
+                },
+                {
+                    "step": 6,
+                    "description": "Sea FCL Export displayed",
+                    "menu_action": "sea_fcl_export"
+                },
+                {
+                    "step": 7,
+                    "description": "Sea FCL Import displayed",
+                    "menu_action": "sea_fcl_import"
+                },
+                {
+                    "step": 8,
+                    "description": "Sea LCL Export displayed",
+                    "menu_action": "sea_lcl_export"
+                },
+                {
+                    "step": 9,
+                    "description": "Sea LCL Import displayed",
+                    "menu_action": "sea_lcl_import"
+                }
+            ]
         }
     ]
 }

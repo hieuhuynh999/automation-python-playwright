@@ -17,14 +17,32 @@ class BasePage:
     @log_method("Open URL")
     def open_url(self, url: str) -> None:
         self.page.goto(url, wait_until="domcontentloaded")
-        # url login failed
-        self.page.wait_for_timeout(5000)
+        # Legacy SPA bootstrap: brief settle before reload (see settings.open_url_settle_ms)
+        if settings.open_url_settle_ms > 0:
+            self.page.wait_for_timeout(settings.open_url_settle_ms)
         self.page.reload()
         self.wait_for_dom_content_loaded()
 
     @log_method("Wait for DOM content loaded")
     def wait_for_dom_content_loaded(self) -> None:
         self.page.wait_for_load_state("domcontentloaded")
+
+    @log_method("Wait for page stable")
+    def wait_for_page_stable(self) -> "BasePage":
+        self.wait_for_dom_content_loaded()
+        self.page.wait_for_function(
+            "() => document.readyState === 'complete'",
+            timeout=settings.page_load_timeout,
+        )
+        if settings.navigation_settle_ms > 0:
+            self.page.wait_for_timeout(settings.navigation_settle_ms)
+        return self
+
+    @log_method("Reload page")
+    def reload_page(self) -> "BasePage":
+        self.page.reload(wait_until="domcontentloaded")
+        self.wait_for_page_stable()
+        return self
 
     @log_method("Wait for element visible")
     def wait_for_visible(
@@ -74,7 +92,17 @@ class BasePage:
             )
         )
 
-
+    def _build_wait_error(
+        self,
+        element_name: str,
+        selectors: list[str],
+        timeout: int,
+    ) -> str:
+        selector_list = "\n".join(f"  - {selector}" for selector in selectors)
+        return (
+            f"Element '{element_name}' not visible after {timeout}ms.\n"
+            f"Tried selectors:\n{selector_list}"
+        )
 
     def find_visible(
         self,
