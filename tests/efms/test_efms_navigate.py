@@ -97,53 +97,57 @@ class TestEfmsNavigate:
         DataProvider.efms_cases("test_smk_nav_verify_commercial_menu_efms"),
     )
     def test_smk_nav_verify_commercial_menu_efms(
-        self, pages, data, account_password
+        self, pages, data, efms_account_password
     ):
         # Precondition: Login success
         pages.efms_login_page.open().login(
-            settings.account_username,
-            account_password,
+            settings.efms_username,
+            efms_account_password,
             data["company"],
         )
         assert pages.efms_home_page.is_dashboard_displayed()
         pages.efms_home_page.wait_for_dashboard_ready()
 
+        # Step 1: Open Commercial Menu
+        pages.efms_agent_page.open_commercial_menu()
+
         for index, scenario in enumerate(data["scenarios"]):
-            tc_id = scenario["test_case_id"]
-            record_step_log(f"[CASE START] {tc_id} - {scenario['description']}")
+            step = scenario["step"]
+            record_step_log(f"[STEP {step}] {scenario['description']}")
+
+            # Reset to dashboard before each scenario except the first
+            if index > 0:
+                base_url = pages.efms_agent_page.page.url.split("#")[0]
+                pages.efms_agent_page.page.goto(
+                    f"{base_url}#/home",
+                    wait_until="domcontentloaded",
+                )
+                pages.efms_home_page.wait_for_dashboard_ready()
+                pages.efms_agent_page.wait_for_sidebar_ready()
+                pages.efms_agent_page.open_commercial_menu()
 
             page_name, click_method_name, verify_method_name = COMMERCIAL_MENU_ACTIONS[
                 scenario["menu_action"]
             ]
             action_page = getattr(pages, page_name)
 
-            # Reset to dashboard before each scenario except the first
-            if index > 0:
-                base_url = action_page.page.url.split("#")[0]
-                action_page.page.goto(
-                    f"{base_url}#/home",
-                    wait_until="domcontentloaded",
-                )
-                pages.efms_home_page.wait_for_dashboard_ready()
-                action_page.wait_for_sidebar_ready()
-
             getattr(action_page, click_method_name)()
 
             assert getattr(action_page, verify_method_name)(), (
-                f"{tc_id}: {scenario['description']} — verification failed"
+                f"Step {step}: {scenario['description']} — verification failed"
             )
-            record_step_log(f"[CASE PASS] {tc_id}")
+            record_step_log(f"[STEP PASS] {step}")
 
     @pytest.mark.parametrize(
         "data",
         DataProvider.efms_cases("test_smk_nav_verify_logistics_menu_efms"),
     )
     @pytest.mark.tc_id("SMK_NAV_005")
-    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, account_password):
+    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, efms_account_password):
         # Precondition: Login success
         pages.efms_login_page.open().login(
-            settings.account_username,
-            account_password,
+            settings.efms_username,
+            efms_account_password,
             data["company"],
         )
         assert pages.efms_home_page.is_dashboard_displayed()
@@ -175,11 +179,11 @@ class TestEfmsNavigate:
         DataProvider.efms_cases("test_smk_nav_verify_services_menu_efms"),
     )
     @pytest.mark.tc_id("SMK_NAV_006")
-    def test_smk_nav_verify_services_menu_efms(self, pages, data, account_password):
+    def test_smk_nav_verify_services_menu_efms(self, pages, data, efms_account_password):
         # Precondition: Login success
         pages.efms_login_page.open().login(
-            settings.account_username,
-            account_password,
+            settings.efms_username,
+            efms_account_password,
             data["company"],
         )
         assert pages.efms_home_page.is_dashboard_displayed()

@@ -14,7 +14,14 @@ Automation framework for eFMS/eTMS using Python 3.12+, pytest, Playwright (sync 
 | Browsers | `chrome`, `edge` |
 | Default headless | `BROWSER_HEADLESS=false` (headed when display available) |
 
-Copy `.env.example` to `.env` and set `ACCOUNT_PASSWORD` locally. Never commit secrets.
+Copy `.env.example` to `.env` and set credentials per product. Never commit secrets.
+
+| Product | `.env` keys |
+|---------|-------------|
+| eFMS | `EFMS_ACCOUNT_USERNAME`, `EFMS_ACCOUNT_PASSWORD` |
+| eTMS | `ETMS_ACCOUNT_USERNAME`, `ETMS_ACCOUNT_PASSWORD` |
+
+Legacy `ACCOUNT_USERNAME` / `ACCOUNT_PASSWORD` still work as **eFMS fallback** only.
 
 ## Project structure
 
@@ -76,7 +83,7 @@ auotmation-techub/
 python3 -m pip install --user uv
 uv sync --extra dev
 uv run playwright install --with-deps chrome msedge
-cp .env.example .env   # then set ACCOUNT_PASSWORD
+cp .env.example .env   # set EFMS_ACCOUNT_* and ETMS_ACCOUNT_*
 ```
 
 Alternative with pip:
@@ -91,8 +98,8 @@ python -m playwright install --with-deps chrome msedge
 ## Run tests
 
 ```bash
-# All tests (7 cases)
-ACCOUNT_PASSWORD='<password>' uv run pytest -v --browser chrome --browser-headless true
+# All tests — each product uses its own .env credentials
+uv run pytest -v --browser chrome --browser-headless true
 
 # By priority (from JSON via DataProvider.*_cases)
 uv run pytest -m critical -v --browser chrome --browser-headless true
@@ -114,7 +121,7 @@ uv run pytest tests/efms/test_efms_auth.py -v --browser chrome --browser-headles
 uv run pytest -m login --browser chrome --browser-headless false -s
 ```
 
-If `ACCOUNT_PASSWORD` is not set, login tests are **skipped** safely.
+If `EFMS_ACCOUNT_PASSWORD` or `ETMS_ACCOUNT_PASSWORD` is not set, login tests for that product are **skipped** safely.
 
 ## HTML report
 
@@ -140,15 +147,44 @@ All settings in `src/automation/config/settings.py`, overridable via `.env`:
 ```bash
 BROWSER=chrome
 BROWSER_HEADLESS=true
-BROWSER_TIMEOUT=60000
-PAGE_LOAD_TIMEOUT=60000
-ACCOUNT_USERNAME=your_user
-ACCOUNT_PASSWORD=your_password
+# eFMS
+EFMS_ACCOUNT_USERNAME=your_efms_user
+EFMS_ACCOUNT_PASSWORD=your_efms_password
+# eTMS
+ETMS_ACCOUNT_USERNAME=automation.test
+ETMS_ACCOUNT_PASSWORD=your_etms_password
 EFMS_BASE_URL=https://uat-efms.logtechub.com/en/#/home
 ETMS_BASE_URL=https://staging-itllog-etms.logtechub.com/en/#/app/default/home
 ```
 
 See `.env.example` for the full list.
+
+## ReportPortal
+
+Local ReportPortal UI: `http://localhost:8080/ui/#default_personal/dashboard`
+
+1. Open **Profile → API Keys** in ReportPortal UI and copy your API key.
+2. Add to `.env`:
+
+```bash
+RP_API_KEY=your-api-key-here
+RP_ENDPOINT=http://localhost:8080
+RP_PROJECT=default_personal
+```
+
+3. Run tests with `--reportportal`:
+
+```bash
+uv run pytest -m login --reportportal --browser chrome --browser-headless true
+```
+
+**Sent to ReportPortal automatically:**
+- Test results (pass/fail/skip) + pytest markers (`efms`, `critical`, `tc_id`, …)
+- Step logs from `@log_method`
+- Failure screenshot (Playwright full page)
+- Test Case IDs / Scenarios (multi-nav tests)
+
+pytest-html report still works in parallel (`--html=reports/report.html`).
 
 ## Code quality
 
@@ -169,7 +205,7 @@ uv run pyright
 | `HEADLESS` | `true`, `false` |
 | `PYTEST_ARGS` | Extra pytest args (e.g. `tests/efms/test_efms_auth.py`) |
 
-`ACCOUNT_PASSWORD` is injected from Jenkins credential `automation-account-password`.
+`EFMS_ACCOUNT_PASSWORD` and `ETMS_ACCOUNT_PASSWORD` are injected from Jenkins credentials (configure per product).
 
 ## Adding a new test
 

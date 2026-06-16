@@ -3,7 +3,7 @@
 > **Purpose:** This document is the single source of truth for any AI model (Claude, GPT, Gemini, Cursor Agent, Copilot, etc.) to **read, understand, and write** automation tests in this repository.
 >
 > **Language:** English (code and comments remain English).
-> **Stack:** Python 3.12+, pytest, Playwright (sync API), pytest-html, httpx, psycopg, Pydantic Settings, Loguru.
+> **Stack:** Python 3.12+, pytest, Playwright (sync API), pytest-html, pytest-reportportal, Pydantic Settings, Loguru.
 
 ---
 
@@ -56,11 +56,11 @@ When asked to **write a new automation test** (no manual sheet), follow:
 
 ```
 1. Identify application  → efms | etms
-2. Identify test type    → ui | api | db
+2. Identify test type    → ui (api/db: add layers when needed)
 3. Search existing code first           → Section 16 — reuse before creating
 4. Create/update Page Object (UI only)  → src/automation/pages/{app}/ — extend existing page when possible
 5. Add test data (if data-driven)       → tests/testdata/dataTest-{app}.json
-6. Write test file                      → tests/{app}/test_{feature}.py (UI) | tests/api/ | tests/db/ (future)
+6. Write test file                      → tests/{app}/test_{feature}.py
 7. Register page in PageManager (only if a genuinely new page is needed)
 8. Add pytest markers: @pytest.mark.{app}, @pytest.mark.{smoke|login|regression}
 ```
@@ -70,7 +70,7 @@ When asked to **write a new automation test** (no manual sheet), follow:
 | Rule | Description |
 |------|-------------|
 | **Never interact with `page` directly in tests** | Always use `pages` fixture → Page Object methods |
-| **Never hardcode passwords in JSON or test files** | Use `account_password` fixture or `settings.account_password` from env |
+| **Never hardcode passwords in JSON or test files** | Use `efms_account_password` / `etms_account_password` fixture from `.env` |
 | **Never hardcode URLs in tests** | Use `settings.efms_base_url` / `settings.etms_base_url` inside Page Objects |
 | **Never hardcode waits (`sleep`, raw ms in code)** | Use `settings.*_timeout`, `settings.*_ms`, or condition-based waits (Section 3.6) |
 | **Always decorate page/API/DB methods with `@log_method`** | Required for HTML report step logs |
@@ -87,14 +87,10 @@ When asked to **write a new automation test** (no manual sheet), follow:
 
 ```
 auotmation-techub/
+├── conftest.py                     # Early hooks — load .env, auto-enable ReportPortal
 ├── src/automation/                 # Framework package (import as `automation`)
-│   ├── api/
-│   │   └── base_api_client.py      # httpx wrapper — extend for API tests
 │   ├── config/
 │   │   └── settings.py             # Pydantic Settings — all env config
-│   ├── db/
-│   │   ├── connection.py           # PostgreSQL context manager
-│   │   └── query_executor.py       # SQL helpers
 │   ├── logging/
 │   │   ├── logger.py               # Loguru file logger
 │   │   └── step_logger.py          # @log_method decorator + step logs
@@ -121,32 +117,28 @@ auotmation-techub/
 │   │   └── etms/
 │   │       └── etms_home_page.py
 │   └── reporting/
-│       └── attachments.py          # attach_text/png/file for reports
+│       └── reportportal_support.py # ReportPortal ini, display names, step logs, screenshots
 │
 ├── tests/
-│   ├── conftest.py                 # Playwright fixtures + HTML report hooks
+│   ├── conftest.py                 # Playwright fixtures + HTML/RP report hooks
+│   ├── conftest_reportportal.py    # ReportPortal pytest hooks (via pytest_plugins)
 │   ├── data_provider.py            # DataProvider — load JSON + auto priority markers
 │   ├── testdata/
 │   │   ├── dataTest-efms.json
 │   │   └── dataTest-etms.json
 │   ├── efms/                       # eFMS UI tests (app-first layout)
-│   │   ├── __init__.py
 │   │   ├── test_efms_auth.py       # TestEfmsAuth — SMK_AUTH_001/002
-│   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
-│   │   └── test_efms_login.py      # EFMS-LOGIN-001 (standalone)
-│   ├── etms/                       # eTMS UI tests
-│   │   ├── __init__.py
-│   │   └── test_etms_login.py
-│   ├── api/                        # API tests (create when needed)
-│   └── db/                         # DB tests (create when needed)
+│   │   └── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
+│   └── etms/                       # eTMS UI tests
+│       └── test_etms_login.py      # ETMS-LOGIN-001
 │
 ├── reports/                        # HTML report output (gitignored)
-├── test-results/                   # Screenshots + attachments (gitignored)
+├── test-results/                   # Screenshots (gitignored)
 ├── logs/                           # automation.log (gitignored)
 ├── Jenkinsfile                     # CI pipeline
 ├── pyproject.toml                  # Package metadata, pytest markers, ruff, pyright
 ├── uv.lock                         # Dependency lock
-├── .env.example                    # Environment variable template
+├── .env.example                    # Environment variable template (copy → .env)
 └── README.md
 ```
 
@@ -156,10 +148,10 @@ auotmation-techub/
 |------|---------|
 | `tests/efms/` | All eFMS UI automation tests |
 | `tests/etms/` | All eTMS UI automation tests |
-| `tests/api/` | API tests (scaffold — create when implementing) |
-| `tests/db/` | DB tests (scaffold — create when implementing) |
 | `tests/testdata/` | Shared JSON test data per application |
-| `tests/conftest.py` | Global Playwright fixtures + HTML report hooks |
+| `tests/conftest.py` | Global Playwright fixtures + HTML/ReportPortal report hooks |
+| `tests/conftest_reportportal.py` | ReportPortal configuration hooks |
+| `conftest.py` (root) | Early `.env` load + auto `--reportportal` when `RP_API_KEY` is set |
 
 > **Migration note:** Tests moved from `tests/ui/{app}/` → `tests/{app}/`. Do **not** recreate the `tests/ui/` layer.
 
@@ -175,7 +167,7 @@ auotmation-techub/
 | Class | File | Responsibility |
 |-------|------|----------------|
 | `EfmsLoginPage` | `efms_login_page.py` | Open login URL, enter credentials, click login, verify login page |
-| `EfmsHomePage` | `efms_home_page.py` | Dashboard ready, logout flow, verify logo title |
+| `EfmsHomePage` | `efms_home_page.py` | Dashboard ready, logout flow |
 | `EfmsCommercialMenuPage` | `commercial/commercial_menu_page.py` | Base: sidebar, `open_commercial_menu()` — **internal only** |
 | `EfmsAgentPage` | `commercial/efms_agent_page.py` | Agent submenu + Agent List verification |
 | `EfmsCustomerPage` | `commercial/efms_customer_page.py` | Customer submenu + Customer List verification |
@@ -188,8 +180,8 @@ auotmation-techub/
 | `EfmsServicesMenuPage` | `services/services_menu_page.py` | Base: `open_services_menu()` — **internal only** |
 | `EfmsServicesDocumentationPage` | `services/efms_services_documentation_page.py` | All 8 Services documentation pages (title + URL verify) |
 
-**Default UAT URLs:**
-- eFMS: `https://uat-efms.logtechub.com/en/#/home`
+**Default UAT URLs (settings defaults):**
+- eFMS: `https://uat-efms.logtechub.com/`
 - eTMS: `https://staging-itllog-etms.logtechub.com/en/#/app/default/home`
 
 ### 2.1 Framework Architecture & Layers
@@ -223,9 +215,7 @@ auotmation-techub/
 └─────────────────────────────────────────────────────────────┘
 
 Supporting layers (not in UI test path):
-  api/     → BaseApiClient (httpx) — API tests (scaffold ready)
-  db/      → QueryExecutor — DB tests (scaffold ready)
-  reporting/ → pytest-html attachments
+  reporting/ → reportportal_support.py (ReportPortal) + pytest-html hooks in conftest
 ```
 
 **Test pyramid (current scope):**
@@ -233,8 +223,9 @@ Supporting layers (not in UI test path):
 | Layer | Status | Location |
 |-------|--------|----------|
 | UI E2E | **Active** — smoke auth + navigation | `tests/efms/`, `tests/etms/` |
-| API | Scaffold only | `tests/api/` (create when needed) |
-| DB | Scaffold only | `tests/db/` (create when needed) |
+| ReportPortal | **Active** — auto when `RP_API_KEY` in `.env` | `reportportal_support.py`, `conftest_reportportal.py` |
+| API | Not implemented | Add `src/automation/api/` + `tests/api/` when needed |
+| DB | Not implemented | Add `src/automation/db/` + `tests/db/` when needed |
 
 **Design principles (SA view):**
 
@@ -254,19 +245,20 @@ Supporting layers (not in UI test path):
 |-------|--------|----------|---------------------|------|
 | SMK_AUTH_001 | Login | Critical | `TestEfmsAuth.test_smk_auth_001_login_success_efms` | `tests/efms/test_efms_auth.py` |
 | SMK_AUTH_002 | Login | Critical | `TestEfmsAuth.test_smk_auth_002_logout_success_efms` | `tests/efms/test_efms_auth.py` |
-| EFMS-LOGIN-001 | Login | High | `test_login_efms` | `tests/efms/test_efms_login.py` |
 | SMK_NAV_001–004 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_commercial_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_005 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_logistics_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_006 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_services_menu_efms` | `tests/efms/test_efms_navigate.py` |
-| ETMS-LOGIN-001 | Login | — | `test_login_etms` | `tests/etms/test_etms_login.py` |
+| ETMS-LOGIN-001 | Login | High | `test_login_etms` | `tests/etms/test_etms_login.py` |
 
 **Run by priority (from JSON, auto-applied via `DataProvider.efms_cases`):**
 
 ```bash
 uv run pytest -m critical -v --browser chrome --browser-headless true   # SMK_AUTH_001/002
-uv run pytest -m high -v --browser chrome --browser-headless true       # navigation + EFMS-LOGIN-001
+uv run pytest -m high -v --browser chrome --browser-headless true       # navigation + ETMS-LOGIN-001
 uv run pytest -m navigation -v --browser chrome --browser-headless true # SMK_NAV_001–006
 uv run pytest -m login -v --browser chrome --browser-headless true      # all login/logout tests
+uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
+uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS only → RP launch etms-automation
 ```
 
 ---
@@ -288,15 +280,11 @@ Test File  →  pages fixture  →  PageManager  →  {App}Page  →  BasePage  
 ```python
 # Preferred — auto-applies priority markers (critical/high/medium/low) from JSON
 @pytest.mark.parametrize("data", DataProvider.efms_cases("test_smk_auth_001_login_success_efms"))
-def test_smk_auth_001_login_success_efms(pages, data, account_password):
+def test_smk_auth_001_login_success_efms(pages, data, efms_account_password):
     # data["test_case_id"]  → "SMK_AUTH_001"  (HTML report + pytest param id)
     # data["test_data_id"]  → "LOGIN_ADMIN"   (maps to .env credentials)
     # data["company"]       → business field from JSON
     # pytest mark critical  → auto from data["priority"] == "Critical"
-
-# Legacy — no auto priority markers
-@pytest.mark.parametrize("data", DataProvider.efms_cases("test_login_efms"))
-def test_login_efms(pages, data, account_password):
     ...
 ```
 
@@ -307,17 +295,19 @@ def test_login_efms(pages, data, account_password):
 ### 3.3 Credential Pattern
 
 ```python
-# CORRECT — use fixture (skips test if password missing)
-def test_login_efms(pages, data, account_password):
-    pages.efms_login_page.open().login(settings.account_username, account_password, data["company"])
+# CORRECT — eFMS login (skips if EFMS_ACCOUNT_PASSWORD missing)
+def test_smk_auth_001_login_success_efms(pages, data, efms_account_password):
+    pages.efms_login_page.open().login(
+        settings.efms_username, efms_account_password, data["company"]
+    )
 
-# CORRECT — settings (but test won't skip if password missing)
-def test_login_efms(pages, data):
-    pages.efms_login_page.open().login(settings.account_username, settings.account_password, data["company"])
+# CORRECT — eTMS login (skips if ETMS_ACCOUNT_PASSWORD missing)
+def test_login_etms(pages, data, etms_account_password):
+    pages.etms_home_page.open().login(settings.etms_username, etms_account_password)
 
 # WRONG — hardcoded password
-def test_login_efms(pages, data):
-    pages.efms_login_page.open().login("henry.hieu", "123456", data["company"])
+def test_login(pages, data):
+    pages.efms_login_page.open().login("user", "123456", data["company"])
 ```
 
 ### 3.4 Selector Priority Rules (MUST follow)
@@ -500,11 +490,12 @@ def login(self, username: str, password: str, company: str) -> "EfmsHomePage":
 |---------|---------|---------|
 | `browser_timeout` | `60000` | Default element wait (ms) — Playwright context default |
 | `page_load_timeout` | `60000` | Navigation / post-login dashboard wait (ms) |
+| `browser_slow_mo` | `0` | Playwright slow motion (ms) — debug only |
 | `polling_interval` | `250` | Poll interval inside `wait_for_visible()` |
-| `navigation_settle_ms` | `2000` | Extra settle after `document.readyState === 'complete'` |
-| `open_url_settle_ms` | `5000` | Brief wait before reload in `open_url()` SPA workaround |
-| `api_timeout` | `30000` | httpx client timeout (ms) |
+| `navigation_settle_ms` | `1000` | Extra settle after `document.readyState === 'complete'` |
+| `open_url_settle_ms` | `5000` | Brief SPA settle after `goto()` in `open_url()` |
 | `headless_viewport_width` / `height` | `1920` / `1080` | Headless browser viewport in `conftest.py` |
+| `screenshot_dir` | `test-results/screenshots` | Failure screenshot path |
 
 #### Correct patterns
 
@@ -556,11 +547,11 @@ def test_login(pages):
 4. **Submenu navigation** uses `click(force=True)` after `open_commercial_menu()`.
 5. After login, call `wait_for_page_stable()` before dashboard assertions.
 
-#### `open_url()` SPA workaround
+#### `open_url()` SPA settle
 
-`BasePage.open_url()` performs: `goto` → `open_url_settle_ms` wait → `reload` → `wait_for_dom_content_loaded()`.
+`BasePage.open_url()` performs: `goto` → optional `open_url_settle_ms` wait → `wait_for_dom_content_loaded()`.
 
-Do **not** remove or bypass without team approval. Tune via `OPEN_URL_SETTLE_MS` in `.env` instead of editing code.
+Tune via `OPEN_URL_SETTLE_MS` in `.env` — do not hard-code milliseconds in Page Objects.
 
 ---
 
@@ -590,16 +581,15 @@ Group related test cases in one **test class per module** when they share marker
 |--------|-------|------|---------|
 | Auth (Login/Logout) | `TestEfmsAuth` | `tests/efms/test_efms_auth.py` | `test_smk_auth_001_*`, `test_smk_auth_002_*` |
 | Navigation | `TestEfmsNavigate` | `tests/efms/test_efms_navigate.py` | commercial, logistics, services nav tests |
-| eFMS Login (standalone) | — | `tests/efms/test_efms_login.py` | `test_login_efms` |
 | eTMS Login | — | `tests/etms/test_etms_login.py` | `test_login_etms` |
 
 **Rules:**
 
 1. **Class-level markers** — `@pytest.mark.login` + `@pytest.mark.efms` on the class (shared by all methods).
 2. **Method-level markers** — `@pytest.mark.tc_id("SMK_AUTH_001")` per test case when needed for report fallback.
-3. **Parametrize** — use `DataProvider.efms_cases()` (not `efms()`) when JSON has `priority` field.
+3. **Parametrize** — use `DataProvider.efms_cases()` / `etms_cases()` (auto priority markers from JSON).
 4. **First parameter** — always `self` in class methods.
-5. **Standalone tests** — single TC with different suite (e.g. `test_efms_login.py`) may remain function-based with `@pytest.mark.smoke`.
+5. **Standalone tests** — single TC (e.g. `test_etms_login.py`) may remain function-based with `@pytest.mark.smoke`.
 
 **Canonical class template:**
 
@@ -612,7 +602,7 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_001_login_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_001")
-    def test_smk_auth_001_login_success_efms(self, pages, data, account_password):
+    def test_smk_auth_001_login_success_efms(self, pages, data, efms_account_password):
         ...
 ```
 
@@ -621,7 +611,7 @@ class TestEfmsAuth:
 | Situation | Use |
 |-----------|-----|
 | 2+ related TCs in same module (Auth, Navigation) | Test class |
-| Single TC, different marker mix (EFMS-LOGIN-001 + smoke) | Standalone function |
+| Single TC (e.g. ETMS-LOGIN-001) | Standalone function |
 | New module with only 1 TC planned | Standalone function — refactor to class when 2nd TC added |
 
 ---
@@ -659,19 +649,21 @@ Map each column to automation as follows:
 
 | TestData_ID | Username source | Password source | .env keys |
 |-------------|-----------------|-----------------|-----------|
-| `LOGIN_ADMIN` | `settings.account_username` | `account_password` fixture | `ACCOUNT_USERNAME`, `ACCOUNT_PASSWORD` |
-| `LOGIN_USER` | `settings.account_username` | `account_password` fixture | same (add new env keys only when a second account is needed) |
+| `LOGIN_ADMIN` (eFMS) | `settings.efms_username` | `efms_account_password` fixture | `EFMS_ACCOUNT_USERNAME`, `EFMS_ACCOUNT_PASSWORD` |
+| eTMS login | `settings.etms_username` | `etms_account_password` fixture | `ETMS_ACCOUNT_USERNAME`, `ETMS_ACCOUNT_PASSWORD` |
+
+Legacy fallback (eFMS only): `ACCOUNT_USERNAME`, `ACCOUNT_PASSWORD` when `EFMS_ACCOUNT_*` is not set.
 
 **Rules:**
 - JSON stores `test_data_id: "LOGIN_ADMIN"` as metadata only
-- Test injects `account_password` fixture — test **skips** if `ACCOUNT_PASSWORD` is empty
-- Username comes from `settings.account_username` (loaded from `.env`)
+- Test injects `efms_account_password` or `etms_account_password` — test **skips** if that product password is empty
+- Username from `settings.efms_username` (eFMS) or `settings.etms_username` (eTMS)
 - **Never** put `username` or `password` fields in JSON
 
 ```python
 # Step 2 & 3 in test — LOGIN_ADMIN resolves to env credentials
-pages.efms_login_page.enter_username(settings.account_username)
-pages.efms_login_page.enter_password(account_password)
+pages.efms_login_page.enter_username(settings.efms_username)
+pages.efms_login_page.enter_password(efms_account_password)
 ```
 
 ### 5.3 Steps → Page Object methods (1 step = 1 method)
@@ -682,7 +674,7 @@ Each manual step becomes exactly one `@log_method` in the Page Object and one ca
 |-------------|-------------------|-----------|
 | 1. Open Login Page | `EfmsLoginPage.open()` | `pages.efms_login_page.open()` |
 | 2. Enter Username | `EfmsLoginPage.enter_username(username)` | `pages.efms_login_page.enter_username(settings.account_username)` |
-| 3. Enter Password | `EfmsLoginPage.enter_password(password)` | `pages.efms_login_page.enter_password(account_password)` |
+| 3. Enter Password | `EfmsLoginPage.enter_password(password)` | `pages.efms_login_page.enter_password(efms_account_password)` |
 | 4. Enter Company | `EfmsLoginPage.select_company(company)` | `pages.efms_login_page.select_company(data["company"])` |
 | 5. Click Login | `EfmsLoginPage.click_login()` | `pages.efms_login_page.click_login()` |
 | Expected: Dashboard displayed | `EfmsHomePage.is_dashboard_displayed()` | `assert pages.efms_home_page.is_dashboard_displayed()` |
@@ -692,7 +684,7 @@ Each manual step becomes exactly one `@log_method` in the Page Object and one ca
 ```python
 # Composite — chains all step methods internally (returns EfmsLoginPage)
 pages.efms_login_page.open().login(
-    settings.account_username, account_password, data["company"],
+    settings.efms_username, efms_account_password, data["company"],
 )
 assert pages.efms_home_page.is_dashboard_displayed()
 ```
@@ -747,7 +739,7 @@ File: `tests/testdata/dataTest-efms.json`
 | `preconditions` | Recommended | `Preconditions` column | documentation |
 | `{feature_fields}` | As needed | business data from steps | e.g. `company`, `expected_title` |
 | `username` | **Never** | — | use `settings.account_username` |
-| `password` | **Never** | — | use `account_password` fixture |
+| `password` | **Never** | — | use `efms_account_password` fixture |
 
 ### 5.6 Complete test file template (CANONICAL)
 
@@ -768,15 +760,15 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_001_login_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_001")
-    def test_smk_auth_001_login_success_efms(self, pages, data, account_password):
+    def test_smk_auth_001_login_success_efms(self, pages, data, efms_account_password):
         # Step 1: Open Login Page
         pages.efms_login_page.open()
 
         # Step 2: Enter Username (LOGIN_ADMIN → settings.account_username)
         pages.efms_login_page.enter_username(settings.account_username)
 
-        # Step 3: Enter Password (LOGIN_ADMIN → account_password fixture)
-        pages.efms_login_page.enter_password(account_password)
+        # Step 3: Enter Password (LOGIN_ADMIN → efms_account_password fixture)
+        pages.efms_login_page.enter_password(efms_account_password)
 
         # Step 4: Enter Company (from JSON business data)
         pages.efms_login_page.select_company(data["company"])
@@ -806,7 +798,6 @@ class TestEfmsAuth:
 |--------|---------|
 | `is_dashboard_displayed()` | Wait `dashboard_ready_selectors` + URL `#/home` |
 | `wait_for_dashboard_ready()` | Dashboard ready + `wait_for_page_stable()` |
-| `verify_logo_title(expected)` | Wait dashboard ready, read `h3` via `inner_text()` |
 | `click_user_menu()`, `click_logout()`, `click_confirm_yes()` | Logout flow |
 
 **Commercial navigation** — `src/automation/pages/efms/commercial/`
@@ -877,8 +868,8 @@ Manual Test Case Sheet
         │       └─→ tests/testdata/dataTest-{app}.json  (metadata + business fields)
         │
         ├─ TestData_ID (e.g. LOGIN_ADMIN)
-        │       └─→ .env  (ACCOUNT_USERNAME, ACCOUNT_PASSWORD)
-        │               └─→ settings.account_username + account_password fixture
+        │       └─→ .env  (EFMS_ACCOUNT_*, ETMS_ACCOUNT_*)
+        │               └─→ settings.efms_username + efms_account_password fixture
         │
         ├─ Steps (1..N)
         │       └─→ Page Object methods (@log_method per step)
@@ -957,8 +948,8 @@ LOGISTICS_MENU_ACTIONS = {
 @pytest.mark.efms
 class TestEfmsNavigate:
     @pytest.mark.parametrize("data", DataProvider.efms_cases("test_smk_nav_verify_logistics_menu_efms"))
-    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, account_password):
-        pages.efms_login_page.open().login(settings.account_username, account_password, data["company"])
+    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, efms_account_password):
+        pages.efms_login_page.open().login(settings.account_username, efms_account_password, data["company"])
         assert pages.efms_home_page.is_dashboard_displayed()
         pages.efms_home_page.wait_for_dashboard_ready()
 
@@ -1054,7 +1045,7 @@ File: `tests/efms/test_efms_shipment.py` (eFMS UI) or `tests/etms/test_etms_{fea
 ### Step 5 — Run and verify
 
 ```bash
-ACCOUNT_PASSWORD='<password>' uv run pytest tests/efms/test_efms_shipment.py -v --browser chrome --browser-headless true
+uv run pytest tests/efms/test_efms_shipment.py -v --browser chrome --browser-headless true
 ```
 
 ---
@@ -1119,12 +1110,11 @@ class EfmsShipmentPage(BasePage):
 
 | Method | Usage |
 |--------|-------|
-| `open_url(url)` | Navigate + `open_url_settle_ms` + reload (SPA workaround — Section 3.6) |
+| `open_url(url)` | Navigate + optional `open_url_settle_ms` + `wait_for_dom_content_loaded()` |
 | `wait_for_visible(selectors, name, timeout?)` | Poll until element visible; default timeout = `settings.browser_timeout` |
 | `find_visible(selectors)` | Single-check, returns `Locator \| None` |
 | `wait_for_dom_content_loaded()` | Wait for `domcontentloaded` |
 | `wait_for_page_stable()` | `readyState === 'complete'` + `navigation_settle_ms` |
-| `reload_page()` | Reload + `wait_for_page_stable()` |
 | `current_url` (property) | Current page URL string |
 
 ---
@@ -1189,114 +1179,22 @@ tests/testdata/dataTest-{app}.json
 ```python
 from tests.data_provider import DataProvider
 
-# Preferred — auto priority markers from JSON
+# Always use *_cases() — auto priority markers from JSON
 @pytest.mark.parametrize("data", DataProvider.efms_cases("test_smk_auth_001_login_success_efms"))
-
-# Simple — no auto markers
-@pytest.mark.parametrize("data", DataProvider.efms_cases("test_login_efms"))
-@pytest.mark.parametrize("data", DataProvider.etms("test_login_etms"))
+@pytest.mark.parametrize("data", DataProvider.etms_cases("test_login_etms"))
 ```
 
 ---
 
 ## 9. How to Write an API Test
 
-> **Status:** Scaffold exists (`BaseApiClient`), no tests yet. Create `tests/api/` when needed.
-
-### Step 1 — Create API client subclass
-
-```python
-# src/automation/api/efms_api_client.py
-from automation.api.base_api_client import BaseApiClient
-from automation.config import settings
-from automation.logging import log_method
-
-
-class EfmsApiClient(BaseApiClient):
-    def __init__(self) -> None:
-        super().__init__(base_url=settings.api_base_url)
-
-    @log_method("Get shipment by ID")
-    def get_shipment(self, shipment_id: str):
-        return self.get(f"/api/shipments/{shipment_id}")
-```
-
-### Step 2 — Write API test
-
-```python
-# tests/api/efms/test_efms_shipment_api.py
-import pytest
-from automation.api.efms_api_client import EfmsApiClient
-
-
-@pytest.mark.efms
-@pytest.mark.regression
-def test_get_shipment_returns_200():
-    client = EfmsApiClient()
-    try:
-        response = client.get_shipment("12345")
-        assert response.status_code == 200
-        body = response.json()
-        assert "id" in body
-    finally:
-        client.close()
-```
-
-### BaseApiClient methods
-
-| Method | Description |
-|--------|-------------|
-| `get(path, **kwargs)` | HTTP GET |
-| `post(path, **kwargs)` | HTTP POST |
-| `put(path, **kwargs)` | HTTP PUT |
-| `patch(path, **kwargs)` | HTTP PATCH |
-| `delete(path, **kwargs)` | HTTP DELETE |
-| `close()` | Close httpx client |
-
-Responses are auto-attached to `test-results/attachments/api-response.txt`.
+> **Status:** Not implemented. When needed, add `src/automation/api/` (e.g. httpx client) and `tests/api/`. Follow `@log_method` and settings-based timeouts.
 
 ---
 
 ## 10. How to Write a DB Test
 
-> **Status:** Scaffold exists (`QueryExecutor`, `db_connection`), no tests yet. Create `tests/db/` when needed.
-
-### Prerequisites
-
-Set in `.env`:
-```
-DB_URL=postgresql://host:5432/dbname
-DB_USERNAME=your_user
-DB_PASSWORD=your_password
-```
-
-### Template
-
-```python
-# tests/db/test_efms_shipment_db.py
-import pytest
-from automation.db.query_executor import QueryExecutor
-
-
-@pytest.mark.efms
-@pytest.mark.regression
-def test_shipment_exists_in_database():
-    executor = QueryExecutor()
-    row = executor.fetch_one(
-        "SELECT id, status FROM shipments WHERE id = %s",
-        ("12345",),
-    )
-    assert row is not None
-    assert row["status"] == "ACTIVE"
-```
-
-### QueryExecutor methods
-
-| Method | Returns |
-|--------|---------|
-| `fetch_all(sql, params)` | `list[dict]` |
-| `fetch_one(sql, params)` | `dict \| None` |
-| `execute(sql, params)` | `int` (row count) |
+> **Status:** Not implemented. When needed, add `src/automation/db/` (e.g. psycopg) and `tests/db/`. Keep credentials in `.env` only.
 
 ---
 
@@ -1311,7 +1209,8 @@ def test_shipment_exists_in_database():
 | `context` | function | rarely | Browser context; headless → fixed viewport from settings |
 | `page` | function | **avoid in tests** | Raw Playwright Page |
 | `pages` | function | **always use this** | `PageManager` instance |
-| `account_password` | function | login tests | Skips if `ACCOUNT_PASSWORD` not set |
+| `efms_account_password` | function | eFMS login tests — skips if `EFMS_ACCOUNT_PASSWORD` missing |
+| `etms_account_password` | function | eTMS login tests — skips if `ETMS_ACCOUNT_PASSWORD` missing |
 
 ### Markers — two sources
 
@@ -1325,9 +1224,9 @@ def test_shipment_exists_in_database():
 @pytest.mark.navigation     # eFMS menu navigation suite
 @pytest.mark.efms           # eFMS application
 @pytest.mark.etms           # eTMS application (NOT etmss)
-@pytest.mark.smoke          # smoke suite (manual — e.g. test_efms_login.py)
+@pytest.mark.smoke          # smoke suite (manual — e.g. test_etms_login.py)
 @pytest.mark.regression     # regression suite
-@pytest.mark.tc_id("EFMS-LOGIN-001")       # fallback when JSON tc_id absent
+@pytest.mark.tc_id("SMK_AUTH_001")       # fallback when JSON tc_id absent
 @pytest.mark.description("Login eFMS Successfully")  # fallback description
 ```
 
@@ -1336,17 +1235,18 @@ def test_shipment_exists_in_database():
 | Command | Collects |
 |---------|----------|
 | `-m critical` | SMK_AUTH_001, SMK_AUTH_002 |
-| `-m high` | EFMS-LOGIN-001, SMK_NAV_001–006 |
-| `-m login` | All auth + EFMS-LOGIN-001 + ETMS-LOGIN-001 |
+| `-m high` | SMK_NAV_001–006, ETMS-LOGIN-001 |
+| `-m login` | SMK_AUTH_001/002 + ETMS-LOGIN-001 |
 | `-m navigation` | SMK_NAV commercial/logistics/services |
 | `-m "login and efms"` | eFMS auth tests only |
+| `-m efms` / `-m etms` | All tests for one app; ReportPortal uses separate launch name |
 | `-m smoke` | Tests with explicit `@pytest.mark.smoke` |
 
 ### HTML report hooks (`conftest.py`)
 
 | Hook | Behavior |
 |------|----------|
-| `pytest_html_report_title` | Report title: "eFMS/eTMS Automation Report" |
+| `pytest_html_report_title` | Report title: "Automation Report" |
 | `pytest_runtest_makereport` | Enriches report: TC_ID, description, method logs, failure screenshot |
 | `pytest_html_results_table_*` | Custom "Test Case" column (not raw nodeid) |
 | Multi-scenario tests | Shows `test_case_ids[]` + per-scenario breakdown in extras |
@@ -1356,6 +1256,21 @@ def test_shipment_exists_in_database():
 - Screenshots on failure: `test-results/screenshots/`
 - Step logs: embedded in HTML report + console `[STEP START/PASS]`
 - File log: `logs/automation.log`
+
+### ReportPortal integration
+
+| Item | Behavior |
+|------|----------|
+| Auto-enable | When `RP_API_KEY` is set in `.env` — no `--reportportal` flag needed |
+| Early load | Root `conftest.py` → `pytest_load_initial_conftests` |
+| Config hook | `tests/conftest_reportportal.py` → inject ini + `rp_enabled=True` |
+| Display name | `{test_case_id} - {description}` from JSON via `@pytest.mark.name` |
+| Launch name | `-m efms` → `efms-automation`; `-m etms` → `etms-automation`; else `RP_LAUNCH` |
+| Step logs | `log_step_lines()` → ReportPortal on test finish |
+| Failure screenshot | `attach_failure_screenshot()` → full-page PNG |
+| View results | `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all` |
+
+**Dashboard tip:** Create separate dashboards filtering launch name `efms-automation` vs `etms-automation`, or filter test attribute `efms` / `etms`.
 
 ### CLI options
 
@@ -1371,34 +1286,35 @@ def test_shipment_exists_in_database():
 uv sync --extra dev
 uv run playwright install --with-deps chrome msedge
 
+# Setup env (once)
+copy .env.example .env   # Windows
+# Fill EFMS_ACCOUNT_*, ETMS_ACCOUNT_*, RP_API_KEY
+
 # Run all login tests (both apps)
-ACCOUNT_PASSWORD='<password>' uv run pytest -m login --browser chrome --browser-headless true
+uv run pytest -m login --browser chrome --browser-headless true
 
-# Run eFMS only
-ACCOUNT_PASSWORD='<password>' uv run pytest -m 'login and efms' --browser chrome --browser-headless true
+# Run eFMS only (ReportPortal launch: efms-automation)
+uv run pytest -m efms --browser chrome --browser-headless true
 
-# Run eTMS only
-ACCOUNT_PASSWORD='<password>' uv run pytest -m 'login and etms' --browser edge --browser-headless true
+# Run eTMS only (ReportPortal launch: etms-automation)
+uv run pytest -m etms --browser edge --browser-headless true
 
 # Run by priority (from JSON)
-ACCOUNT_PASSWORD='<password>' uv run pytest -m critical --browser chrome --browser-headless true
-ACCOUNT_PASSWORD='<password>' uv run pytest -m high --browser chrome --browser-headless true
+uv run pytest -m critical --browser chrome --browser-headless true
+uv run pytest -m high --browser chrome --browser-headless true
 
 # Run navigation suite
-ACCOUNT_PASSWORD='<password>' uv run pytest tests/efms/test_efms_navigate.py -v \
-  --browser chrome --browser-headless true
+uv run pytest tests/efms/test_efms_navigate.py -v --browser chrome --browser-headless true
 
 # Run auth class
-ACCOUNT_PASSWORD='<password>' uv run pytest tests/efms/test_efms_auth.py -v \
-  --browser chrome --browser-headless true
+uv run pytest tests/efms/test_efms_auth.py -v --browser chrome --browser-headless true
 
 # Run with HTML report
-ACCOUNT_PASSWORD='<password>' uv run pytest -m login \
-  --browser chrome --browser-headless true \
+uv run pytest -m login --browser chrome --browser-headless true \
   --html=reports/report.html --self-contained-html
 
 # Headed mode (visible browser)
-ACCOUNT_PASSWORD='<password>' uv run pytest -m login --browser chrome --browser-headless false -s
+uv run pytest -m login --browser chrome --browser-headless false -s
 
 # Code quality
 uv run ruff check .
@@ -1420,7 +1336,7 @@ File: `Jenkinsfile`
 
 **Pipeline stages:** Checkout → Install (`uv sync`, Playwright browsers) → Quality (`ruff`, `pyright`) → Run Tests → Archive artifacts.
 
-**Credentials:** `ACCOUNT_PASSWORD` from Jenkins credential `automation-account-password`.
+**Credentials:** Jenkins injects `EFMS_ACCOUNT_PASSWORD`, `ETMS_ACCOUNT_PASSWORD` (or map from credential store).
 
 **Artifacts archived:** `reports/`, `test-results/`, `logs/`
 
@@ -1483,10 +1399,10 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_001_login_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_001")
-    def test_smk_auth_001_login_success_efms(self, pages, data, account_password):
+    def test_smk_auth_001_login_success_efms(self, pages, data, efms_account_password):
         pages.efms_login_page.open()
-        pages.efms_login_page.enter_username(settings.account_username)
-        pages.efms_login_page.enter_password(account_password)
+        pages.efms_login_page.enter_username(settings.efms_username)
+        pages.efms_login_page.enter_password(efms_account_password)
         pages.efms_login_page.select_company(data["company"])
         pages.efms_login_page.click_login()
         assert pages.efms_home_page.is_dashboard_displayed()
@@ -1500,48 +1416,21 @@ uv run pytest tests/efms/test_efms_auth.py -v \
 
 ---
 
-### Example B — eFMS Login Test (Fluent shorthand) ✅ Alternative Pattern
+### Example B — eTMS Login Test ✅ Current Pattern
 
-**Test data** — `tests/testdata/dataTest-efms.json`:
+**Test data** — `tests/testdata/dataTest-etms.json`:
 ```json
 {
-    "test_login_efms": [
+    "test_login_etms": [
         {
-            "test_case_id": "EFMS-LOGIN-001",
-            "description": "Login eFMS with valid company",
+            "test_case_id": "ETMS-LOGIN-001",
+            "description": "Login eTMS successfully",
             "priority": "High",
-            "company": "LTH Demo JSC",
-            "title": "eFMS"
+            "expected_url_contains": "staging-itllog-etms.logtechub.com"
         }
     ]
 }
 ```
-
-**Test file** — `tests/efms/test_efms_login.py`:
-```python
-import pytest
-
-from automation.config import settings
-from tests.data_provider import DataProvider
-
-
-@pytest.mark.parametrize("data", DataProvider.efms_cases("test_login_efms"))
-@pytest.mark.login
-@pytest.mark.smoke
-@pytest.mark.efms
-def test_login_efms(pages, data, account_password):
-    pages.efms_login_page.open().login(
-        settings.account_username,
-        account_password,
-        data["company"],
-    )
-
-    assert pages.efms_home_page.verify_logo_title(data["title"])
-```
-
----
-
-### Example C — eTMS Login Test (Marker-Based) ✅ Alternative Pattern
 
 **Test file** — `tests/etms/test_etms_login.py`:
 ```python
@@ -1555,10 +1444,10 @@ from tests.data_provider import DataProvider
 @pytest.mark.login
 @pytest.mark.smoke
 @pytest.mark.etms
-def test_login_etms(pages, data, account_password):
+def test_login_etms(pages, data, etms_account_password):
     pages.etms_home_page.open().login(
-        settings.account_username,
-        account_password,
+        settings.etms_username,
+        etms_account_password,
     )
 
     assert not pages.etms_home_page.is_password_field_visible()
@@ -1567,7 +1456,7 @@ def test_login_etms(pages, data, account_password):
 
 ---
 
-### Example D — eFMS Negative Login Test (New Test)
+### Example C — eFMS Negative Login Test (New Test — template)
 
 **Test data** — add to `tests/testdata/dataTest-efms.json`:
 ```json
@@ -1604,14 +1493,14 @@ from automation.config import settings
 from tests.data_provider import DataProvider
 
 
-@pytest.mark.parametrize("data", DataProvider.efms("test_login_efms_invalid_company"))
+@pytest.mark.parametrize("data", DataProvider.efms_cases("test_login_efms_invalid_company"))
 @pytest.mark.login
 @pytest.mark.regression
 @pytest.mark.efms
-def test_login_efms_invalid_company(pages, data, account_password):
+def test_login_efms_invalid_company(pages, data, efms_account_password):
     pages.efms_login_page.open().login(
         settings.account_username,
-        account_password,
+        efms_account_password,
         data["company"],
     )
 
@@ -1724,14 +1613,14 @@ from automation.config import settings
 from tests.data_provider import DataProvider
 
 
-@pytest.mark.parametrize("data", DataProvider.efms("test_click_bay_button_efms"))
+@pytest.mark.parametrize("data", DataProvider.efms_cases("test_click_bay_button_efms"))
 @pytest.mark.smoke
 @pytest.mark.efms
-def test_click_bay_button_efms(pages, data, account_password):
+def test_click_bay_button_efms(pages, data, efms_account_password):
     # Precondition: login first
     pages.efms_login_page.open().login(
         settings.account_username,
-        account_password,
+        efms_account_password,
         "LTH Demo JSC",
     )
     assert pages.efms_home_page.is_dashboard_displayed()
@@ -1745,24 +1634,9 @@ def test_click_bay_button_efms(pages, data, account_password):
 
 ---
 
-### Example G — API Test (New)
+### Example G — API Test (future template)
 
-```python
-# tests/api/efms/test_efms_health_api.py
-import pytest
-from automation.api.base_api_client import BaseApiClient
-
-
-@pytest.mark.efms
-@pytest.mark.smoke
-def test_api_health_check():
-    client = BaseApiClient()
-    try:
-        response = client.get("/health")
-        assert response.status_code == 200
-    finally:
-        client.close()
-```
+> Add `src/automation/api/` when first API test is needed. Use httpx (or similar), `@log_method`, settings-based timeouts, and `tests/api/{app}/`.
 
 ---
 
@@ -1773,7 +1647,7 @@ def test_api_health_check():
 | 1 | Dashboard `h3` "eFMS" only for `is_visible()` | Fails headless (0×0 element) | Use `dashboard_ready_selectors` + `inner_text()` for title |
 | 2 | Headless with `no_viewport=True` | Sidebar click "outside viewport" | Headless uses `headless_viewport_width/height` in conftest |
 | 3 | `@pytest.mark.etmss` typo | Marker filter `-m etms` won't match | Always use `@pytest.mark.etms` |
-| 4 | Login tests without `account_password` fixture | Tests fail instead of skip | Always inject `account_password` fixture |
+| 4 | Login tests without `efms_account_password` fixture | Tests fail instead of skip | Always inject `efms_account_password` fixture |
 | 5 | `dataTest-etms.json` wrong key / hardcoded password | DataProvider fails or security risk | **Fixed** — `test_login_etms` + no credentials in JSON |
 | 6 | `open_url()` settle wait + reload | Every navigation is slow | Tune via `settings.open_url_settle_ms` — do not hardcode ms |
 | 7 | Jenkins `MARKER` dropdown missing `critical`/`navigation` | CI cannot select by priority from UI | **Fixed** — MARKER includes critical, high, navigation |
@@ -1788,7 +1662,7 @@ def test_api_health_check():
 | Missing `pyproject.toml` | ✅ Fixed |
 | `_build_wait_error` missing in BasePage | ✅ Fixed |
 | Duplicate `model_config` in settings | ✅ Fixed |
-| Hardcoded `timeout=30` in BaseApiClient | ✅ Fixed — uses `settings.api_timeout` |
+| Hardcoded waits in Page Objects | ✅ Fixed — settings-based timing (Section 3.6) |
 | Hardcoded `5000` in open_url | ✅ Fixed — uses `settings.open_url_settle_ms` |
 | `browser_timeout` 30s too short for headless login | ✅ Fixed — default 60s |
 
@@ -1799,7 +1673,7 @@ def test_api_health_check():
 ### P0 — Critical ✅ DONE
 
 - [x] Add `pyproject.toml`, fix BasePage wait errors, fix etmss typo
-- [x] `account_password` fixture in all login tests
+- [x] `efms_account_password` fixture in all login tests
 - [x] Register all markers in `pytest_configure`
 - [x] Headless viewport + dashboard_ready_selectors
 - [x] Remove hard-coded waits — settings-based timing (Section 3.6)
@@ -1809,15 +1683,16 @@ def test_api_health_check():
 ### P1 — High (consistency)
 
 - [x] **Fix `dataTest-etms.json`** — rename key to `test_login_etms`, remove hardcoded password, add `priority`
-- [x] **Migrate `test_efms_login.py` / `test_etms_login.py`** to `DataProvider.*_cases()` for auto priority markers
+- [x] **Migrate login tests** to `DataProvider.*_cases()` + product password fixtures
+- [x] **ReportPortal integration** — auto-enable, display names, per-app launches
 - [x] **Update Jenkinsfile** — add `critical`, `navigation`, `high` to MARKER choices
-- [ ] **Add `tests/api/` and `tests/db/`** with at least one example test each
+- [ ] **Add API/DB layers** when first API or DB test is required (not scaffolded in repo)
 - [x] **Restructure tests** — `tests/ui/{app}/` → `tests/{app}/` (app-first layout)
 - [x] **Update README** to match current structure
 
 ### P2 — Medium (developer experience)
 
-- [ ] **Playwright trace on failure** using `settings.trace_dir`
+- [ ] **Playwright trace on failure** (optional — add `trace_dir` to settings when needed)
 - [ ] **Shared `conftest.py` per app** (`tests/efms/conftest.py`) for login precondition fixture
 - [ ] **Extract `MENU_ACTIONS` dicts** to shared module if duplicated across new nav tests
 - [ ] **AGENTS.md** reference to this `ruleAi.md`
@@ -1827,7 +1702,7 @@ def test_api_health_check():
 
 - [ ] **Configure `pytest-xdist`** in Jenkins for parallel UI runs (careful: shared UAT env)
 - [ ] **Configure `pytest-rerunfailures`** for flaky test retry in CI
-- [ ] **Remove unused `pyyaml`** or implement YAML test data support
+- [ ] **ReportPortal dashboards** — eFMS / eTMS widgets on CI (optional)
 - [ ] **Visual regression** (Playwright screenshot compare) for critical pages
 - [ ] **Allure report** as alternative to pytest-html
 
@@ -1847,7 +1722,7 @@ When implementing a new test or Page Object method, run this checklist **in orde
 3. Search PageManager      → src/automation/pages/page_manager.py
 4. Search existing tests   → tests/{app}/  (see how similar flows are done)
 5. Search fixtures         → tests/conftest.py
-6. Search utilities        → src/automation/{api,db,logging,reporting}/
+6. Search utilities        → src/automation/{logging,reporting}/
 7. Search test data        → tests/testdata/dataTest-{app}.json
 ```
 
@@ -1868,8 +1743,8 @@ When implementing a new test or Page Object method, run this checklist **in orde
 | eTMS login | `EtmsHomePage` | `open()`, `login()` |
 | Wait for element | `BasePage` | `wait_for_visible()`, `wait_for_page_stable()`, `wait_for_dom_content_loaded()` |
 | Open URL + reload | `BasePage` | `open_url()` — tune `open_url_settle_ms`, do not copy wait logic |
-| Credentials | `conftest.py` + `settings` | `account_password` fixture, `settings.account_username` |
-| Test data loading | `DataProvider` | `DataProvider.efms_cases("test_...")` (preferred) or `efms()` |
+| Credentials | `conftest.py` + `settings` | `efms_account_password` / `etms_account_password`, `settings.efms_username` |
+| Test data loading | `DataProvider` | `DataProvider.efms_cases("test_...")` / `etms_cases("test_...")` |
 | Step logging | `step_logger.py` | `@log_method` decorator |
 | Page access in test | `PageManager` | `pages.efms_login_page`, `pages.efms_home_page`, `pages.efms_agent_page`, … |
 
@@ -1890,18 +1765,18 @@ When implementing a new test or Page Object method, run this checklist **in orde
 
 ```python
 # WRONG — duplicate login logic in test instead of reusing login()
-def test_nav(pages, data, account_password):
+def test_nav(pages, data, efms_account_password):
     pages.efms_login_page.open()
     pages.efms_login_page.enter_username(settings.account_username)
-    pages.efms_login_page.enter_password(account_password)
+    pages.efms_login_page.enter_password(efms_account_password)
     pages.efms_login_page.select_company(data["company"])
     pages.efms_login_page.click_login()
     # ... navigation steps
 
 # CORRECT — reuse composite login on EfmsLoginPage
-def test_nav(pages, data, account_password):
+def test_nav(pages, data, efms_account_password):
     pages.efms_login_page.open().login(
-        settings.account_username, account_password, data["company"],
+        settings.efms_username, efms_account_password, data["company"],
     )
     assert pages.efms_home_page.is_dashboard_displayed()
     pages.efms_home_page.wait_for_dashboard_ready()
@@ -2006,7 +1881,7 @@ Before finishing any automation task, verify:
 [ ] JSON key matches test function name exactly
 [ ] test_case_id, test_data_id, description present in JSON
 [ ] TestData_ID credentials via .env — no username/password in JSON
-[ ] account_password fixture injected for login tests
+[ ] efms_account_password / etms_account_password fixture for login tests
 [ ] One Page Object @log_method per manual Step
 [ ] Test has # Step N comments matching manual Steps
 [ ] Expected Result has assert + verify method with wait_for_visible
@@ -2026,33 +1901,64 @@ Before finishing any automation task, verify:
 
 ## Appendix — Environment Variables
 
+Copy `.env.example` → `.env` and fill credentials. **Never commit `.env` to Git.**
+
+### Runtime
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ENV` | `UAT` | Environment name |
+| `ENV` | `UAT` | Environment name (HTML metadata + RP attribute) |
+
+### Browser
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `BROWSER` | `chrome` | `chrome` or `edge` |
 | `BROWSER_HEADLESS` | `false` | Headless mode |
 | `BROWSER_TIMEOUT` | `60000` | Element timeout (ms) |
+| `BROWSER_SLOW_MO` | `0` | Playwright slow motion (ms) |
 | `PAGE_LOAD_TIMEOUT` | `60000` | Navigation / dashboard wait (ms) |
 | `POLLING_INTERVAL` | `250` | `wait_for_visible` poll interval (ms) |
-| `NAVIGATION_SETTLE_MS` | `2000` | Post-navigation settle (ms) |
-| `OPEN_URL_SETTLE_MS` | `5000` | `open_url()` pre-reload settle (ms) |
+| `NAVIGATION_SETTLE_MS` | `1000` | Post-navigation settle (ms) |
+| `OPEN_URL_SETTLE_MS` | `5000` | `open_url()` SPA settle (ms) |
 | `HEADLESS_VIEWPORT_WIDTH` | `1920` | Headless browser width |
 | `HEADLESS_VIEWPORT_HEIGHT` | `1080` | Headless browser height |
-| `API_TIMEOUT` | `30000` | httpx client timeout (ms) |
-| `EFMS_BASE_URL` | UAT eFMS URL | eFMS entry point |
-| `ETMS_BASE_URL` | UAT eTMS URL | eTMS entry point |
-| `ACCOUNT_USERNAME` | — | Shared login username |
-| `ACCOUNT_PASSWORD` | — | Shared login password (required for login tests) |
-| `API_BASE_URL` | eFMS API URL | API test base URL |
-| `DB_URL` | — | PostgreSQL connection string |
-| `DB_USERNAME` | — | Database username |
-| `DB_PASSWORD` | — | Database password |
-| `SCREENSHOT_DIR` | `test-results/screenshots` | Failure screenshot path |
-| `TRACE_DIR` | `test-results/traces` | Playwright trace path (future) |
-| `DB_TIMEOUT` | `10000` | Database query timeout (ms) |
 
-Copy `.env.example` to `.env` and fill in values locally. **Never commit `.env` to Git.**
+### Application URLs
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EFMS_BASE_URL` | `https://uat-efms.logtechub.com/` | eFMS entry point |
+| `ETMS_BASE_URL` | staging eTMS home URL | eTMS entry point |
+
+### Credentials (required for login tests)
+
+| Variable | Description |
+|----------|-------------|
+| `EFMS_ACCOUNT_USERNAME` | eFMS login username |
+| `EFMS_ACCOUNT_PASSWORD` | eFMS login password |
+| `ETMS_ACCOUNT_USERNAME` | eTMS login username |
+| `ETMS_ACCOUNT_PASSWORD` | eTMS login password |
+
+Legacy fallback in code (`settings.account_username` / `settings.account_password`) still works if `EFMS_ACCOUNT_*` is unset — prefer product-specific keys.
+
+### ReportPortal
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RP_ENDPOINT` | `http://localhost:8080` | ReportPortal server |
+| `RP_PROJECT` | `default_personal` | Project slug in UI URL |
+| `RP_API_KEY` | — | API key from Profile → API Keys; **auto-enables reporting** |
+| `RP_LAUNCH` | `efms-etms-automation` | Launch name (full suite) |
+| `RP_LAUNCH_DESCRIPTION` | eFMS/eTMS UI automation | Launch description |
+| `RP_VERIFY_SSL` | `false` | SSL verify for local Docker |
+| `RP_LAUNCH_EFMS` | `efms-automation` | Launch when `pytest -m efms` |
+| `RP_LAUNCH_ETMS` | `etms-automation` | Launch when `pytest -m etms` |
+| `RP_LAUNCH_DESCRIPTION_EFMS` | eFMS UI automation | eFMS launch description |
+| `RP_LAUNCH_DESCRIPTION_ETMS` | eTMS UI automation | eTMS launch description |
+
+**View launches:** `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all`
 
 ---
 
-*Last updated: 2026-06-12 | Framework: efms-etms-automation 1.0.0 | Test layout: `tests/{app}/` | Canonical: TestEfmsAuth (SMK_AUTH_001/002), TestEfmsNavigate (SMK_NAV_001–006), EFMS-LOGIN-001*
+*Last updated: 2026-06-12 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, ETMS-LOGIN-001 | ReportPortal: auto-enabled*

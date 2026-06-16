@@ -4,11 +4,6 @@ from automation.pages.base_page import BasePage
 
 
 class EfmsHomePage(BasePage):
-    home_title_selectors = [
-        "xpath=//h3[normalize-space()='eFMS']",
-        "text=eFMS",
-    ]
-
     dashboard_ready_selectors = [
         "xpath=//a[contains(@class,'m-menu__toggle') and .//span[normalize-space()='Commercial']]",
         "xpath=//span[normalize-space()='Commercial']/ancestor::a[contains(@class,'m-menu__toggle')][1]",
@@ -65,21 +60,6 @@ class EfmsHomePage(BasePage):
         )
         self.wait_for_page_stable()
         return self
-
-    @log_method("Verify eFMS title")
-    def verify_logo_title(self, expected_title: str) -> bool:
-        self.wait_for_visible(
-            self.dashboard_ready_selectors,
-            "eFMS dashboard navigation",
-            timeout=settings.page_load_timeout,
-        )
-        actual_title = (
-            self.page.locator("xpath=//h3[normalize-space()='eFMS']")
-            .first
-            .inner_text()
-            .strip()
-        )
-        return actual_title == expected_title
 
     @log_method("Click user menu")
     def click_user_menu(self) -> "EfmsHomePage":

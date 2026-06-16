@@ -1,13 +1,4 @@
 {
-    "test_login_efms": [
-        {
-            "test_case_id": "EFMS-LOGIN-001",
-            "description": "Login eFMS Successfully",
-            "priority": "High",
-            "company": "LTH Demo JSC",
-            "title": "eFMS"
-        }
-    ],
     "test_smk_auth_001_login_success_efms": [
         {
             "test_case_id": "SMK_AUTH_001",
@@ -46,21 +37,25 @@
             "company": "LTH Demo JSC",
             "scenarios": [
                 {
+                    "step": 2,
                     "test_case_id": "SMK_NAV_001",
                     "description": "Agent List displayed",
                     "menu_action": "agent"
                 },
                 {
+                    "step": 3,
                     "test_case_id": "SMK_NAV_002",
                     "description": "Customer List displayed",
                     "menu_action": "customer"
                 },
                 {
+                    "step": 4,
                     "test_case_id": "SMK_NAV_003",
                     "description": "Work Order List displayed",
                     "menu_action": "work_order"
                 },
                 {
+                    "step": 5,
                     "test_case_id": "SMK_NAV_004",
                     "description": "Booking Receipt displayed",
                     "menu_action": "booking_receipt"

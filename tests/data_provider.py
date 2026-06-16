@@ -9,89 +9,46 @@ import pytest
 PRIORITY_MARKERS = frozenset({"critical", "high", "medium", "low"})
 
 
+def _get_param_id(row: dict[str, Any], index: int) -> str:
+    test_case_ids = row.get("test_case_ids")
+    if isinstance(test_case_ids, list):
+        return " | ".join(str(tc_id) for tc_id in test_case_ids if tc_id)
+
+    if test_case_ids:
+        return str(test_case_ids)
+
+    test_case_id = row.get("test_case_id")
+    return str(test_case_id) if test_case_id else f"case{index + 1}"
+
+
 class DataProvider:
-
-    BASE_PATH = (
-        Path(__file__)
-        .parent
-        / "testdata"
-    )
-
+    BASE_PATH = Path(__file__).parent / "testdata"
 
     @staticmethod
-    def load_file(
-        file_name: str
-    ) -> dict[str, Any]:
-        """
-        Load json data file
-
-        Example:
-            dataTest-efms.json
-            dataTest-etms.json
-        """
-
-        file_path = (
-            DataProvider.BASE_PATH /
-            file_name
-        )
-
+    def load_file(file_name: str) -> dict[str, Any]:
+        file_path = DataProvider.BASE_PATH / file_name
         if not file_path.exists():
-            raise FileNotFoundError(
-                f"Test data not found: {file_path}"
-            )
+            raise FileNotFoundError(f"Test data not found: {file_path}")
 
-
-        with open(
-            file_path,
-            encoding="utf-8"
-        ) as file:
-
+        with open(file_path, encoding="utf-8") as file:
             return json.load(file)
 
-
-
     @staticmethod
-    def get_data(
-        application: str,
-        test_method: str
-    ) -> list[dict[str, Any]]:
-        """
-        Get test data by application and test method
-
-        Example:
-            DataProvider.get_data(
-                "efms",
-                "test_login_efms"
-            )
-        """
-
-
+    def get_data(application: str, test_method: str) -> list[dict[str, Any]]:
         file_mapping = {
-
             "efms": "dataTest-efms.json",
-
             "etms": "dataTest-etms.json",
-
         }
 
-
         if application not in file_mapping:
-            raise ValueError(
-                f"Unsupported application: {application}"
-            )
+            raise ValueError(f"Unsupported application: {application}")
 
-
-        data = DataProvider.load_file(
-            file_mapping[application]
-        )
-
+        data = DataProvider.load_file(file_mapping[application])
 
         if test_method not in data:
             raise KeyError(
-                f"Cannot find {test_method} "
-                f"in {file_mapping[application]}"
+                f"Cannot find {test_method} in {file_mapping[application]}"
             )
-
 
         return data[test_method]
 
@@ -103,7 +60,7 @@ class DataProvider:
         if priority in PRIORITY_MARKERS:
             marks.append(getattr(pytest.mark, priority))
 
-        param_id = row.get("test_case_id") or f"case{index + 1}"
+        param_id = _get_param_id(row, index)
         return pytest.param(row, marks=marks, id=param_id)
 
     @staticmethod
@@ -114,35 +71,9 @@ class DataProvider:
             for index, row in enumerate(rows)
         ]
 
-    # ======================
-    # EFMS
-    # ======================
-
-    @staticmethod
-    def efms(
-        test_method: str,
-    ):
-        return DataProvider.get_data(
-            "efms",
-            test_method,
-        )
-
     @staticmethod
     def efms_cases(test_method: str) -> list[pytest.ParameterSet]:
         return DataProvider.parametrize("efms", test_method)
-
-    # ======================
-    # ETMS
-    # ======================
-
-    @staticmethod
-    def etms(
-        test_method: str,
-    ):
-        return DataProvider.get_data(
-            "etms",
-            test_method,
-        )
 
     @staticmethod
     def etms_cases(test_method: str) -> list[pytest.ParameterSet]:

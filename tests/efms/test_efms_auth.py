@@ -12,15 +12,15 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_001_login_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_001")
-    def test_smk_auth_001_login_success_efms(self, pages, data, account_password):
+    def test_smk_auth_001_login_success_efms(self, pages, data, efms_account_password):
         # Step 1: Open Login Page
         pages.efms_login_page.open()
 
         # Step 2: Enter Username (LOGIN_ADMIN)
-        pages.efms_login_page.enter_username(settings.account_username)
+        pages.efms_login_page.enter_username(settings.efms_username)
 
         # Step 3: Enter Password (LOGIN_ADMIN)
-        pages.efms_login_page.enter_password(account_password)
+        pages.efms_login_page.enter_password(efms_account_password)
 
         # Step 4: Enter Company
         pages.efms_login_page.select_company(data["company"])
@@ -36,11 +36,11 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_002_logout_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_002")
-    def test_smk_auth_002_logout_success_efms(self, pages, data, account_password):
+    def test_smk_auth_002_logout_success_efms(self, pages, data, efms_account_password):
         # Precondition: Login success
         pages.efms_login_page.open().login(
-            settings.account_username,
-            account_password,
+            settings.efms_username,
+            efms_account_password,
             data["company"],
         )
         assert pages.efms_home_page.is_dashboard_displayed()

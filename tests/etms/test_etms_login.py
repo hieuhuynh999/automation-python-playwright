@@ -8,10 +8,10 @@ from tests.data_provider import DataProvider
 @pytest.mark.login
 @pytest.mark.smoke
 @pytest.mark.etms
-def test_login_etms(pages, data, account_password):
+def test_login_etms(pages, data, etms_account_password):
     pages.etms_home_page.open().login(
-        settings.account_username,
-        account_password,
+        settings.etms_username,
+        etms_account_password,
     )
 
     assert not pages.etms_home_page.is_password_field_visible()

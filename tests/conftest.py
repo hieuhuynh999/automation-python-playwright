@@ -13,6 +13,16 @@ from pytest_metadata.plugin import metadata_key
 from automation.config import get_settings, settings
 from automation.logging import get_step_logs, logger, reset_step_logs, safe_terminal_print
 from automation.pages import PageManager
+from automation.reporting.reportportal_support import (
+    attach_failure_screenshot,
+    attach_text_artifact,
+    get_rp_logger,
+    is_reportportal_enabled,
+    log_step_lines,
+    resolve_test_display_name,
+)
+
+pytest_plugins = ["tests.conftest_reportportal"]
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -40,57 +50,39 @@ def pytest_configure(config: pytest.Config) -> None:
         else headless_option.lower() == "true"
     )
 
-    # Get pytest-html metadata
     metadata = config.stash[metadata_key]
 
-    # Remove default pytest-html metadata
     metadata.pop("Python", None)
     metadata.pop("Platform", None)
     metadata.pop("Packages", None)
     metadata.pop("Plugins", None)
 
-    # Get browser from command line
-    browser_name = (
-        config.getoption("--browser")
-        or settings.browser
-    )
-
-    headless_option = config.getoption(
-        "--browser-headless"
-    )
-
-    headless = (
-        settings.browser_headless
-        if headless_option is None
-        else headless_option.lower() == "true"
-    )
-
-    # Add custom metadata
     metadata["Environment"] = settings.env
     metadata["Browser"] = browser_name
     metadata["Headless"] = str(headless)
     metadata["Timeout"] = str(settings.browser_timeout)
     metadata["Base URL"] = settings.efms_base_url
 
-    for marker in (
-        "efms: eFMS application tests",
-        "etms: eTMS application tests",
-        "smoke: smoke test suite",
-        "login: login test suite",
-        "navigation: navigation test suite",
-        "regression: regression test suite",
-        "critical: Critical priority tests",
-        "high: High priority tests",
-        "medium: Medium priority tests",
-        "low: Low priority tests",
-        "tc_id(id): Test Case ID",
-        "description(text): Test case description",
-    ):
-        config.addinivalue_line("markers", marker)
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    if is_reportportal_enabled(session.config):
+        get_rp_logger()
+        endpoint = str(session.config.getini("rp_endpoint")).rstrip("/")
+        project = session.config.getini("rp_project")
+        logger.info(
+            "ReportPortal enabled: endpoint=%s project=%s",
+            endpoint,
+            project,
+        )
+        logger.info(
+            "View launches: %s/ui/#%s/launches/all",
+            endpoint,
+            project,
+        )
 
 
 def pytest_html_report_title(report):
-    report.title = "eFMS/eTMS Automation Report"
+    report.title = "Automation Report"
 
 
 @pytest.fixture(scope="session")
@@ -205,11 +197,74 @@ def pages(page: Page) -> PageManager:
 
 
 @pytest.fixture()
-def account_password() -> str:
-    password = get_settings().account_password or os.getenv("ACCOUNT_PASSWORD")
+def efms_account_password() -> str:
+    cfg = get_settings()
+    password = cfg.efms_password or os.getenv("EFMS_ACCOUNT_PASSWORD")
     if not password:
-        pytest.skip("Set ACCOUNT_PASSWORD to run login tests")
+        pytest.skip("Set EFMS_ACCOUNT_PASSWORD (or legacy ACCOUNT_PASSWORD) to run eFMS login tests")
     return password
+
+
+@pytest.fixture()
+def etms_account_password() -> str:
+    cfg = get_settings()
+    password = cfg.etms_password or os.getenv("ETMS_ACCOUNT_PASSWORD")
+    if not password:
+        pytest.skip("Set ETMS_ACCOUNT_PASSWORD to run eTMS login tests")
+    return password
+
+
+def _get_test_case_id(test_data: Any) -> str:
+    if not isinstance(test_data, dict):
+        return ""
+
+    test_case_ids = test_data.get("test_case_ids")
+    if isinstance(test_case_ids, list):
+        return " | ".join(str(tc_id) for tc_id in test_case_ids if tc_id)
+
+    if test_case_ids:
+        return str(test_case_ids)
+
+    test_case_id = test_data.get("test_case_id")
+    return str(test_case_id) if test_case_id else ""
+
+
+def _get_description(test_data: Any, default: str) -> str:
+    if not isinstance(test_data, dict):
+        return default
+
+    description = test_data.get("description")
+    return str(description) if description else default
+
+
+def _get_scenario_lines(test_data: Any) -> list[str]:
+    if not isinstance(test_data, dict):
+        return []
+
+    scenario_lines: list[str] = []
+    for scenario in test_data.get("scenarios", []):
+        if not isinstance(scenario, dict):
+            continue
+
+        tc_id = scenario.get("test_case_id")
+        description = scenario.get("description")
+        if tc_id and description:
+            scenario_lines.append(f"- {tc_id}: {description}")
+        elif tc_id:
+            scenario_lines.append(f"- {tc_id}")
+
+    return scenario_lines
+
+
+def _get_test_case_ids_text(test_data: Any) -> str:
+    if not isinstance(test_data, dict):
+        return ""
+
+    test_case_ids = test_data.get("test_case_ids")
+    if isinstance(test_case_ids, list):
+        return "\n".join(str(tc_id) for tc_id in test_case_ids if tc_id)
+
+    return str(test_case_ids) if test_case_ids else ""
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
@@ -235,23 +290,13 @@ def pytest_runtest_makereport(
     # ==========================
     tc_id = ""
     description = item.name
+    funcargs = getattr(item, "funcargs", {})
 
     # 1. Get from JSON data provider
-    test_data = item.funcargs.get("data")
+    test_data = funcargs.get("data") if isinstance(funcargs, dict) else None
     if test_data:
-        test_case_ids = test_data.get("test_case_ids")
-        if test_case_ids:
-            tc_id = " | ".join(test_case_ids)
-        else:
-            tc_id = test_data.get(
-                "test_case_id",
-                "",
-            )
-
-        description = test_data.get(
-            "description",
-            item.name
-        )
+        tc_id = _get_test_case_id(test_data)
+        description = _get_description(test_data, item.name)
 
     # 2. Fallback get from pytest marker
     if not tc_id:
@@ -273,12 +318,13 @@ def pytest_runtest_makereport(
 
     report.tc_id = tc_id
     report.description = description
+    report.test_name = resolve_test_display_name(
+        test_data,
+        tc_id=str(tc_id) if tc_id else "",
+        description=str(description) if description else "",
+    ) or description
 
-    if tc_id:
-        report.test_name = (
-            f"{tc_id} - {description}"
-        )
-    else:
+    if not report.test_name:
         report.test_name = description
 
     # ==========================
@@ -303,14 +349,12 @@ def pytest_runtest_makereport(
         )
     )
 
-    if test_data and test_data.get("test_case_ids"):
-        scenario_lines = [
-            f"- {case['test_case_id']}: {case['description']}"
-            for case in test_data.get("scenarios", [])
-        ]
+    test_case_ids_text = _get_test_case_ids_text(test_data)
+    scenario_lines = _get_scenario_lines(test_data)
+    if test_case_ids_text:
         report.extras.append(
             extras.text(
-                "\n".join(test_data["test_case_ids"]),
+                test_case_ids_text,
                 name="Test Case IDs",
             )
         )
@@ -321,6 +365,10 @@ def pytest_runtest_makereport(
                     name="Scenarios",
                 )
             )
+        if is_reportportal_enabled(item.config):
+            attach_text_artifact("Test Case IDs", test_case_ids_text)
+            if scenario_lines:
+                attach_text_artifact("Scenarios", "\n".join(scenario_lines))
 
     # ==========================
     # Method Logs
@@ -340,6 +388,9 @@ def pytest_runtest_makereport(
             Any,
             report
         ).method_logs = method_logs
+
+    if method_logs and is_reportportal_enabled(item.config):
+        log_step_lines(method_logs)
 
     # ==========================
     # Console Logging
@@ -422,6 +473,9 @@ def pytest_runtest_makereport(
             name="Failure Screenshot"
         )
     )
+
+    if is_reportportal_enabled(item.config):
+        attach_failure_screenshot(page, report.test_name)
 
 
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:

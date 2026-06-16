@@ -42,7 +42,10 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                withCredentials([string(credentialsId: 'automation-account-password', variable: 'ACCOUNT_PASSWORD')]) {
+                withCredentials([
+                    string(credentialsId: 'automation-efms-account-password', variable: 'EFMS_ACCOUNT_PASSWORD'),
+                    string(credentialsId: 'automation-etms-account-password', variable: 'ETMS_ACCOUNT_PASSWORD'),
+                ]) {
                     sh '''
                         export PATH="$HOME/.local/bin:$PATH"
                         ENV=${ENV} BROWSER=${BROWSER} BROWSER_HEADLESS=${HEADLESS} \

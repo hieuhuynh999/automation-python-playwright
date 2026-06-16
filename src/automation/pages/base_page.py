@@ -17,10 +17,8 @@ class BasePage:
     @log_method("Open URL")
     def open_url(self, url: str) -> None:
         self.page.goto(url, wait_until="domcontentloaded")
-        # Legacy SPA bootstrap: brief settle before reload (see settings.open_url_settle_ms)
         if settings.open_url_settle_ms > 0:
             self.page.wait_for_timeout(settings.open_url_settle_ms)
-        self.page.reload()
         self.wait_for_dom_content_loaded()
 
     @log_method("Wait for DOM content loaded")
@@ -36,12 +34,6 @@ class BasePage:
         )
         if settings.navigation_settle_ms > 0:
             self.page.wait_for_timeout(settings.navigation_settle_ms)
-        return self
-
-    @log_method("Reload page")
-    def reload_page(self) -> "BasePage":
-        self.page.reload(wait_until="domcontentloaded")
-        self.wait_for_page_stable()
         return self
 
     @log_method("Wait for element visible")

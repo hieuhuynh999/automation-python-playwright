@@ -8,38 +8,32 @@ class Settings(BaseSettings):
     env: str = "UAT"
     browser: str = "chrome"
     browser_headless: bool = False
-    # Playwright default timeout (element wait)
     browser_timeout: int = 60000
-    # Page loading
     page_load_timeout: int = 60000
-    # API timeout
-    api_timeout: int = 30000
-    # Database timeout
-    db_timeout: int = 10000
     browser_slow_mo: int = 0
     polling_interval: int = 250
-    navigation_settle_ms: int = 2000
+    navigation_settle_ms: int = 1000
     open_url_settle_ms: int = 5000
     headless_viewport_width: int = 1920
     headless_viewport_height: int = 1080
     efms_base_url: str = "https://uat-efms.logtechub.com/"
     etms_base_url: str = "https://staging-itllog-etms.logtechub.com/en/#/app/default/home"
-    api_base_url: str = "https://uat-efms.logtechub.com"
-    account_username: str | None = Field(
-        default=None,
-        repr=False
-    )
-    account_password: str | None = Field(
-        default=None,
-        repr=False
-    )
-
-    db_url: str | None = None
-    db_username: str | None = None
-    db_password: str | None = Field(default=None, repr=False)
+    efms_account_username: str | None = Field(default=None, repr=False)
+    efms_account_password: str | None = Field(default=None, repr=False)
+    etms_account_username: str | None = Field(default=None, repr=False)
+    etms_account_password: str | None = Field(default=None, repr=False)
+    account_username: str | None = Field(default=None, repr=False)
+    account_password: str | None = Field(default=None, repr=False)
 
     screenshot_dir: str = "test-results/screenshots"
-    trace_dir: str = "test-results/traces"
+
+    rp_endpoint: str = "http://localhost:8080"
+    rp_project: str = "default_personal"
+    rp_api_key: str | None = Field(default=None, repr=False)
+    rp_launch: str = "efms-etms-automation"
+    rp_launch_description: str = "eFMS/eTMS UI automation"
+    rp_launch_attributes: str = "'Environment:UAT' 'Framework:pytest-playwright'"
+    rp_verify_ssl: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -48,13 +42,20 @@ class Settings(BaseSettings):
     )
 
     @property
-    def playwright_channel(self) -> str:
-        browser_name = self.browser.strip().lower()
-        if browser_name == "edge":
-            return "msedge"
-        if browser_name == "chrome":
-            return "chrome"
-        raise ValueError(f"Unsupported browser: {self.browser}. Use chrome or edge.")
+    def efms_username(self) -> str | None:
+        return self.efms_account_username or self.account_username
+
+    @property
+    def efms_password(self) -> str | None:
+        return self.efms_account_password or self.account_password
+
+    @property
+    def etms_username(self) -> str | None:
+        return self.etms_account_username
+
+    @property
+    def etms_password(self) -> str | None:
+        return self.etms_account_password
 
 
 @lru_cache
