@@ -30,9 +30,6 @@ class Settings(BaseSettings):
     rp_endpoint: str = "http://localhost:8080"
     rp_project: str = "default_personal"
     rp_api_key: str | None = Field(default=None, repr=False)
-    rp_launch: str = "efms-etms-automation"
-    rp_launch_description: str = "eFMS/eTMS UI automation"
-    rp_launch_attributes: str = "'Environment:UAT' 'Framework:pytest-playwright'"
     rp_verify_ssl: bool = False
 
     model_config = SettingsConfigDict(

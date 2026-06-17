@@ -45,10 +45,73 @@ def detect_application_from_marker(marker_expr: str | None) -> str | None:
     return None
 
 
-def resolve_launch_for_run(marker_expr: str | None, settings: Any) -> tuple[str, str, str]:
+def detect_application_from_paths(args: list[str]) -> str | None:
+    has_efms = False
+    has_etms = False
+
+    for arg in args:
+        if arg.startswith("-"):
+            continue
+        normalized = arg.replace("\\", "/").lower()
+        if "tests/efms" in normalized or normalized.endswith("/efms"):
+            has_efms = True
+        if "tests/etms" in normalized or normalized.endswith("/etms"):
+            has_etms = True
+
+    if has_efms and not has_etms:
+        return "efms"
+    if has_etms and not has_efms:
+        return "etms"
+    return None
+
+
+def detect_application_from_items(items: list[pytest.Item]) -> str | None:
+    apps: set[str] = set()
+
+    for item in items:
+        if item.get_closest_marker("efms"):
+            apps.add("efms")
+        if item.get_closest_marker("etms"):
+            apps.add("etms")
+
+    if apps == {"efms"}:
+        return "efms"
+    if apps == {"etms"}:
+        return "etms"
+    return None
+
+
+def detect_application_for_run(
+    *,
+    marker_expr: str | None = None,
+    args: list[str] | None = None,
+    items: list[pytest.Item] | None = None,
+) -> str | None:
+    for detector in (
+        lambda: detect_application_from_marker(marker_expr),
+        lambda: detect_application_from_paths(args or []),
+        lambda: detect_application_from_items(items or []),
+    ):
+        application = detector()
+        if application:
+            return application
+    return None
+
+
+def resolve_launch_for_run(
+    *,
+    marker_expr: str | None = None,
+    args: list[str] | None = None,
+    items: list[pytest.Item] | None = None,
+    settings: Any,
+) -> tuple[str, str, str] | None:
     """Return ReportPortal launch name, description, and attributes for this run."""
     base_attrs = f"'Environment:{settings.env}' 'Framework:pytest-playwright'"
-    application = detect_application_from_marker(marker_expr)
+    application = detect_application_for_run(
+        marker_expr=marker_expr,
+        args=args,
+        items=items,
+    )
 
     if application == "efms":
         launch = os.getenv("RP_LAUNCH_EFMS", "efms-automation")
@@ -62,12 +125,7 @@ def resolve_launch_for_run(marker_expr: str | None, settings: Any) -> tuple[str,
         attributes = f"{base_attrs} 'Application:etms'"
         return launch, description, attributes
 
-    launch = settings.rp_launch
-    description = settings.rp_launch_description
-    attributes = settings.rp_launch_attributes or base_attrs
-    if "Application:" not in attributes:
-        attributes = f"{attributes} 'Application:efms-etms'"
-    return launch, description, attributes
+    return None
 
 
 def resolve_test_display_name(
@@ -143,20 +201,32 @@ def is_reportportal_enabled(config: pytest.Config) -> bool:
     return "--reportportal" in config.invocation_params.args
 
 
-def configure_reportportal_ini(config: pytest.Config) -> None:
+def configure_reportportal_ini(
+    config: pytest.Config,
+    items: list[pytest.Item] | None = None,
+) -> bool:
+    """Inject ReportPortal ini values. Returns True when RP should run for this session."""
     from automation.config import get_settings
 
     settings = get_settings()
     api_key = settings.rp_api_key or os.getenv("RP_API_KEY")
     if not api_key:
-        return
+        return False
 
     marker_expr = getattr(config.option, "markexpr", "") or ""
-    launch_name, launch_description, launch_attributes = resolve_launch_for_run(
-        marker_expr,
-        settings,
+    launch = resolve_launch_for_run(
+        marker_expr=marker_expr,
+        args=list(config.args),
+        items=items,
+        settings=settings,
     )
 
+    if launch is None:
+        for key in ("rp_launch", "rp_launch_description", "rp_launch_attributes"):
+            config._inicache.pop(key, None)  # noqa: SLF001
+        return False
+
+    launch_name, launch_description, launch_attributes = launch
     ini_map = {
         "rp_endpoint": settings.rp_endpoint,
         "rp_project": settings.rp_project,
@@ -170,6 +240,8 @@ def configure_reportportal_ini(config: pytest.Config) -> None:
     for key, value in ini_map.items():
         if value:
             config._inicache[key] = value  # noqa: SLF001 — pytest-reportportal pattern
+
+    return True
 
 
 def get_rp_logger() -> logging.Logger | None:

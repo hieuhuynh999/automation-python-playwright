@@ -1,6 +1,8 @@
 # ruleAi.md — AI Rules for eFMS/eTMS Automation Framework
 
-> **Purpose:** This document is the single source of truth for any AI model (Claude, GPT, Gemini, Cursor Agent, Copilot, etc.) to **read, understand, and write** automation tests in this repository.
+> **Purpose:** This document is the **only file** any AI model (Claude, GPT, Gemini, Cursor Agent, Copilot, etc.) must read to **write correct automation tests** in this repository — no other docs required.
+>
+> **Start here:** [Section 0 — AI Master Playbook](#0-ai-master-playbook--read-this-first) → then follow the pipeline for your test type.
 >
 > **Language:** English (code and comments remain English).
 > **Stack:** Python 3.12+, pytest, Playwright (sync API), pytest-html, pytest-reportportal, Pydantic Settings, Loguru.
@@ -9,6 +11,12 @@
 
 ## Table of Contents
 
+0. [AI Master Playbook — Read This First](#0-ai-master-playbook--read-this-first)
+   - [0.3 Eight-Step Pipeline](#03-mandatory-eight-step-pipeline)
+   - [0.4 Test Type → Reference Pattern](#04-test-type--reference-pattern)
+   - [0.5 User Input Formats](#05-user-input-formats-ai-must-parse)
+   - [0.6 AI Response Template](#06-ai-response-template-when-user-asks-automate-tc_xxx)
+   - [0.7 Copy-Paste Skeletons](#07-copy-paste-skeletons-minimum-viable-code)
 1. [Quick Start for AI](#1-quick-start-for-ai)
 2. [Repository Map](#2-repository-map)
    - [2.1 Framework Architecture & Layers](#21-framework-architecture--layers)
@@ -22,6 +30,7 @@
    - [5.12 Menu Module POM Pattern](#512-menu-module-pom-pattern)
    - [5.13 Booking Receipt CRUD (FMS_BR_001–005)](#513-booking-receipt-crud-fms_br_001005)
    - [5.14 XPath Catalog — Booking Receipt](#514-xpath-catalog--booking-receipt)
+   - [5.15 End-to-End Walkthrough](#515-end-to-end-walkthrough--one-new-tc-from-scratch)
 6. [How to Write a UI Test (Step-by-Step)](#6-how-to-write-a-ui-test-step-by-step)
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
 8. [How to Write Test Data (JSON)](#8-how-to-write-test-data-json)
@@ -38,7 +47,260 @@
 
 ---
 
+## 0. AI Master Playbook — Read This First
+
+> **Contract:** If you are an AI asked to automate a manual test case, read **this section end-to-end**, then jump to the referenced section for your test type. Do **not** invent patterns outside this repo. Do **not** put selectors or `page.locator()` in test files.
+
+### 0.1 What this repo automates
+
+| App | URL setting | Test folder | Test data | Page objects |
+|-----|-------------|-------------|-----------|--------------|
+| **eFMS** | `settings.efms_base_url` | `tests/efms/` | `tests/testdata/dataTest-efms.json` | `src/automation/pages/efms/` |
+| **eTMS** | `settings.etms_base_url` | `tests/etms/` | `tests/testdata/dataTest-etms.json` | `src/automation/pages/etms/` |
+
+**Architecture in one line:** `Test → pages fixture → PageManager → {App}Page → BasePage → Playwright`
+
+**Layers NOT implemented yet:** API tests, DB tests — do not scaffold unless explicitly requested (Section 9–10).
+
+### 0.2 Golden rules (non-negotiable)
+
+| # | Rule |
+|---|------|
+| 1 | Tests use **`pages` fixture only** — never `page.locator()` in tests |
+| 2 | **Passwords in `.env` only** — inject `efms_account_password` / `etms_account_password` fixture |
+| 3 | **URLs in Page Objects only** — via `settings.efms_base_url` / `settings.etms_base_url` |
+| 4 | **One manual Step = one `@log_method` Page Object method** + `# Step N` comment in test |
+| 5 | **JSON key = test function name exactly** (e.g. `"test_smk_auth_001_login_success_efms"`) |
+| 6 | **Search existing code first** — extend Page Objects before creating new files (Section 16) |
+| 7 | **No hard-coded waits** — use `settings.*_timeout`, `wait_for_visible`, condition waits (Section 3.6) |
+| 8 | **Selectors in Page Object `*_selectors` lists** — priority order Section 3.4 |
+
+### 0.3 Mandatory eight-step pipeline
+
+Use this **every time** you automate a new manual test case:
+
+```
+Step 1  PARSE manual sheet
+        → Extract: TC_ID, Module, Scenario, Priority, Preconditions, TestData_ID, Steps[], Expected Result
+        → Identify app: efms | etms (from module, URL, or user hint)
+
+Step 2  CLASSIFY test type
+        → See Section 0.5 — pick reference implementation to copy
+
+Step 3  SEARCH codebase (Section 16.1)
+        → rg existing Page methods, fixtures, similar tests
+
+Step 4  ADD JSON test data
+        → File: tests/testdata/dataTest-{app}.json
+        → Key: test function name (derive from TC_ID — Section 5.4)
+        → Include: test_case_id, test_data_id, description, module, priority, preconditions + business fields
+        → NEVER: username, password in JSON
+
+Step 5  CREATE / EXTEND Page Object
+        → File: src/automation/pages/{app}/... (Section 7)
+        → Add *_selectors + @log_method per manual step + verify method for Expected Result
+
+Step 6  REGISTER in PageManager (only if new page class)
+        → src/automation/pages/page_manager.py — lazy @property
+
+Step 7  WRITE test file
+        → tests/{app}/test_{app}_{module}.py (Section 4, 5.6)
+        → Class if 2+ TCs in same module; parametrize via DataProvider.{app}_cases("test_...")
+        → Markers: @pytest.mark.{efms|etms}, suite marker, @pytest.mark.tc_id("TC_ID")
+
+Step 8  RUN & verify
+        → uv run pytest tests/{app}/test_{app}_{module}.py -v --browser chrome --browser-headless false
+        → Fix failures using Section 14 (Known Issues)
+        → Run: uv run ruff check . && uv run ruff format .
+```
+
+### 0.4 Test type → reference pattern
+
+| Test type | When to use | Copy from | Key pattern |
+|-----------|-------------|-----------|-------------|
+| **A — Login / Logout** | Auth flows, preconditions | `TestEfmsAuth` — Section 5.6, Example A | Step-by-step or `open().login()` composite |
+| **B — Menu navigation** | Multiple submenu items in one TC | `TestEfmsNavigate` — Section 5.11 | JSON `scenarios[]` + `MENU_ACTIONS` dict |
+| **C — CRUD ordered flow** | Create → read → update → delete same record | `TestEfmsBookingReceipt` — Section 5.13 | Class variable `booking_no`; run tests in order |
+| **D — Single form / action** | One screen, fill + save + verify | FMS_BR_001/002 patterns | `fill_*_form(data)`, assert message |
+| **E — eTMS login** | eTMS only | `test_etms_login.py` — Example B | `DataProvider.etms_cases`, `etms_account_password` |
+| **F — New module page** | New sidebar screen | Example F — Section 13 | New POM + PageManager + extend menu base if under Commercial/Logistics/Services |
+
+**Precondition "Login success" (all eFMS tests except auth):**
+
+```python
+pages.efms_login_page.open().login(
+    settings.efms_username, efms_account_password, data["company"],
+)
+assert pages.efms_home_page.is_dashboard_displayed()
+pages.efms_home_page.wait_for_dashboard_ready()
+```
+
+### 0.5 User input formats AI must parse
+
+Users may paste test cases in any of these shapes — extract the same fields:
+
+**Format 1 — Table (preferred):**
+
+| TC_ID | Module | Scenario | Priority | Preconditions | TestData_ID | Steps | Expected Result |
+|-------|--------|----------|----------|---------------|-------------|-------|-----------------|
+
+**Format 2 — Bullet list:**
+
+```
+TC_ID: FMS_XX_001
+Steps:
+1. Open Booking Receipt page
+2. Click Add new
+Expected: Form displayed
+TestData_ID: LOGIN_ADMIN
+```
+
+**Format 3 — Free text:** Parse TC_ID, numbered steps, and expected result; ask user only if app (efms/etms) is ambiguous.
+
+**Column → code mapping (canonical):** Section 5.1
+
+| Manual column | Code destination |
+|---------------|------------------|
+| `TC_ID` | JSON `test_case_id` + `@pytest.mark.tc_id("...")` |
+| `TestData_ID` | JSON `test_data_id` → `.env` credentials (Section 5.2) |
+| `Steps` | Page Object methods + `# Step N` in test |
+| `Expected Result` | `assert pages.*.is_*()` or `assert pages.*.is_message_displayed(...)` |
+| Business values in steps | JSON fields → `data["field"]` |
+
+### 0.6 AI response template (when user asks "automate TC_XXX")
+
+Structure your answer in this order so any reviewer (human or AI) can apply the change:
+
+```markdown
+## 1. Classification
+- App: efms | etms
+- Type: A|B|C|D|E|F (Section 0.4)
+- Reference: {existing test file to mirror}
+
+## 2. Files to create/modify
+- [ ] tests/testdata/dataTest-{app}.json — add key `test_...`
+- [ ] src/automation/pages/... — add/extend methods
+- [ ] src/automation/pages/page_manager.py — if new page
+- [ ] tests/{app}/test_{app}_{module}.py — add test method
+
+## 3. JSON entry
+{full JSON block}
+
+## 4. Page Object methods
+{methods with @log_method and *_selectors}
+
+## 5. Test method
+{full test with markers, parametrize, steps, asserts}
+
+## 6. Run command
+uv run pytest ... -v --browser chrome --browser-headless false
+```
+
+### 0.7 Copy-paste skeletons (minimum viable code)
+
+**Test method skeleton (eFMS, data-driven):**
+
+```python
+@pytest.mark.parametrize(
+    "data",
+    DataProvider.efms_cases("test_{tc_id_lower}_{scenario_slug}_efms"),
+)
+@pytest.mark.tc_id("{TC_ID}")
+def test_{tc_id_lower}_{scenario_slug}_efms(self, pages, data, efms_account_password):
+    # Precondition: Login (skip if auth test — call steps directly)
+    pages.efms_login_page.open().login(
+        settings.efms_username, efms_account_password, data["company"],
+    )
+    assert pages.efms_home_page.is_dashboard_displayed()
+
+    # Step 1: {description}
+    pages.{page}.{method}()
+
+    # Expected: {expected result}
+    assert pages.{page}.{verify_method}()
+```
+
+**JSON row skeleton:**
+
+```json
+"test_{tc_id_lower}_{scenario_slug}_efms": [
+    {
+        "test_case_id": "{TC_ID}",
+        "test_data_id": "LOGIN_ADMIN",
+        "description": "{Scenario} - {Expected Result short}",
+        "module": "{Module}",
+        "priority": "Critical|High|Medium|Low",
+        "preconditions": "{Preconditions}",
+        "company": "LTH Demo JSC"
+    }
+]
+```
+
+**Page Object action skeleton:**
+
+```python
+@log_method("{Human-readable step name}")
+def {action_method}(self, value: str = "") -> "{ClassName}":
+    self.wait_for_visible(self.{element}_selectors, "{Element name}").fill(value)
+    return self
+
+@log_method("Verify {expected state}")
+def is_{state}_displayed(self) -> bool:
+    self.wait_for_visible(self.{element}_selectors, "{Element name}", timeout=settings.page_load_timeout)
+    return True
+```
+
+**Naming formula (Section 5.4):**
+
+```
+TC_ID:     FMS_BR_002
+Scenario:  Create Booking Receipt
+App:       efms
+
+Function:  test_fms_br_002_create_booking_receipt_efms
+JSON key:  "test_fms_br_002_create_booking_receipt_efms"
+File:      tests/efms/test_efms_booking_receipt.py
+Class:     TestEfmsBookingReceipt
+```
+
+### 0.8 Extend vs create — decision in 30 seconds
+
+```
+Same screen/module already has a Page Object?
+  YES → Add methods to that file (preferred)
+  NO  ↓
+
+Under Commercial / Logistics / Services sidebar?
+  YES → Extend {module}_menu_page.py base + new efms_{feature}_page.py + PageManager
+  NO  ↓
+
+New top-level eFMS screen?
+  YES → New efms_{feature}_page.py + PageManager
+  NO  → Add to closest existing page
+```
+
+**Never register** `EfmsCommercialMenuPage`, `EfmsLogisticsMenuPage`, `EfmsServicesMenuPage` in PageManager — bases only.
+
+### 0.9 Validation before finishing
+
+```bash
+# Collect only (no browser)
+uv run pytest tests/{app}/test_{file}.py --collect-only -q
+
+# Run headed (debug)
+uv run pytest tests/{app}/test_{file}.py -v --browser chrome --browser-headless false
+
+# Lint
+uv run ruff check . && uv run ruff format .
+```
+
+Complete checklist: [Section 17](#17-ai-checklist-before-submitting-code)
+
+---
+
 ## 1. Quick Start for AI
+
+> **Already read Section 0?** Use this section as a short reminder. Full rules are in Sections 3–17.
 
 When asked to **write a new automation test from a manual test case sheet**, follow this order:
 
@@ -131,8 +393,7 @@ auotmation-techub/
 │   ├── efms/                       # eFMS UI tests (app-first layout)
 │   │   ├── test_efms_auth.py       # TestEfmsAuth — SMK_AUTH_001/002
 │   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
-│   │   ├── test_efms_booking_receipt.py                 # FMS_BR_001–005
-│   │   └── test_efms_booking_receipt_delete_debug.py    # Debug FMS_BR_005
+│   │   └── test_efms_booking_receipt.py                 # FMS_BR_001–005
 │   └── etms/                       # eTMS UI tests
 │       └── test_etms_login.py      # ETMS-LOGIN-001
 │
@@ -253,7 +514,6 @@ Supporting layers (not in UI test path):
 | SMK_NAV_005 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_logistics_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_006 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_services_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | FMS_BR_001–005 | Booking Receipt | High | `TestEfmsBookingReceipt` | `tests/efms/test_efms_booking_receipt.py` |
-| FMS_BR_005 (debug) | Booking Receipt | — | `TestEfmsBookingReceiptDeleteDebug` | `tests/efms/test_efms_booking_receipt_delete_debug.py` |
 | ETMS-LOGIN-001 | Login | High | `test_login_etms` | `tests/etms/test_etms_login.py` |
 
 **Run by priority (from JSON, auto-applied via `DataProvider.efms_cases`):**
@@ -627,10 +887,6 @@ class TestEfmsBookingReceipt:
     # BR_005: refresh_list_page() before delete_booking_receipt_from_grid()
 ```
 
-**Debug class for FMS_BR_005 only:** `TestEfmsBookingReceiptDeleteDebug` in
-`tests/efms/test_efms_booking_receipt_delete_debug.py` — set `BOOKING_NO` or env
-`EFMS_DEBUG_BOOKING_NO`; run `-k step03` for single step.
-
 ---
 
 ## 4. Naming Conventions
@@ -696,6 +952,7 @@ class TestEfmsAuth:
 
 ## 5. Manual Test Case Sheet → Automation (CANONICAL)
 
+> **AI entry point:** [Section 0](#0-ai-master-playbook--read-this-first) first, then this section for column mapping and templates.
 > **This is the primary pattern.** When a user provides a manual test case table, convert it using this section.
 > Reference implementation: `SMK_AUTH_001` in `tests/efms/test_efms_auth.py` (`TestEfmsAuth`).
 > Navigation reference: `SMK_NAV_001–006` in `tests/efms/test_efms_navigate.py` (`TestEfmsNavigate`).
@@ -751,7 +1008,7 @@ Each manual step becomes exactly one `@log_method` in the Page Object and one ca
 | Manual Step | Page Object method | Test call |
 |-------------|-------------------|-----------|
 | 1. Open Login Page | `EfmsLoginPage.open()` | `pages.efms_login_page.open()` |
-| 2. Enter Username | `EfmsLoginPage.enter_username(username)` | `pages.efms_login_page.enter_username(settings.account_username)` |
+| 2. Enter Username | `EfmsLoginPage.enter_username(username)` | `pages.efms_login_page.enter_username(settings.efms_username)` |
 | 3. Enter Password | `EfmsLoginPage.enter_password(password)` | `pages.efms_login_page.enter_password(efms_account_password)` |
 | 4. Enter Company | `EfmsLoginPage.select_company(company)` | `pages.efms_login_page.select_company(data["company"])` |
 | 5. Click Login | `EfmsLoginPage.click_login()` | `pages.efms_login_page.click_login()` |
@@ -816,7 +1073,7 @@ File: `tests/testdata/dataTest-efms.json`
 | `priority` | Recommended | `Priority` column | auto marker: `critical`/`high`/`medium`/`low` via `efms_cases()` |
 | `preconditions` | Recommended | `Preconditions` column | documentation |
 | `{feature_fields}` | As needed | business data from steps | e.g. `company`, `expected_title` |
-| `username` | **Never** | — | use `settings.account_username` |
+| `username` | **Never** | — | use `settings.efms_username` / `settings.etms_username` |
 | `password` | **Never** | — | use `efms_account_password` fixture |
 
 ### 5.6 Complete test file template (CANONICAL)
@@ -842,8 +1099,8 @@ class TestEfmsAuth:
         # Step 1: Open Login Page
         pages.efms_login_page.open()
 
-        # Step 2: Enter Username (LOGIN_ADMIN → settings.account_username)
-        pages.efms_login_page.enter_username(settings.account_username)
+        # Step 2: Enter Username (LOGIN_ADMIN → settings.efms_username)
+        pages.efms_login_page.enter_username(settings.efms_username)
 
         # Step 3: Enter Password (LOGIN_ADMIN → efms_account_password fixture)
         pages.efms_login_page.enter_password(efms_account_password)
@@ -965,7 +1222,7 @@ Is it a secret (password, token, API key)?
   NO  ↓
 
 Is it shared across all tests (username for LOGIN_ADMIN)?
-  YES → .env (ACCOUNT_USERNAME) + settings.account_username in test
+  YES → .env (`EFMS_ACCOUNT_USERNAME` / `ETMS_ACCOUNT_USERNAME`) + `settings.efms_username` in test
   NO  ↓
 
 Is it test-specific business data (company name, shipment ID, expected text)?
@@ -1027,7 +1284,7 @@ LOGISTICS_MENU_ACTIONS = {
 class TestEfmsNavigate:
     @pytest.mark.parametrize("data", DataProvider.efms_cases("test_smk_nav_verify_logistics_menu_efms"))
     def test_smk_nav_verify_logistics_menu_efms(self, pages, data, efms_account_password):
-        pages.efms_login_page.open().login(settings.account_username, efms_account_password, data["company"])
+        pages.efms_login_page.open().login(settings.efms_username, efms_account_password, data["company"])
         assert pages.efms_home_page.is_dashboard_displayed()
         pages.efms_home_page.wait_for_dashboard_ready()
 
@@ -1115,11 +1372,6 @@ assert br_page.wait_until_booking_absent(booking_no)
 ```bash
 uv run pytest tests/efms/test_efms_booking_receipt.py -v \
   --browser chrome --browser-headless false
-
-# Debug delete only (existing Draft record)
-$env:EFMS_DEBUG_BOOKING_NO="BKAE26060007"
-uv run pytest tests/efms/test_efms_booking_receipt_delete_debug.py -k step03 -v \
-  --browser chrome --browser-headless false
 ```
 
 ### 5.14 XPath Catalog — Booking Receipt
@@ -1201,6 +1453,63 @@ uv run pytest tests/efms/test_efms_booking_receipt_delete_debug.py -k step03 -v 
 #   POST/PUT → status 200/204 AND "delete" in URL
 def _is_booking_receipt_delete_response(response) -> bool: ...
 ```
+
+### 5.15 End-to-end walkthrough — one new TC from scratch
+
+> **Use this when Section 0 is not enough detail.** Follow every file touch in order.
+
+**User gives:**
+
+| TC_ID | Module | Scenario | Priority | Preconditions | TestData_ID | Steps | Expected Result |
+|-------|--------|----------|----------|---------------|-------------|-------|-----------------|
+| FMS_WO_001 | Work Order | Open Work Order list | High | Login success | LOGIN_ADMIN | 1. Open Commercial menu 2. Click Work Order | Work Order list displayed |
+
+**Step-by-step file changes:**
+
+| # | File | Action |
+|---|------|--------|
+| 1 | `tests/testdata/dataTest-efms.json` | Add key `"test_fms_wo_001_open_work_order_list_efms"` with metadata + `"company": "LTH Demo JSC"` |
+| 2 | `src/automation/pages/efms/commercial/efms_work_order_page.py` | Reuse existing `click_work_order_menu()`, `is_work_order_list_displayed()` — add method only if step is new |
+| 3 | `tests/efms/test_efms_work_order.py` | New file OR add method to existing class |
+| 4 | PageManager | Skip — `efms_work_order_page` already registered |
+
+**Test file (minimal):**
+
+```python
+import pytest
+
+from automation.config import settings
+from tests.data_provider import DataProvider
+
+
+@pytest.mark.regression
+@pytest.mark.efms
+class TestEfmsWorkOrder:
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.efms_cases("test_fms_wo_001_open_work_order_list_efms"),
+    )
+    @pytest.mark.tc_id("FMS_WO_001")
+    def test_fms_wo_001_open_work_order_list_efms(self, pages, data, efms_account_password):
+        pages.efms_login_page.open().login(
+            settings.efms_username, efms_account_password, data["company"],
+        )
+        assert pages.efms_home_page.is_dashboard_displayed()
+        pages.efms_home_page.wait_for_dashboard_ready()
+
+        pages.efms_work_order_page.open_commercial_menu()  # Step 1
+        pages.efms_work_order_page.click_work_order_menu()  # Step 2
+
+        assert pages.efms_work_order_page.is_work_order_list_displayed()  # Expected
+```
+
+**Run:**
+
+```bash
+uv run pytest tests/efms/test_efms_work_order.py -v --browser chrome --browser-headless false
+```
+
+**If Steps include form fill / save / delete:** switch to Type C or D (Section 0.4) — use `TestEfmsBookingReceipt` as CRUD reference.
 
 ---
 
@@ -1467,14 +1776,26 @@ from tests.data_provider import DataProvider
 |------|----------|
 | Auto-enable | When `RP_API_KEY` is set in `.env` — no `--reportportal` flag needed |
 | Early load | Root `conftest.py` → `pytest_load_initial_conftests` |
-| Config hook | `tests/conftest_reportportal.py` → inject ini + `rp_enabled=True` |
+| Config hook | `tests/conftest_reportportal.py` → detect app → inject ini |
+| App detection | `-m efms` / `-m etms` → marker; `tests/efms/` path → efms; collected test markers → fallback |
+| Launch name | eFMS only → `efms-automation`; eTMS only → `etms-automation` |
+| No combined launch | Do **not** use `efms-etms-automation` — run apps separately: `pytest -m efms` / `pytest -m etms` |
+| Mixed suite | `pytest` without app filter → RP disabled + warning in log |
 | Display name | `{test_case_id} - {description}` from JSON via `@pytest.mark.name` |
-| Launch name | `-m efms` → `efms-automation`; `-m etms` → `etms-automation`; else `RP_LAUNCH` |
 | Step logs | `log_step_lines()` → ReportPortal on test finish |
 | Failure screenshot | `attach_failure_screenshot()` → full-page PNG |
 | View results | `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all` |
 
-**Dashboard tip:** Create separate dashboards filtering launch name `efms-automation` vs `etms-automation`, or filter test attribute `efms` / `etms`.
+**Env vars (per-app launches only):**
+
+| Variable | Default | When used |
+|----------|---------|-----------|
+| `RP_LAUNCH_EFMS` | `efms-automation` | `pytest -m efms` or `tests/efms/` |
+| `RP_LAUNCH_ETMS` | `etms-automation` | `pytest -m etms` or `tests/etms/` |
+| `RP_LAUNCH_DESCRIPTION_EFMS` | eFMS UI automation | eFMS launch |
+| `RP_LAUNCH_DESCRIPTION_ETMS` | eTMS UI automation | eTMS launch |
+
+**Dashboard tip:** Filter launch name `efms-automation` vs `etms-automation`, or filter test attribute `Application:efms` / `Application:etms`.
 
 ### CLI options
 
@@ -1703,7 +2024,7 @@ from tests.data_provider import DataProvider
 @pytest.mark.efms
 def test_login_efms_invalid_company(pages, data, efms_account_password):
     pages.efms_login_page.open().login(
-        settings.account_username,
+        settings.efms_username,
         efms_account_password,
         data["company"],
     )
@@ -1823,7 +2144,7 @@ from tests.data_provider import DataProvider
 def test_click_bay_button_efms(pages, data, efms_account_password):
     # Precondition: login first
     pages.efms_login_page.open().login(
-        settings.account_username,
+        settings.efms_username,
         efms_account_password,
         "LTH Demo JSC",
     )
@@ -1976,7 +2297,7 @@ When implementing a new test or Page Object method, run this checklist **in orde
 # WRONG — duplicate login logic in test instead of reusing login()
 def test_nav(pages, data, efms_account_password):
     pages.efms_login_page.open()
-    pages.efms_login_page.enter_username(settings.account_username)
+    pages.efms_login_page.enter_username(settings.efms_username)
     pages.efms_login_page.enter_password(efms_account_password)
     pages.efms_login_page.select_company(data["company"])
     pages.efms_login_page.click_login()
@@ -2076,9 +2397,12 @@ rg "@pytest.fixture" tests/conftest.py
 
 ## 17. AI Checklist Before Submitting Code
 
+> **Start with [Section 0](#0-ai-master-playbook--read-this-first)** — then verify every item below before finishing.
+
 Before finishing any automation task, verify:
 
 ```
+[ ] Read Section 0 — classified test type (A–F) and followed 8-step pipeline
 [ ] Searched existing Page Objects / BasePage / fixtures — reused before creating (Section 16)
 [ ] No hard-coded waits — all timing from settings or condition-based waits (Section 3.6)
 [ ] Dashboard verify uses dashboard_ready_selectors (headless-safe), not h3 is_visible alone
@@ -2107,6 +2431,8 @@ Before finishing any automation task, verify:
 [ ] Booking Receipt delete uses delete_booking_receipt_from_grid() — not raw click_delete chain (Section 3.6 / 5.13)
 [ ] Grid verify uses exact normalize-space() for booking_no — not contains()
 [ ] Toolbar delete only after row select — never row btn-outline-danger for delete
+[ ] ReportPortal: run with `-m efms` or `-m etms` — not mixed full suite without app filter
+[ ] Delivered: JSON + POM + test + run command (Section 0.6 response format)
 ```
 
 ---
@@ -2174,16 +2500,16 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 | `RP_ENDPOINT` | `http://localhost:8080` | ReportPortal server |
 | `RP_PROJECT` | `default_personal` | Project slug in UI URL |
 | `RP_API_KEY` | — | API key from Profile → API Keys; **auto-enables reporting** |
-| `RP_LAUNCH` | `efms-etms-automation` | Launch name (full suite) |
-| `RP_LAUNCH_DESCRIPTION` | eFMS/eTMS UI automation | Launch description |
 | `RP_VERIFY_SSL` | `false` | SSL verify for local Docker |
-| `RP_LAUNCH_EFMS` | `efms-automation` | Launch when `pytest -m efms` |
-| `RP_LAUNCH_ETMS` | `etms-automation` | Launch when `pytest -m etms` |
+| `RP_LAUNCH_EFMS` | `efms-automation` | Launch when running eFMS only (`pytest -m efms`) |
+| `RP_LAUNCH_ETMS` | `etms-automation` | Launch when running eTMS only (`pytest -m etms`) |
 | `RP_LAUNCH_DESCRIPTION_EFMS` | eFMS UI automation | eFMS launch description |
 | `RP_LAUNCH_DESCRIPTION_ETMS` | eTMS UI automation | eTMS launch description |
+
+> **Removed:** `RP_LAUNCH` / `RP_LAUNCH_DESCRIPTION` combined launch — always run eFMS and eTMS separately for correct ReportPortal dashboards.
 
 **View launches:** `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all`
 
 ---
 
-*Last updated: 2026-06-16 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, FMS_BR_001–005, ETMS-LOGIN-001 | ReportPortal: auto-enabled*
+*Last updated: 2026-06-17 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, FMS_BR_001–005, ETMS-LOGIN-001 | ReportPortal: per-app launches (efms-automation / etms-automation)*

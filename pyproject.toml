@@ -33,7 +33,6 @@ packages = ["src/automation"]
 testpaths = ["tests"]
 rp_endpoint = "http://localhost:8080"
 rp_project = "default_personal"
-rp_launch = "efms-etms-automation"
 rp_verify_ssl = "false"
 markers = [
     "efms: eFMS application tests",

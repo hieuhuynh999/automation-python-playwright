@@ -11,7 +11,6 @@ from automation.logging import logger
 from automation.reporting.reportportal_support import (
     apply_reportportal_display_names,
     configure_reportportal_ini,
-    is_reportportal_enabled,
     load_dotenv_for_reportportal,
 )
 
@@ -20,11 +19,13 @@ from automation.reporting.reportportal_support import (
 def pytest_configure(config: pytest.Config) -> None:
     load_dotenv_for_reportportal()
     get_settings.cache_clear()
-    configure_reportportal_ini(config)
+    rp_ready = configure_reportportal_ini(config)
 
     api_key = config.getini("rp_api_key") or os.getenv("RP_API_KEY")
-    if api_key:
+    if api_key and rp_ready:
         config.option.rp_enabled = True
+    elif api_key:
+        config.option.rp_enabled = False
     elif getattr(config.option, "rp_enabled", False):
         config.option.rp_enabled = False
         logger.warning(
@@ -33,5 +34,20 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if is_reportportal_enabled(config):
+    api_key = config.getini("rp_api_key") or os.getenv("RP_API_KEY")
+    if not api_key:
+        return
+
+    rp_ready = configure_reportportal_ini(config, items)
+    if rp_ready:
+        config.option.rp_enabled = True
         apply_reportportal_display_names(items)
+        launch_name = config.getini("rp_launch")
+        logger.info("ReportPortal launch: {}", launch_name)
+        return
+
+    config.option.rp_enabled = False
+    logger.warning(
+        "ReportPortal disabled: chạy riêng từng app — "
+        "pytest -m efms hoặc pytest -m etms (hoặc tests/efms, tests/etms)"
+    )
