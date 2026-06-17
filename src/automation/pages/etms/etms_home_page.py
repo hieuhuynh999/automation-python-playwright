@@ -5,17 +5,29 @@ from automation.pages.base_page import BasePage
 
 class EtmsHomePage(BasePage):
     username_selectors = [
-        "input[name='username']", "input[name='userName']", "input[id='username']",
-        "input[id='userName']", "input[autocomplete='username']", "input[placeholder*='Username']",
-        "input[placeholder*='User']", "input[type='email']", "input[type='text']",
+        "input[name='username']",
+        "input[name='userName']",
+        "input[id='username']",
+        "input[id='userName']",
+        "input[autocomplete='username']",
+        "input[placeholder*='Username']",
+        "input[placeholder*='User']",
+        "input[type='email']",
+        "input[type='text']",
     ]
     password_selectors = [
-        "input[name='password']", "input[id='password']", "input[autocomplete='current-password']",
-        "input[placeholder*='Password']", "input[type='password']",
+        "input[name='password']",
+        "input[id='password']",
+        "input[autocomplete='current-password']",
+        "input[placeholder*='Password']",
+        "input[type='password']",
     ]
     submit_selectors = [
-        "button[type='submit']", "input[type='submit']", "button:has-text('Login')",
-        "button:has-text('Log in')", "button:has-text('Sign in')",
+        "button[type='submit']",
+        "input[type='submit']",
+        "button:has-text('Login')",
+        "button:has-text('Log in')",
+        "button:has-text('Sign in')",
     ]
 
     @log_method("Open eTMS home page")

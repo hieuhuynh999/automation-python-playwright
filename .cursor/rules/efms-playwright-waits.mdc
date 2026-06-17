@@ -1,0 +1,39 @@
+---
+description: eFMS Playwright wait strategy — no sleep, grid/delete race conditions
+globs: src/automation/pages/**/*.py,tests/**/*.py
+alwaysApply: false
+---
+
+# eFMS Playwright — Wait & Race Conditions
+
+Full reference: `ruleAi.md` Section 3.6.
+
+## Rules
+
+- Never `time.sleep()` or raw ms literals — use `settings.*_timeout` / `settings.*_ms`.
+- `wait_for_page_stable()` is NOT enough for Angular grid/API — add `_wait_for_grid_ready()`, `networkidle`, `expect_response`.
+- **Run FAIL + debug PASS** = race condition → add condition waits, not slower sleeps.
+
+## Grid delete (Booking Receipt)
+
+```
+refresh_list_page → search → select_booking_row (toolbar Delete enabled)
+→ _wait_toolbar_delete_ready → toolbar click → popup → Yes + expect_response
+→ toast → wait_until_booking_absent → reload verify
+```
+
+## DO NOT
+
+```python
+br_page.click_delete(booking_no)
+br_page.click_delete_confirm_yes()  # returns before API/grid done
+```
+
+## DO
+
+```python
+br_page.delete_booking_receipt_from_grid(booking_no, expected_message)
+```
+
+- Toolbar delete only — never row `btn-outline-danger` (Duplicate popup).
+- Verify row absent with exact `normalize-space()='{booking_no}'`, not `contains()`.

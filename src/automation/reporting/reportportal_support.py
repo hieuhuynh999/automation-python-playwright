@@ -69,6 +69,7 @@ def resolve_launch_for_run(marker_expr: str | None, settings: Any) -> tuple[str,
         attributes = f"{attributes} 'Application:efms-etms'"
     return launch, description, attributes
 
+
 def resolve_test_display_name(
     test_data: Any,
     *,
@@ -126,6 +127,7 @@ def apply_reportportal_display_names(items: list[pytest.Item]) -> None:
         display_name = build_reportportal_display_name(item)
         if display_name:
             item.add_marker(pytest.mark.name(display_name))
+
 
 def is_reportportal_enabled(config: pytest.Config) -> bool:
     if getattr(config, "_rp_enabled", False):
@@ -196,12 +198,7 @@ def attach_failure_screenshot(page: Page, test_name: str) -> None:
         return
 
     screenshot_bytes = page.screenshot(full_page=True)
-    safe_name = (
-        test_name.replace(" ", "_")
-        .replace("/", "_")
-        .replace("|", "_")
-        .replace(":", "_")
-    )
+    safe_name = test_name.replace(" ", "_").replace("/", "_").replace("|", "_").replace(":", "_")
     rp_logger.info(
         "Failure screenshot",
         attachment={

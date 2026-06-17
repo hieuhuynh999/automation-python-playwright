@@ -27,27 +27,19 @@ pytest_plugins = ["tests.conftest_reportportal"]
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--browser", choices=["chrome", "edge"], default=None)
-    parser.addoption("--browser-headless",
-                     choices=["true", "false"], default=None)
+    parser.addoption("--browser-headless", choices=["true", "false"], default=None)
 
 
 def pytest_configure(config: pytest.Config) -> None:
     Path("reports").mkdir(exist_ok=True)
     Path(settings.screenshot_dir).mkdir(parents=True, exist_ok=True)
 
-    browser_name = (
-        config.getoption("--browser")
-        or settings.browser
-    )
+    browser_name = config.getoption("--browser") or settings.browser
 
-    headless_option = config.getoption(
-        "--browser-headless"
-    )
+    headless_option = config.getoption("--browser-headless")
 
     headless = (
-        settings.browser_headless
-        if headless_option is None
-        else headless_option.lower() == "true"
+        settings.browser_headless if headless_option is None else headless_option.lower() == "true"
     )
 
     metadata = config.stash[metadata_key]
@@ -97,17 +89,12 @@ def browser(
     playwright_instance: Playwright,
 ) -> Generator[Browser, None, None]:
 
-    browser_name = (
-        pytestconfig.getoption("--browser")
-        or settings.browser
-    ).lower()
+    browser_name = (pytestconfig.getoption("--browser") or settings.browser).lower()
 
     headless_option = pytestconfig.getoption("--browser-headless")
 
     headless = (
-        settings.browser_headless
-        if headless_option is None
-        else headless_option.lower() == "true"
+        settings.browser_headless if headless_option is None else headless_option.lower() == "true"
     )
 
     browser_channels = {
@@ -122,18 +109,14 @@ def browser(
         )
 
     logger.info(
-        f"Launching browser={browser_name}, "
-        f"headless={headless}, "
-        f"slow_mo={settings.browser_slow_mo}"
+        f"Launching browser={browser_name}, headless={headless}, slow_mo={settings.browser_slow_mo}"
     )
 
     browser = playwright_instance.chromium.launch(
         channel=browser_channels[browser_name],
         headless=headless,
         slow_mo=settings.browser_slow_mo,
-        args=[
-        "--start-maximized"
-    ]
+        args=["--start-maximized"],
     )
 
     yield browser
@@ -170,15 +153,11 @@ def context(
 
     # Timeout cho element:
     # click, fill, locator, expect...
-    context.set_default_timeout(
-        settings.browser_timeout
-    )
+    context.set_default_timeout(settings.browser_timeout)
 
     # Timeout cho page navigation:
     # goto(), reload(), wait_for_url()
-    context.set_default_navigation_timeout(
-        settings.page_load_timeout
-    )
+    context.set_default_navigation_timeout(settings.page_load_timeout)
 
     yield context
 
@@ -201,7 +180,9 @@ def efms_account_password() -> str:
     cfg = get_settings()
     password = cfg.efms_password or os.getenv("EFMS_ACCOUNT_PASSWORD")
     if not password:
-        pytest.skip("Set EFMS_ACCOUNT_PASSWORD (or legacy ACCOUNT_PASSWORD) to run eFMS login tests")
+        pytest.skip(
+            "Set EFMS_ACCOUNT_PASSWORD (or legacy ACCOUNT_PASSWORD) to run eFMS login tests"
+        )
     return password
 
 
@@ -300,29 +281,27 @@ def pytest_runtest_makereport(
 
     # 2. Fallback get from pytest marker
     if not tc_id:
-        tc_id_marker = item.get_closest_marker(
-            "tc_id"
-        )
+        tc_id_marker = item.get_closest_marker("tc_id")
 
         if tc_id_marker and tc_id_marker.args:
             tc_id = tc_id_marker.args[0]
 
     if description == item.name:
-
-        desc_marker = item.get_closest_marker(
-            "description"
-        )
+        desc_marker = item.get_closest_marker("description")
 
         if desc_marker and desc_marker.args:
             description = desc_marker.args[0]
 
     report.tc_id = tc_id
     report.description = description
-    report.test_name = resolve_test_display_name(
-        test_data,
-        tc_id=str(tc_id) if tc_id else "",
-        description=str(description) if description else "",
-    ) or description
+    report.test_name = (
+        resolve_test_display_name(
+            test_data,
+            tc_id=str(tc_id) if tc_id else "",
+            description=str(description) if description else "",
+        )
+        or description
+    )
 
     if not report.test_name:
         report.test_name = description
@@ -331,23 +310,11 @@ def pytest_runtest_makereport(
     # Log Result
     # ==========================
     status = report.outcome.upper()
-    message = (
-        f"{status}: "
-        f"{report.test_name}"
-    )
+    message = f"{status}: {report.test_name}"
 
-    report.extras = getattr(
-        report,
-        "extras",
-        []
-    )
+    report.extras = getattr(report, "extras", [])
 
-    report.extras.append(
-        extras.text(
-            message,
-            name="Test Result"
-        )
-    )
+    report.extras.append(extras.text(message, name="Test Result"))
 
     test_case_ids_text = _get_test_case_ids_text(test_data)
     scenario_lines = _get_scenario_lines(test_data)
@@ -376,18 +343,9 @@ def pytest_runtest_makereport(
     method_logs = get_step_logs()
 
     if method_logs:
+        report.extras.append(extras.text("\n".join(method_logs), name="Method Logs"))
 
-        report.extras.append(
-            extras.text(
-                "\n".join(method_logs),
-                name="Method Logs"
-            )
-        )
-
-        cast(
-            Any,
-            report
-        ).method_logs = method_logs
+        cast(Any, report).method_logs = method_logs
 
     if method_logs and is_reportportal_enabled(item.config):
         log_step_lines(method_logs)
@@ -397,22 +355,13 @@ def pytest_runtest_makereport(
     # ==========================
 
     if report.passed:
-
-        logger.success(
-            message
-        )
+        logger.success(message)
 
     elif report.skipped:
-
-        logger.warning(
-            message
-        )
+        logger.warning(message)
 
     else:
-
-        logger.error(
-            message
-        )
+        logger.error(message)
 
     # ==========================
     # Screenshot Failed Only
@@ -421,58 +370,26 @@ def pytest_runtest_makereport(
     if not report.failed:
         return
 
-    page = cast(
-        Any,
-        item
-    ).funcargs.get(
-        "page"
-    )
+    page = cast(Any, item).funcargs.get("page")
 
     if page is None:
-
         report.extras.append(
-            extras.text(
-                "No Playwright page fixture available",
-                name="Failure Note"
-            )
+            extras.text("No Playwright page fixture available", name="Failure Note")
         )
 
         return
 
-    screenshot_dir = Path(
-        settings.screenshot_dir
-    )
+    screenshot_dir = Path(settings.screenshot_dir)
 
-    screenshot_dir.mkdir(
-        parents=True,
-        exist_ok=True
-    )
+    screenshot_dir.mkdir(parents=True, exist_ok=True)
 
-    screenshot_name = (
-        report.test_name
-        .replace(" ", "_")
-        .replace("/", "_")
-        .replace("|", "_")
-    )
+    screenshot_name = report.test_name.replace(" ", "_").replace("/", "_").replace("|", "_")
 
-    screenshot_path = (
-        screenshot_dir /
-        f"{screenshot_name}.png"
-    )
+    screenshot_path = screenshot_dir / f"{screenshot_name}.png"
 
-    page.screenshot(
-        path=screenshot_path,
-        full_page=True
-    )
+    page.screenshot(path=screenshot_path, full_page=True)
 
-    report.extras.append(
-        extras.image(
-            str(
-                screenshot_path.absolute()
-            ),
-            name="Failure Screenshot"
-        )
-    )
+    report.extras.append(extras.image(str(screenshot_path.absolute()), name="Failure Screenshot"))
 
     if is_reportportal_enabled(item.config):
         attach_failure_screenshot(page, report.test_name)
@@ -493,9 +410,7 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     tc_id = getattr(report, "tc_id", "")
     test_name = report.nodeid.split("::")[-1]
 
-    safe_terminal_print(
-        f"[{report.outcome.upper()}] [{tc_id}] {test_name}"
-    )
+    safe_terminal_print(f"[{report.outcome.upper()}] [{tc_id}] {test_name}")
 
 
 def pytest_html_results_table_header(cells):

@@ -96,9 +96,7 @@ class TestEfmsNavigate:
         "data",
         DataProvider.efms_cases("test_smk_nav_verify_commercial_menu_efms"),
     )
-    def test_smk_nav_verify_commercial_menu_efms(
-        self, pages, data, efms_account_password
-    ):
+    def test_smk_nav_verify_commercial_menu_efms(self, pages, data, efms_account_password):
         # Precondition: Login success
         pages.efms_login_page.open().login(
             settings.efms_username,

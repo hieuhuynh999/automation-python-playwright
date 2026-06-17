@@ -48,6 +48,7 @@ markers = [
     "low: Low priority tests",
     "tc_id(id): Test Case ID",
     "description(text): Test case description",
+    "debug: debug-only tests (not part of regression suite)",
 ]
 
 [tool.ruff]

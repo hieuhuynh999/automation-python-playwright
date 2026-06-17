@@ -143,5 +143,78 @@
                 }
             ]
         }
+    ],
+    "test_fms_br_001_open_add_booking_receipt_efms": [
+        {
+            "test_case_id": "FMS_BR_001",
+            "test_data_id": "N/A",
+            "description": "Check open form Add new Booking Receipt - Air Export",
+            "module": "Booking Receipt",
+            "priority": "Critical",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC",
+            "add_option": "Air Export"
+        }
+    ],
+    "test_fms_br_002_create_booking_receipt_efms": [
+        {
+            "test_case_id": "FMS_BR_002",
+            "test_data_id": "BR_ADD_001",
+            "description": "Create Booking Receipt",
+            "module": "Booking Receipt",
+            "priority": "High",
+            "preconditions": "Login success",
+            "company": "LTH Demo JSC",
+            "add_option": "Air Export",
+            "customer_payer": "Demacia",
+            "salesman": "Jasmine.Thu",
+            "booking_date": "TODAY",
+            "shipment_type": "Freehand",
+            "departure_location": "NANSHA",
+            "arrival_location": "FANGCHENG",
+            "shipper": "VIET HY CO LTD",
+            "weight": "500",
+            "package_qty": "5",
+            "expected_success_message": "Booking receipt add successfully!"
+        }
+    ],
+    "test_fms_br_003_open_detail_booking_receipt_efms": [
+        {
+            "test_case_id": "FMS_BR_003",
+            "test_data_id": "N/A",
+            "description": "Check open Detail Booking Receipt - newly added record",
+            "module": "Booking Receipt",
+            "priority": "High",
+            "preconditions": "Login success; Booking Receipt created successfully",
+            "company": "LTH Demo JSC"
+        }
+    ],
+    "test_fms_br_004_update_booking_receipt_efms": [
+        {
+            "test_case_id": "FMS_BR_004",
+            "test_data_id": "BR_UPDATE_001",
+            "description": "Update Booking Receipt",
+            "module": "Booking Receipt",
+            "priority": "High",
+            "preconditions": "Login success; Detail Booking Receipt open",
+            "company": "LTH Demo JSC",
+            "incoterm": "DDU",
+            "shipper": "MAITO VN",
+            "commodities": "OTHER",
+            "cbm": "100",
+            "expected_success_message": "Booking receipt updated successfully!"
+        }
+    ],
+    "test_fms_br_005_delete_booking_receipt_efms": [
+        {
+            "test_case_id": "FMS_BR_005",
+            "test_data_id": "N/A",
+            "description": "Delete Booking Receipt - newly added record (Draft)",
+            "module": "Booking Receipt",
+            "priority": "High",
+            "preconditions": "Login success; Booking Receipt status = Draft",
+            "company": "LTH Demo JSC",
+            "expected_success_message": "Delete Booking Receipt Success!"
+        }
     ]
 }

@@ -28,8 +28,7 @@ def pytest_configure(config: pytest.Config) -> None:
     elif getattr(config.option, "rp_enabled", False):
         config.option.rp_enabled = False
         logger.warning(
-            "ReportPortal disabled: set RP_API_KEY in .env "
-            "(ReportPortal UI → Profile → API Keys)"
+            "ReportPortal disabled: set RP_API_KEY in .env (ReportPortal UI → Profile → API Keys)"
         )
 
 

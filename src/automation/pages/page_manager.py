@@ -3,8 +3,8 @@ from playwright.sync_api import Page
 from automation.pages.efms import (
     EfmsAgentPage,
     EfmsBookingReceiptPage,
-    EfmsCustomerPage,
     EfmsCustomClearancePage,
+    EfmsCustomerPage,
     EfmsHomePage,
     EfmsJobManagementPage,
     EfmsLoginPage,
@@ -87,9 +87,7 @@ class PageManager:
     @property
     def efms_services_documentation_page(self) -> EfmsServicesDocumentationPage:
         if self._efms_services_documentation_page is None:
-            self._efms_services_documentation_page = EfmsServicesDocumentationPage(
-                self.page
-            )
+            self._efms_services_documentation_page = EfmsServicesDocumentationPage(self.page)
         return self._efms_services_documentation_page
 
     @property

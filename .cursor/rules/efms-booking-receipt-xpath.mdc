@@ -1,0 +1,61 @@
+---
+description: Booking Receipt XPath selectors and FMS_BR CRUD flow
+globs: **/efms_booking_receipt*.py,**/dataTest-efms.json
+alwaysApply: false
+---
+
+# Booking Receipt — XPath & FMS_BR_001–005
+
+Full catalog: `ruleAi.md` Section 5.13–5.14.
+
+## Delete flow (FMS_BR_005)
+
+1. `open_list_page()` → `refresh_list_page()`
+2. `delete_booking_receipt_from_grid(booking_no, "Delete Booking Receipt Success!")`
+3. `open_list_page()` → `wait_until_booking_absent(booking_no)`
+
+Shared `booking_no` from FMS_BR_002: `TestEfmsBookingReceipt.booking_no`.
+
+## XPath — copy into POM only (never in tests)
+
+**Toolbar Delete (use this):**
+```
+xpath=//*[contains(@class,'m-portlet__head')]
+  //button[contains(@class,'btn-outline-danger') and .//i[contains(@class,'la-trash')]]
+```
+
+**Delete popup title:**
+```
+xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div
+```
+
+**Yes on delete popup:**
+```
+xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div//span[text()=' Yes ']
+```
+
+**Row checkbox `{booking_no}`:**
+```
+xpath=//tr[.//span[normalize-space()='{booking_no}']]//input[@type='checkbox']
+```
+
+**Row verify absent (exact match):**
+```
+xpath=//table//tbody//tr[.//span[normalize-space()='{booking_no}']
+  or .//a[normalize-space()='{booking_no}']]
+```
+
+**Row delete — reference only, do NOT click in automation:**
+```
+xpath=//tr[.//span[normalize-space()='{booking_no}']]
+  //app-permission-button[@type='delete']
+```
+
+**Loading overlay:**
+```
+.m-blockui | .block-ui-wrapper.block-ui-active | .loading-mask
+```
+
+## Debug class
+
+`TestEfmsBookingReceiptDeleteDebug` — `EFMS_DEBUG_BOOKING_NO` env or `BOOKING_NO` constant.

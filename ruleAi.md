@@ -20,6 +20,8 @@
 5. [Manual Test Case Sheet → Automation (CANONICAL)](#5-manual-test-case-sheet--automation-canonical)
    - [5.11 Multi-Scenario Navigation Tests](#511-multi-scenario-navigation-tests)
    - [5.12 Menu Module POM Pattern](#512-menu-module-pom-pattern)
+   - [5.13 Booking Receipt CRUD (FMS_BR_001–005)](#513-booking-receipt-crud-fms_br_001005)
+   - [5.14 XPath Catalog — Booking Receipt](#514-xpath-catalog--booking-receipt)
 6. [How to Write a UI Test (Step-by-Step)](#6-how-to-write-a-ui-test-step-by-step)
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
 8. [How to Write Test Data (JSON)](#8-how-to-write-test-data-json)
@@ -128,7 +130,9 @@ auotmation-techub/
 │   │   └── dataTest-etms.json
 │   ├── efms/                       # eFMS UI tests (app-first layout)
 │   │   ├── test_efms_auth.py       # TestEfmsAuth — SMK_AUTH_001/002
-│   │   └── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
+│   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
+│   │   ├── test_efms_booking_receipt.py                 # FMS_BR_001–005
+│   │   └── test_efms_booking_receipt_delete_debug.py    # Debug FMS_BR_005
 │   └── etms/                       # eTMS UI tests
 │       └── test_etms_login.py      # ETMS-LOGIN-001
 │
@@ -172,7 +176,7 @@ auotmation-techub/
 | `EfmsAgentPage` | `commercial/efms_agent_page.py` | Agent submenu + Agent List verification |
 | `EfmsCustomerPage` | `commercial/efms_customer_page.py` | Customer submenu + Customer List verification |
 | `EfmsWorkOrderPage` | `commercial/efms_work_order_page.py` | Work Order submenu + list verification |
-| `EfmsBookingReceiptPage` | `commercial/efms_booking_receipt_page.py` | Booking Receipt submenu + page verification |
+| `EfmsBookingReceiptPage` | `commercial/efms_booking_receipt_page.py` | Booking Receipt CRUD: list, create, update, delete (FMS_BR_001–005) |
 | `EfmsLogisticsMenuPage` | `logistics/logistics_menu_page.py` | Base: `open_logistics_menu()` — **internal only** |
 | `EfmsJobManagementPage` | `logistics/efms_job_management_page.py` | Job Management submenu + table verification |
 | `EfmsCustomClearancePage` | `logistics/efms_custom_clearance_page.py` | Customs Clearance submenu + verification |
@@ -248,6 +252,8 @@ Supporting layers (not in UI test path):
 | SMK_NAV_001–004 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_commercial_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_005 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_logistics_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_006 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_services_menu_efms` | `tests/efms/test_efms_navigate.py` |
+| FMS_BR_001–005 | Booking Receipt | High | `TestEfmsBookingReceipt` | `tests/efms/test_efms_booking_receipt.py` |
+| FMS_BR_005 (debug) | Booking Receipt | — | `TestEfmsBookingReceiptDeleteDebug` | `tests/efms/test_efms_booking_receipt_delete_debug.py` |
 | ETMS-LOGIN-001 | Login | High | `test_login_etms` | `tests/etms/test_etms_login.py` |
 
 **Run by priority (from JSON, auto-applied via `DataProvider.efms_cases`):**
@@ -553,6 +559,78 @@ def test_login(pages):
 
 Tune via `OPEN_URL_SETTLE_MS` in `.env` — do not hard-code milliseconds in Page Objects.
 
+#### Angular grid / SPA — beyond `wait_for_page_stable()` (learned from FMS_BR_005)
+
+`wait_for_page_stable()` only waits `document.readyState === 'complete'` + `navigation_settle_ms`.
+**It does NOT guarantee:** API finished, grid re-rendered, toolbar enabled, overlay hidden.
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Run FAIL, debug step-by-step PASS | Race condition — automation faster than Angular | Condition-based waits (below), not `time.sleep()` |
+| Delete popup never opens | Clicked **row delete** before **toolbar delete** ready | **Only toolbar delete** after row selected |
+| `is_checked()` stays False | Angular checkbox state lags DOM | Verify selection via **toolbar Delete enabled** |
+| Record still on grid after delete | Verified DOM before API/grid refresh | `expect_response` + toast + `wait_until_booking_absent` |
+
+**Mandatory wait chain for grid delete (Booking Receipt):**
+
+```
+refresh_list_page()          → reload + networkidle + _wait_for_grid_ready()
+search_booking(booking_no)
+select_booking_row()         → poll until toolbar Delete enabled
+_wait_toolbar_delete_ready() → 3 consecutive enabled checks
+_click_delete_for_booking()  → toolbar only → wait delete popup
+_click_delete_confirm_yes_and_wait()
+  → wait popup → actionable Yes → expect_response(delete API)
+  → popup closed → grid ready → toast success
+wait_until_booking_absent()  → networkidle + grid ready + poll exact row match
+open_list_page() + verify again (avoid transient DOM false-pass)
+```
+
+**Helper methods on `EfmsBookingReceiptPage` (reuse — do not duplicate in tests):**
+
+| Method | Purpose |
+|--------|---------|
+| `_wait_for_grid_ready()` | No loading overlay + table header visible |
+| `_wait_actionable(selectors, name, stable_checks=3)` | Visible + enabled for N polls |
+| `_wait_toolbar_delete_ready()` | Toolbar trash enabled after row select |
+| `_click_delete_for_booking()` | Toolbar delete only + wait confirm popup |
+| `_click_delete_confirm_yes_and_wait()` | Yes + API + popup close + toast |
+| `delete_booking_receipt_from_grid()` | **Use in tests** — full stable delete flow |
+| `refresh_list_page()` | Reload list before delete (FMS_BR_005) |
+| `wait_until_booking_absent()` | networkidle + poll; exact `normalize-space()` match |
+
+**DO NOT in delete tests:**
+
+```python
+# WRONG — returns before API/popup/grid complete
+br_page.click_delete(booking_no)
+br_page.click_delete_confirm_yes()
+assert br_page.wait_until_booking_absent(booking_no)
+
+# WRONG — row trash opens Duplicate or no popup
+row.locator("app-permission-button[@type='delete']").click()
+
+# CORRECT — single stable flow
+br_page.refresh_list_page()
+br_page.delete_booking_receipt_from_grid(booking_no, data["expected_success_message"])
+br_page.open_list_page()
+assert br_page.wait_until_booking_absent(booking_no)
+```
+
+**CRUD ordered test class pattern (`TestEfmsBookingReceipt`):**
+
+```python
+class TestEfmsBookingReceipt:
+    booking_no: str | None = None  # set in FMS_BR_002, shared by BR_003–005
+
+    # Run in order: BR_001 → BR_002 → BR_003 → BR_004 → BR_005
+    # BR_005: refresh_list_page() before delete_booking_receipt_from_grid()
+```
+
+**Debug class for FMS_BR_005 only:** `TestEfmsBookingReceiptDeleteDebug` in
+`tests/efms/test_efms_booking_receipt_delete_debug.py` — set `BOOKING_NO` or env
+`EFMS_DEBUG_BOOKING_NO`; run `-k step03` for single step.
+
 ---
 
 ## 4. Naming Conventions
@@ -808,7 +886,7 @@ class TestEfmsAuth:
 | `EfmsAgentPage` | `click_agent_menu()`, `is_agent_list_displayed()` | Extends commercial base |
 | `EfmsCustomerPage` | `click_customer_menu()`, `is_customer_list_displayed()` | Same pattern |
 | `EfmsWorkOrderPage` | `click_work_order_menu()`, `is_work_order_list_displayed()` | Same pattern |
-| `EfmsBookingReceiptPage` | `click_booking_receipt_menu()`, `is_booking_receipt_displayed()` | Same pattern |
+| `EfmsBookingReceiptPage` | `open_list_page()`, `refresh_list_page()`, `click_add_new()`, `fill_create_form()`, `delete_booking_receipt_from_grid()`, `wait_until_booking_absent()` | FMS_BR_001–005; delete via stable flow only |
 
 **Logistics navigation** — `src/automation/pages/efms/logistics/`
 
@@ -997,6 +1075,132 @@ PageManager               → Register feature pages only (NOT base menu class)
 |-----------|-------------|---------|
 | List page (Agent, Job Management) | `h3` title + table column header | `Job ID`, `Clearance Date` |
 | Documentation page (Services) | `h3` title + URL hash fragment | `#/home/documentation/air-export` |
+| Booking Receipt grid row | Exact `normalize-space()` on `span`/`a` | Never `contains()` for booking_no verify |
+| Booking Receipt delete | Toolbar delete after checkbox | Never row `btn-outline-danger` (opens Duplicate) |
+
+### 5.13 Booking Receipt CRUD (FMS_BR_001–005)
+
+> Reference: `tests/efms/test_efms_booking_receipt.py`, `efms_booking_receipt_page.py`,
+> `tests/testdata/dataTest-efms.json` keys `test_fms_br_001_*` … `test_fms_br_005_*`.
+
+| TC_ID | Scenario | Key Page methods |
+|-------|----------|------------------|
+| FMS_BR_001 | Open Add New — Air Export | `open_list_page()`, `click_add_new()`, `click_add_new_option()`, `is_add_form_displayed()` |
+| FMS_BR_002 | Create + capture `booking_no` | `fill_create_form()`, `click_save()`, `click_confirm_yes()`, `get_booking_no_from_grid_row_containing()` |
+| FMS_BR_003 | Open detail | `search_booking()`, `click_booking_no()`, `is_detail_displayed()` |
+| FMS_BR_004 | Update (stay Draft) | `fill_update_form()`, `click_save()`, `get_booking_status_in_grid()` == `Draft` |
+| FMS_BR_005 | Delete Draft record | `refresh_list_page()`, `delete_booking_receipt_from_grid()`, verify absent after reload |
+
+**FMS_BR_005 test template (canonical):**
+
+```python
+booking_no = TestEfmsBookingReceipt.booking_no
+if not booking_no:
+    pytest.skip("Requires booking_no from FMS_BR_002")
+
+br_page.open_list_page()
+br_page.refresh_list_page()
+br_page.delete_booking_receipt_from_grid(
+    booking_no,
+    data["expected_success_message"],
+)
+br_page.open_list_page()
+assert br_page.wait_until_booking_absent(booking_no)
+```
+
+**Expected success message (JSON):** `Delete Booking Receipt Success!`
+
+**Run full CRUD flow:**
+
+```bash
+uv run pytest tests/efms/test_efms_booking_receipt.py -v \
+  --browser chrome --browser-headless false
+
+# Debug delete only (existing Draft record)
+$env:EFMS_DEBUG_BOOKING_NO="BKAE26060007"
+uv run pytest tests/efms/test_efms_booking_receipt_delete_debug.py -k step03 -v \
+  --browser chrome --browser-headless false
+```
+
+### 5.14 XPath Catalog — Booking Receipt
+
+> All selectors live in `EfmsBookingReceiptPage` class attributes.
+> Dynamic `{booking_no}` — always use **exact** `normalize-space()='{booking_no}'` for verify;
+> avoid `contains(., booking_no)` (false positives).
+
+#### Navigation & list page
+
+| Element | XPath / selector (priority order in POM) |
+|---------|------------------------------------------|
+| Menu | `xpath=//div[contains(@class,'m-menu__submenu')]//a[contains(@href,'commercial/booking-receipt')]` |
+| List title | `xpath=//h3[normalize-space()='Booking Receipt']` |
+| Table header | `xpath=//th[normalize-space()='Booking No']` |
+| List URL | `{efms_base_url}en/#/home/commercial/booking-receipt` |
+
+#### Create / detail
+
+| Element | XPath / selector |
+|---------|------------------|
+| Add new | `button:has-text('Add new')` |
+| Add form title | `xpath=//h3[contains(normalize-space(),'Add New Booking Receipt')]` |
+| Detail title | `xpath=//h3[contains(normalize-space(),'Detail Booking Receipt')]` |
+| Save | `button:has-text('Save')` |
+| Generic Yes (save confirm) | `.swal2-confirm`, `xpath=//button[normalize-space()='Yes']` |
+
+#### Grid — search & row (parameterized `{booking_no}`)
+
+| Element | XPath |
+|---------|-------|
+| Booking no in grid | `xpath=//span[normalize-space()='{booking_no}']` |
+| Row | `xpath=//tr[.//span[normalize-space()='{booking_no}']]` |
+| Row checkbox | `xpath=//tr[.//span[normalize-space()='{booking_no}']]//input[@type='checkbox']` |
+| Row absent verify | `xpath=//table//tbody//tr[.//span[normalize-space()='{booking_no}'] or .//a[normalize-space()='{booking_no}']]` → `count() == 0` |
+
+#### Delete — toolbar (PREFERRED after row select)
+
+| Element | XPath |
+|---------|-------|
+| Toolbar Delete | `xpath=//*[contains(@class,'m-portlet__head')]//button[contains(@class,'btn-outline-danger') and .//i[contains(@class,'la-trash')]]` |
+
+#### Delete — row action (reference only — do NOT use in automation delete flow)
+
+| Element | XPath | Note |
+|---------|-------|------|
+| Row delete permission | `xpath=//tr[.//span[normalize-space()='{booking_no}']]//app-permission-button[@type='delete']` | May not open Delete popup when run fast |
+| Row delete (alt) | `xpath=//span[normalize-space()='{booking_no}']//preceding::td//app-permission-button[@type='delete']` | Same |
+| Row trash button | `xpath=//tr[...]//button[contains(@class,'btn-outline-danger')]` | Opens **Duplicate** popup — forbidden |
+
+#### Delete confirm popup (SweetAlert2)
+
+| Element | XPath |
+|---------|-------|
+| Popup container | `xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div` |
+| Popup (swal2) | `xpath=//div[contains(@class,'swal2-popup') and .//h2[contains(.,'Delete Booking Receipt')]]` |
+| Yes button | `xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div//span[text()=' Yes ']` |
+| Yes (swal2 confirm) | `xpath=//div[contains(@class,'swal2-popup') and .//h2[contains(.,'Delete Booking Receipt')]]//button[contains(@class,'swal2-confirm')]` |
+
+#### Loading / overlay (wait before grid actions)
+
+| Element | Selector |
+|---------|----------|
+| Block UI | `.m-blockui`, `.block-ui-wrapper.block-ui-active` |
+| Loading mask | `xpath=//div[contains(@class,'loading-mask')]` |
+
+#### Toast / system message
+
+| Element | Selector |
+|---------|----------|
+| Success toast | `#toast-container .toast-message:has-text('Delete Booking Receipt Success!')` |
+| Popup closed check | `() => !document.querySelector('.swal2-popup')` |
+
+#### Delete API (`expect_response` matcher)
+
+```python
+# URL contains bookingreceipt (with or without hyphen) AND:
+#   DELETE → status 200/204
+#   POST/PUT → status 200/204 AND "delete" in URL
+def _is_booking_receipt_delete_response(response) -> bool: ...
+```
 
 ---
 
@@ -1654,6 +1858,11 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 | 8 | `EfmsNavigationPage` removed | Old docs reference deleted class | Use module-specific pages under `commercial/`, `logistics/`, `services/` |
 | 9 | Commercial scenarios without dashboard reset | Booking Receipt fails after Work Order | `goto #/home` between commercial scenarios (index > 0) |
 | 10 | Services pages have no stable data table | Table-based verify fails | Verify title + URL hash only |
+| 11 | Row delete / row trash on Booking Receipt | Wrong popup (Duplicate) or no popup | **Toolbar delete only** after row select + `_wait_toolbar_delete_ready()` |
+| 12 | `click_delete` + `click_delete_confirm_yes` without wait chain | Run FAIL / debug PASS race | Use `delete_booking_receipt_from_grid()` |
+| 13 | `is_checked()` on grid checkbox | False while Angular syncing | Verify via toolbar Delete **enabled** |
+| 14 | `wait_until_booking_absent` with `contains()` | False pass / wrong row match | Exact `normalize-space()='{booking_no}'` on span/a |
+| 15 | Delete verify immediately after Yes click | DOM stale — record still visible | Wait API + toast + grid ready + reload verify |
 
 **Fixed — do not re-introduce:**
 
@@ -1895,7 +2104,23 @@ Before finishing any automation task, verify:
 [ ] No index/nth selectors unless documented special case
 [ ] No selectors in test files — only in Page Object *_selectors lists
 [ ] Did not replicate known issues from Section 14
+[ ] Booking Receipt delete uses delete_booking_receipt_from_grid() — not raw click_delete chain (Section 3.6 / 5.13)
+[ ] Grid verify uses exact normalize-space() for booking_no — not contains()
+[ ] Toolbar delete only after row select — never row btn-outline-danger for delete
 ```
+
+---
+
+## Appendix B — Cursor Rules (`.cursor/rules/`)
+
+Project AI rules are maintained in **`ruleAi.md`** (this file). For Cursor IDE, scoped rules mirror key sections:
+
+| File | Scope | Content |
+|------|-------|---------|
+| `efms-playwright-waits.mdc` | `src/automation/pages/**/*.py`, `tests/**/*.py` | Wait strategy, no sleep, grid/delete race conditions |
+| `efms-booking-receipt-xpath.mdc` | `**/efms_booking_receipt*.py` | XPath catalog Section 5.14, delete flow Section 5.13 |
+
+When updating Booking Receipt automation, update **both** `ruleAi.md` and the matching `.cursor/rules/*.mdc` files.
 
 ---
 
@@ -1961,4 +2186,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-12 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, ETMS-LOGIN-001 | ReportPortal: auto-enabled*
+*Last updated: 2026-06-16 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, FMS_BR_001–005, ETMS-LOGIN-001 | ReportPortal: auto-enabled*

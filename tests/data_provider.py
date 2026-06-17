@@ -46,9 +46,7 @@ class DataProvider:
         data = DataProvider.load_file(file_mapping[application])
 
         if test_method not in data:
-            raise KeyError(
-                f"Cannot find {test_method} in {file_mapping[application]}"
-            )
+            raise KeyError(f"Cannot find {test_method} in {file_mapping[application]}")
 
         return data[test_method]
 
@@ -66,10 +64,7 @@ class DataProvider:
     @staticmethod
     def parametrize(application: str, test_method: str) -> list[pytest.ParameterSet]:
         rows = DataProvider.get_data(application, test_method)
-        return [
-            DataProvider._to_pytest_param(row, index)
-            for index, row in enumerate(rows)
-        ]
+        return [DataProvider._to_pytest_param(row, index) for index, row in enumerate(rows)]
 
     @staticmethod
     def efms_cases(test_method: str) -> list[pytest.ParameterSet]:

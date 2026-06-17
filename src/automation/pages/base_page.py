@@ -44,45 +44,21 @@ class BasePage:
         timeout: int | None = None,
     ) -> Locator:
 
-        timeout = (
-            timeout
-            or settings.browser_timeout
-        )
+        timeout = timeout or settings.browser_timeout
 
-        deadline = (
-            time.monotonic()
-            + timeout / 1000
-        )
-
+        deadline = time.monotonic() + timeout / 1000
 
         while time.monotonic() < deadline:
-
-            locator = self.find_visible(
-                selectors
-            )
-
+            locator = self.find_visible(selectors)
 
             if locator:
-
-                logger.info(
-                    f"Element visible: {element_name}"
-                )
+                logger.info(f"Element visible: {element_name}")
 
                 return locator
 
+            self.page.wait_for_timeout(settings.polling_interval)
 
-            self.page.wait_for_timeout(
-                settings.polling_interval
-            )
-
-
-        raise AssertionError(
-            self._build_wait_error(
-                element_name,
-                selectors,
-                timeout
-            )
-        )
+        raise AssertionError(self._build_wait_error(element_name, selectors, timeout))
 
     def _build_wait_error(
         self,
@@ -101,32 +77,16 @@ class BasePage:
         selectors: list[str],
     ) -> Locator | None:
 
-
         for selector in selectors:
-
-            locator = (
-                self.page
-                .locator(selector)
-                .first
-            )
-
+            locator = self.page.locator(selector).first
 
             try:
-
                 if locator.is_visible():
-
-                    logger.info(
-                        f"Found element by selector: {selector}"
-                    )
+                    logger.info(f"Found element by selector: {selector}")
 
                     return locator
 
-
             except Exception:
-
-                logger.debug(
-                    f"Selector not found: {selector}"
-                )
-
+                logger.debug(f"Selector not found: {selector}")
 
         return None
