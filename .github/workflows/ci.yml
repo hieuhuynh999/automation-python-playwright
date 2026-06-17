@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Application under test
+        type: choice
+        options: [efms, etms, all]
+        default: efms
+      marker:
+        description: Pytest marker (use efms/etms for full app suite)
+        type: choice
+        options:
+          - critical
+          - high
+          - login
+          - navigation
+          - smoke
+          - regression
+          - efms
+          - etms
+        default: critical
+      browser:
+        description: Browser channel
+        type: choice
+        options: [chrome, edge]
+        default: chrome
+      headless:
+        description: Headless mode
+        type: choice
+        options: [true, false]
+        default: true
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff check
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Pyright
+        run: uv run pyright
+
+  ui-tests:
+    name: UI tests
+    runs-on: ubuntu-latest
+    needs: quality
+    # PR: quality only. Push main / manual: run UI against UAT.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    env:
+      ENV: UAT
+      APP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.app || 'efms' }}
+      MARKER: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.marker || 'critical' }}
+      BROWSER: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser || 'chrome' }}
+      HEADLESS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.headless || 'true' }}
+      EFMS_ACCOUNT_USERNAME: ${{ secrets.EFMS_ACCOUNT_USERNAME }}
+      EFMS_ACCOUNT_PASSWORD: ${{ secrets.EFMS_ACCOUNT_PASSWORD }}
+      ETMS_ACCOUNT_USERNAME: ${{ secrets.ETMS_ACCOUNT_USERNAME }}
+      ETMS_ACCOUNT_PASSWORD: ${{ secrets.ETMS_ACCOUNT_PASSWORD }}
+      RP_API_KEY: ${{ secrets.RP_API_KEY }}
+      RP_ENDPOINT: ${{ secrets.RP_ENDPOINT }}
+      RP_PROJECT: ${{ secrets.RP_PROJECT }}
+      RP_VERIFY_SSL: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps "${{ env.BROWSER }}"
+
+      - name: Run pytest
+        run: bash scripts/ci-run-tests.sh
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report-${{ env.APP }}-${{ env.MARKER }}
+          path: |
+            reports/
+            test-results/
+            logs/
+          if-no-files-found: ignore

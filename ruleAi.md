@@ -38,7 +38,7 @@
 10. [How to Write a DB Test](#10-how-to-write-a-db-test)
 11. [Pytest Markers & Fixtures Reference](#11-pytest-markers--fixtures-reference)
 12. [Run Commands](#12-run-commands)
-    - [12.1 CI/CD Pipeline (Jenkins)](#121-cicd-pipeline-jenkins)
+    - [12.1 CI/CD Pipeline (GitHub Actions + Jenkins)](#121-cicd-pipeline-github-actions--jenkins)
 13. [Complete Examples (Copy-Paste Ready)](#13-complete-examples-copy-paste-ready)
 14. [Known Issues & Do NOT Replicate](#14-known-issues--do-not-replicate)
 15. [Improvement Backlog](#15-improvement-backlog)
@@ -400,7 +400,11 @@ auotmation-techub/
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
 ├── logs/                           # automation.log (gitignored)
-├── Jenkinsfile                     # CI pipeline
+├── scripts/
+│   └── ci-run-tests.sh             # Shared pytest runner for CI
+├── .github/workflows/
+│   └── ci.yml                      # GitHub Actions — quality + UI tests
+├── Jenkinsfile                     # Jenkins pipeline
 ├── pyproject.toml                  # Package metadata, pytest markers, ruff, pyright
 ├── uv.lock                         # Dependency lock
 ├── .env.example                    # Environment variable template (copy → .env)
@@ -1847,36 +1851,146 @@ uv run ruff format .
 uv run pyright
 ```
 
-### 12.1 CI/CD Pipeline (Jenkins)
+### 12.1 CI/CD Pipeline (GitHub Actions + Jenkins)
 
-File: `Jenkinsfile`
+> **Step-by-step setup:** follow the checklist below. Shared test script: `scripts/ci-run-tests.sh`.
+
+#### CI/CD architecture
+
+```
+Push / PR / Manual trigger
+        │
+        ├─► GitHub Actions (.github/workflows/ci.yml)
+        │     Job 1: quality  → ruff + pyright (every push/PR)
+        │     Job 2: ui-tests → Playwright + pytest (push main + manual)
+        │
+        └─► Jenkins (Jenkinsfile)
+              Checkout → Install → Quality → Run Tests → Archive artifacts
+```
+
+#### Step 1 — Prerequisites (both platforms)
+
+| Requirement | Notes |
+|-------------|-------|
+| Python 3.12+ | GitHub Actions: `astral-sh/setup-uv@v5` |
+| `uv` | Installed in CI automatically |
+| Linux agent | Playwright `--with-deps` needs Ubuntu/Debian (Jenkins agent or `ubuntu-latest`) |
+| UAT reachable | CI runner must reach `EFMS_BASE_URL` / `ETMS_BASE_URL` |
+| Credentials | Username + password per app — **never commit** |
+
+#### Step 2 — GitHub Actions setup
+
+1. **Files in repo** (already committed):
+   - `.github/workflows/ci.yml` — pipeline definition
+   - `scripts/ci-run-tests.sh` — shared pytest runner
+
+2. **Add repository secrets** (GitHub → Settings → Secrets and variables → Actions):
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `EFMS_ACCOUNT_USERNAME` | Yes (for eFMS runs) | eFMS login user |
+| `EFMS_ACCOUNT_PASSWORD` | Yes | eFMS login password |
+| `ETMS_ACCOUNT_USERNAME` | Yes (for eTMS runs) | eTMS login user |
+| `ETMS_ACCOUNT_PASSWORD` | Yes | eTMS login password |
+| `RP_API_KEY` | No | ReportPortal — auto-enables when set |
+| `RP_ENDPOINT` | No | e.g. `http://your-rp-server:8080` |
+| `RP_PROJECT` | No | e.g. `automation-techub` |
+
+3. **Trigger behavior:**
+
+| Event | What runs |
+|-------|-----------|
+| Pull Request | **quality** only (lint + typecheck) |
+| Push to `main` | quality + **ui-tests** (default: `APP=efms`, `MARKER=critical`) |
+| Manual (`workflow_dispatch`) | Choose APP, MARKER, BROWSER, HEADLESS |
+
+4. **Manual run:** GitHub → Actions → **CI** → Run workflow.
+
+5. **Download report:** Actions run → Artifacts → `pytest-report-{app}-{marker}`.
+
+#### Step 3 — Jenkins setup
+
+1. **Create Pipeline job** → Pipeline script from SCM → point to repo `Jenkinsfile`.
+
+2. **Add credentials** (Manage Jenkins → Credentials):
+
+| Credential ID | Type | Maps to |
+|---------------|------|---------|
+| `automation-efms-account-password` | Secret text | `EFMS_ACCOUNT_PASSWORD` |
+| `automation-etms-account-password` | Secret text | `ETMS_ACCOUNT_PASSWORD` |
+
+3. **Pipeline parameters** (build with parameters):
 
 | Parameter | Choices | Purpose |
 |-----------|---------|---------|
 | `ENV` | UAT | Target environment |
+| `APP` | efms, etms, all | Application filter |
 | `BROWSER` | chrome, edge | Browser channel |
 | `HEADLESS` | true, false | Headless mode |
-| `MARKER` | critical, high, login, navigation, smoke, regression | Pytest marker filter |
-| `PYTEST_ARGS` | free text | Extra pytest args (e.g. `-m critical`, file path) |
+| `MARKER` | critical, high, login, navigation, smoke, regression, **efms**, **etms** | Pytest filter |
+| `EFMS_ACCOUNT_USERNAME` | string | eFMS user (default `QCTest`) |
+| `ETMS_ACCOUNT_USERNAME` | string | eTMS user |
+| `PYTEST_ARGS` | string | Extra args |
 
-**Pipeline stages:** Checkout → Install (`uv sync`, Playwright browsers) → Quality (`ruff`, `pyright`) → Run Tests → Archive artifacts.
+4. **Stages:** Checkout → Install (`uv sync`, Playwright) → Quality → Run Tests → Archive artifacts.
 
-**Credentials:** Jenkins injects `EFMS_ACCOUNT_PASSWORD`, `ETMS_ACCOUNT_PASSWORD` (or map from credential store).
+5. **Artifacts:** `reports/`, `test-results/`, `logs/` — download from Jenkins build page.
 
-**Artifacts archived:** `reports/`, `test-results/`, `logs/`
+#### Step 4 — Marker + app matrix (how pytest is invoked)
+
+Script `scripts/ci-run-tests.sh` builds the marker expression:
+
+| APP | MARKER | pytest filter |
+|-----|--------|---------------|
+| `efms` | `critical` | `-m "critical and efms"` |
+| `efms` | `efms` | `-m efms` (full eFMS suite) |
+| `etms` | `high` | `-m "high and etms"` |
+| `all` | `login` | `-m login` (both apps) |
+
+Always passes: `--browser {BROWSER} --browser-headless {HEADLESS} --html=reports/report.html`.
+
+**ReportPortal in CI:** set `RP_API_KEY` (+ endpoint/project) in GitHub Secrets or Jenkins env → launch `efms-automation` / `etms-automation` per Section 11.
+
+#### Step 5 — Recommended CI schedules
+
+| Pipeline | When | Suggested params |
+|----------|------|------------------|
+| Smoke (fast) | Every PR | quality only (automatic) |
+| Critical | Push main / nightly | `APP=efms`, `MARKER=critical` |
+| Regression | Weekly manual | `APP=efms`, `MARKER=regression`, `HEADLESS=true` |
+| Full eFMS | Before release | `APP=efms`, `MARKER=efms` |
+| eTMS smoke | After eTMS changes | `APP=etms`, `MARKER=etms` |
+
+#### Step 6 — Verify CI locally (same as pipeline)
 
 ```bash
-# Example: run Critical tests in CI via parameter or PYTEST_ARGS
-MARKER=critical
-# or
-PYTEST_ARGS='tests/efms/test_efms_auth.py --browser chrome --browser-headless true'
+# Quality gate (matches CI job 1)
+uv sync --extra dev
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+
+# UI tests (matches CI job 2 / Jenkins)
+export APP=efms MARKER=critical BROWSER=chrome HEADLESS=true
+export EFMS_ACCOUNT_USERNAME=QCTest EFMS_ACCOUNT_PASSWORD=***
+bash scripts/ci-run-tests.sh
 ```
 
-**Parallel execution (optional, dev deps installed):**
+#### Step 7 — Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Login tests skipped | Set `EFMS_ACCOUNT_PASSWORD` / `ETMS_ACCOUNT_PASSWORD` in CI secrets |
+| Headless sidebar fail | CI uses `HEADLESS=true` + viewport 1920×1080 in `conftest.py` |
+| Playwright browser missing | Run `uv run playwright install --with-deps chrome` in Install stage |
+| ReportPortal 3 launches | Run `-m efms` or `-m etms` separately — Section 11 |
+| Jenkins `sh` fails on Windows agent | Use Linux agent label or convert script to PowerShell |
+
+**Parallel execution (optional, dev deps):**
 
 ```bash
-uv run pytest -m login -n auto --browser chrome --browser-headless true  # pytest-xdist
-uv run pytest --reruns 2 --reruns-delay 3 ...                          # pytest-rerunfailures
+uv run pytest -m "critical and efms" -n auto --browser chrome --browser-headless true
+uv run pytest --reruns 2 --reruns-delay 3 ...
 ```
 
 ---

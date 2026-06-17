@@ -194,18 +194,35 @@ uv run ruff format .
 uv run pyright
 ```
 
-## Jenkins
+## Jenkins & GitHub Actions
 
-`Jenkinsfile` runs: Checkout → Install (`uv sync`, Playwright browsers) → Quality (`ruff`, `pyright`) → Tests → Archive artifacts.
+### GitHub Actions (recommended)
+
+File: `.github/workflows/ci.yml` + `scripts/ci-run-tests.sh`
+
+| Event | Jobs |
+|-------|------|
+| Pull Request | Lint + typecheck only |
+| Push `main` / Manual | Lint + UI tests (Playwright) |
+
+**Secrets:** `EFMS_ACCOUNT_USERNAME`, `EFMS_ACCOUNT_PASSWORD`, `ETMS_ACCOUNT_*`, optional `RP_*`.
+
+**Manual run:** GitHub → Actions → CI → Run workflow → choose APP / MARKER / BROWSER.
+
+### Jenkins
+
+`Jenkinsfile` runs: Checkout → Install → Quality → Tests → Archive artifacts.
 
 | Parameter | Options |
 |-----------|---------|
-| `MARKER` | `critical`, `high`, `login`, `navigation`, `smoke`, `regression` |
+| `APP` | `efms`, `etms`, `all` |
+| `MARKER` | `critical`, `high`, `login`, `navigation`, `smoke`, `regression`, `efms`, `etms` |
 | `BROWSER` | `chrome`, `edge` |
 | `HEADLESS` | `true`, `false` |
-| `PYTEST_ARGS` | Extra pytest args (e.g. `tests/efms/test_efms_auth.py`) |
 
-`EFMS_ACCOUNT_PASSWORD` and `ETMS_ACCOUNT_PASSWORD` are injected from Jenkins credentials (configure per product).
+Credentials: `automation-efms-account-password`, `automation-etms-account-password`.
+
+Full setup: [`ruleAi.md` Section 12.1](ruleAi.md#121-cicd-pipeline-github-actions--jenkins).
 
 ## Adding a new test
 
