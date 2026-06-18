@@ -39,7 +39,7 @@ def test_sanitize_test_report_redacts_longreprtext() -> None:
     class _Report:
         longrepr = (
             "data = {'company': 'LTH Demo JSC'}\n"
-            "efms_account_password = '12345678'"
+            "efms_account_password = 'dummy-value-for-redaction-test'"
         )
 
         @property
@@ -48,5 +48,5 @@ def test_sanitize_test_report_redacts_longreprtext() -> None:
 
     report = _Report()
     sanitize_test_report(report)
-    assert "12345678" not in report.longreprtext
+    assert "dummy-value-for-redaction-test" not in report.longreprtext
     assert "efms_account_password = '***'" in report.longreprtext
