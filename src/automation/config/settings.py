@@ -13,7 +13,6 @@ class Settings(BaseSettings):
     browser_slow_mo: int = 0
     polling_interval: int = 250
     navigation_settle_ms: int = 1000
-    open_url_settle_ms: int = 5000
     headless_viewport_width: int = 1920
     headless_viewport_height: int = 1080
     efms_base_url: str = "https://uat-efms.logtechub.com/"

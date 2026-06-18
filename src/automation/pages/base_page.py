@@ -17,8 +17,6 @@ class BasePage:
     @log_method("Open URL")
     def open_url(self, url: str) -> None:
         self.page.goto(url, wait_until="domcontentloaded")
-        if settings.open_url_settle_ms > 0:
-            self.page.wait_for_timeout(settings.open_url_settle_ms)
         self.wait_for_dom_content_loaded()
 
     @log_method("Wait for DOM content loaded")
