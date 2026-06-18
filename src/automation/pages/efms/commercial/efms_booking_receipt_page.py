@@ -30,9 +30,9 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
 
     add_new_button_selectors = [
         "button:has-text('Add new')",
-        "button:has-text('Add New')",
+        "button:has-text('add new')",
         "xpath=//button[contains(.,'Add new')]",
-        "xpath=//button[contains(.,'Add New')]",
+        "xpath=//button[contains(.,'add new')]",
     ]
 
     add_form_title_selectors = [

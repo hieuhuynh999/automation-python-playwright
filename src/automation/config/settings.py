@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     page_load_timeout: int = 60000
     browser_slow_mo: int = 0
     polling_interval: int = 250
+    open_url_settle_ms: int = 5000
     navigation_settle_ms: int = 1000
     headless_viewport_width: int = 1920
     headless_viewport_height: int = 1080
