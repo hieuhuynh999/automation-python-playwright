@@ -12,7 +12,7 @@ from automation.pages.efms import (
     EfmsTruckingInlandPage,
     EfmsWorkOrderPage,
 )
-from automation.pages.etms import EtmsHomePage
+from automation.pages.etms import EtmsHomePage, EtmsLoginPage
 
 
 class PageManager:
@@ -29,6 +29,7 @@ class PageManager:
         self._efms_trucking_inland_page: EfmsTruckingInlandPage | None = None
         self._efms_services_documentation_page: EfmsServicesDocumentationPage | None = None
         self._etms_home_page: EtmsHomePage | None = None
+        self._etms_login_page: EtmsLoginPage | None = None
 
     @property
     def efms_login_page(self) -> EfmsLoginPage:
@@ -89,6 +90,12 @@ class PageManager:
         if self._efms_services_documentation_page is None:
             self._efms_services_documentation_page = EfmsServicesDocumentationPage(self.page)
         return self._efms_services_documentation_page
+
+    @property
+    def etms_login_page(self) -> EtmsLoginPage:
+        if self._etms_login_page is None:
+            self._etms_login_page = EtmsLoginPage(self.page)
+        return self._etms_login_page
 
     @property
     def etms_home_page(self) -> EtmsHomePage:

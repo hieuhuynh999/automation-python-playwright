@@ -4,45 +4,22 @@ from automation.pages.base_page import BasePage
 
 
 class EtmsHomePage(BasePage):
-    username_selectors = [
-        "input[name='username']",
-        "input[name='userName']",
-        "input[id='username']",
-        "input[id='userName']",
-        "input[autocomplete='username']",
-        "input[placeholder*='Username']",
-        "input[placeholder*='User']",
-        "input[type='email']",
-        "input[type='text']",
-    ]
-    password_selectors = [
-        "input[name='password']",
-        "input[id='password']",
-        "input[autocomplete='current-password']",
-        "input[placeholder*='Password']",
-        "input[type='password']",
-    ]
-    submit_selectors = [
-        "button[type='submit']",
-        "input[type='submit']",
-        "button:has-text('Login')",
-        "button:has-text('Log in')",
-        "button:has-text('Sign in')",
+    dashboard_ready_selectors = [
+        "app-home",
+        "app-main .page-wrapper",
+        ".ftl-main-header",
+        ".page-header.navbar-fixed-top",
     ]
 
-    @log_method("Open eTMS home page")
-    def open(self) -> "EtmsHomePage":
-        self.open_url(settings.etms_base_url)
-        return self
+    @log_method("Verify eTMS dashboard is displayed")
+    def is_dashboard_displayed(self) -> bool:
+        self.wait_for_visible(
+            self.dashboard_ready_selectors,
+            "eTMS dashboard",
+            timeout=settings.page_load_timeout,
+        )
+        return True
 
-    @log_method("Login to eTMS")
-    def login(self, username: str, password: str) -> "EtmsHomePage":
-        self.wait_for_visible(self.username_selectors, "eTMS username input").fill(username)
-        self.wait_for_visible(self.password_selectors, "eTMS password input").fill(password)
-        self.wait_for_visible(self.submit_selectors, "eTMS login button").click()
-        self.wait_for_dom_content_loaded()
-        return self
-
-    @log_method("Check eTMS password field visible")
-    def is_password_field_visible(self) -> bool:
-        return self.find_visible(self.password_selectors) is not None
+    @log_method("Check eTMS home URL")
+    def is_home_url(self, expected_fragment: str = "app/default/home") -> bool:
+        return expected_fragment in self.current_url

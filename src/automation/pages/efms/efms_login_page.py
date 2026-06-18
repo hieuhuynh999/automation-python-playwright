@@ -1,6 +1,7 @@
 from automation.config import settings
 from automation.logging import log_method
 from automation.pages.base_page import BasePage
+from automation.pages.common.native_select_component import NativeSelectComponent
 
 
 class EfmsLoginPage(BasePage):
@@ -34,6 +35,14 @@ class EfmsLoginPage(BasePage):
         "select[name='company']",
     ]
 
+    @property
+    def _company_select(self) -> NativeSelectComponent:
+        return NativeSelectComponent(
+            self,
+            self.company_selectors,
+            "Company dropdown",
+        )
+
     @log_method("Open eFMS login page")
     def open(self) -> "EfmsLoginPage":
         self.open_url(settings.efms_base_url)
@@ -57,10 +66,7 @@ class EfmsLoginPage(BasePage):
 
     @log_method("Select company")
     def select_company(self, company: str) -> "EfmsLoginPage":
-        self.wait_for_visible(
-            self.company_selectors,
-            "Company dropdown",
-        ).select_option(label=company)
+        self._company_select.select_by_label(company)
         return self
 
     @log_method("Click login button")

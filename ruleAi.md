@@ -33,6 +33,7 @@
    - [5.15 End-to-End Walkthrough](#515-end-to-end-walkthrough--one-new-tc-from-scratch)
 6. [How to Write a UI Test (Step-by-Step)](#6-how-to-write-a-ui-test-step-by-step)
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
+   - [7.1 Common Components & Utils](#71-common-components--utils-when-to-use-what)
 8. [How to Write Test Data (JSON)](#8-how-to-write-test-data-json)
 9. [How to Write an API Test](#9-how-to-write-an-api-test)
 10. [How to Write a DB Test](#10-how-to-write-a-db-test)
@@ -58,7 +59,9 @@
 | **eFMS** | `settings.efms_base_url` | `tests/efms/` | `tests/testdata/dataTest-efms.json` | `src/automation/pages/efms/` |
 | **eTMS** | `settings.etms_base_url` | `tests/etms/` | `tests/testdata/dataTest-etms.json` | `src/automation/pages/etms/` |
 
-**Architecture in one line:** `Test → pages fixture → PageManager → {App}Page → BasePage → Playwright`
+**Architecture in one line:** `Test → pages fixture → PageManager → {App}Page → Common Components (composed) → BasePage → Playwright`
+
+**Pure helpers (no browser):** `src/automation/utils/` — string/date/file helpers used by Page Objects or tests.
 
 **Layers NOT implemented yet:** API tests, DB tests — do not scaffold unless explicitly requested (Section 9–10).
 
@@ -74,6 +77,7 @@
 | 6 | **Search existing code first** — extend Page Objects before creating new files (Section 16) |
 | 7 | **No hard-coded waits** — use `settings.*_timeout`, `wait_for_visible`, condition waits (Section 3.6) |
 | 8 | **Selectors in Page Object `*_selectors` lists** — priority order Section 3.4 |
+| 9 | **Reuse UI widgets via `pages/common/`** — ng-select, native select, SweetAlert; do not duplicate in each Page Object (Section 7.1) |
 
 ### 0.3 Mandatory eight-step pipeline
 
@@ -99,6 +103,8 @@ Step 4  ADD JSON test data
 Step 5  CREATE / EXTEND Page Object
         → File: src/automation/pages/{app}/... (Section 7)
         → Add *_selectors + @log_method per manual step + verify method for Expected Result
+        → Reuse pages/common/ for ng-select, native select, SweetAlert (Section 7.1)
+        → Reuse utils/ for pure helpers (text normalize, dates) — no Playwright in utils
 
 Step 6  REGISTER in PageManager (only if new page class)
         → src/automation/pages/page_manager.py — lazy @property
@@ -122,7 +128,7 @@ Step 8  RUN & verify
 | **B — Menu navigation** | Multiple submenu items in one TC | `TestEfmsNavigate` — Section 5.11 | JSON `scenarios[]` + `MENU_ACTIONS` dict |
 | **C — CRUD ordered flow** | Create → read → update → delete same record | `TestEfmsBookingReceipt` — Section 5.13 | Class variable `booking_no`; run tests in order |
 | **D — Single form / action** | One screen, fill + save + verify | FMS_BR_001/002 patterns | `fill_*_form(data)`, assert message |
-| **E — eTMS login** | eTMS only | `test_etms_login.py` — Example B | `DataProvider.etms_cases`, `etms_account_password` |
+| **E — eTMS auth (login + branch)** | eTMS login / branch / home | `TestEtmsAuth` — Example B, Section 4.1 | `EtmsLoginPage` + `EtmsHomePage`; `NgSelectComponent` for branch |
 | **F — New module page** | New sidebar screen | Example F — Section 13 | New POM + PageManager + extend menu base if under Commercial/Logistics/Services |
 
 **Precondition "Login success" (all eFMS tests except auth):**
@@ -133,6 +139,17 @@ pages.efms_login_page.open().login(
 )
 assert pages.efms_home_page.is_dashboard_displayed()
 pages.efms_home_page.wait_for_dashboard_ready()
+```
+
+**Precondition "Login success" (eTMS tests that need home dashboard):**
+
+```python
+pages.etms_login_page.open().login(
+    settings.etms_username, etms_account_password,
+)
+pages.etms_login_page.select_branch(data["branch"])
+pages.etms_login_page.click_select_branch()
+assert pages.etms_home_page.is_dashboard_displayed()
 ```
 
 ### 0.5 User input formats AI must parse
@@ -362,6 +379,11 @@ auotmation-techub/
 │   ├── pages/
 │   │   ├── base_page.py            # BasePage — open_url, wait_for_visible, wait_for_page_stable
 │   │   ├── page_manager.py         # PageManager — lazy page object factory
+│   │   ├── common/                 # Reusable UI components (NOT in PageManager)
+│   │   │   ├── base_component.py   # BaseComponent — compose inside Page Objects
+│   │   │   ├── ng_select_component.py
+│   │   │   ├── native_select_component.py
+│   │   │   └── swal_modal_component.py
 │   │   ├── efms/
 │   │   │   ├── efms_login_page.py          # EfmsLoginPage
 │   │   │   ├── efms_home_page.py           # EfmsHomePage — dashboard, logout
@@ -380,15 +402,21 @@ auotmation-techub/
 │   │   │       ├── services_menu_page.py   # Base — NOT in PageManager
 │   │   │       └── efms_services_documentation_page.py
 │   │   └── etms/
+│   │       ├── etms_login_page.py
 │   │       └── etms_home_page.py
+│   ├── utils/                      # Pure helpers — no Playwright, no selectors
+│   │   └── text_utils.py           # normalize_text, text_contains_any
 │   └── reporting/
 │       ├── reportportal_support.py # ReportPortal ini, patches, step logs, screenshots
-│       └── rerun_support.py        # pytest-rerunfailures config (TEST_RERUNS)
+│       ├── rerun_support.py        # pytest-rerunfailures config (TEST_RERUNS)
+│       └── metadata_support.py     # HTML report Base URL per app (eFMS / eTMS)
 │
 ├── tests/
 │   ├── conftest.py                 # Playwright fixtures + HTML/RP report hooks
 │   ├── conftest_reportportal.py    # ReportPortal pytest hooks (via pytest_plugins)
 │   ├── data_provider.py            # DataProvider — load JSON + auto priority markers
+│   ├── test_text_utils.py          # Unit tests for utils/text_utils
+│   ├── test_reporting_support.py   # Unit tests — retry + secret redaction
 │   ├── testdata/
 │   │   ├── dataTest-efms.json
 │   │   └── dataTest-etms.json
@@ -397,7 +425,7 @@ auotmation-techub/
 │   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
 │   │   └── test_efms_booking_receipt.py                 # FMS_BR_001–005
 │   └── etms/                       # eTMS UI tests
-│       └── test_etms_login.py      # ETMS-LOGIN-001
+│       └── test_etms_auth.py       # TestEtmsAuth — SMK_AUTH_001/002
 │
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
@@ -431,13 +459,13 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_home_page` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page` | `dataTest-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EfmsLoginPage` | `efms_login_page.py` | Open login URL, enter credentials, click login, verify login page |
+| `EfmsLoginPage` | `efms_login_page.py` | Open login URL, credentials, company select (`NativeSelectComponent`), verify login page |
 | `EfmsHomePage` | `efms_home_page.py` | Dashboard ready, logout flow |
 | `EfmsCommercialMenuPage` | `commercial/commercial_menu_page.py` | Base: sidebar, `open_commercial_menu()` — **internal only** |
 | `EfmsAgentPage` | `commercial/efms_agent_page.py` | Agent submenu + Agent List verification |
@@ -450,6 +478,21 @@ auotmation-techub/
 | `EfmsTruckingInlandPage` | `logistics/efms_trucking_inland_page.py` | Trucking Inland submenu + verification |
 | `EfmsServicesMenuPage` | `services/services_menu_page.py` | Base: `open_services_menu()` — **internal only** |
 | `EfmsServicesDocumentationPage` | `services/efms_services_documentation_page.py` | All 8 Services documentation pages (title + URL verify) |
+
+**eTMS Page Object responsibilities:**
+
+| Class | File | Responsibility |
+|-------|------|----------------|
+| `EtmsLoginPage` | `etms/etms_login_page.py` | Login form, branch/hub picker (`NgSelectComponent`), branch verify |
+| `EtmsHomePage` | `etms/etms_home_page.py` | Home URL + dashboard after branch select |
+
+**Common Components (compose inside Page Objects — not in PageManager):**
+
+| Class | File | Widget |
+|-------|------|--------|
+| `NgSelectComponent` | `common/ng_select_component.py` | Angular `ng-select` |
+| `NativeSelectComponent` | `common/native_select_component.py` | HTML `<select>` |
+| `SwalModalComponent` | `common/swal_modal_component.py` | SweetAlert2 popup |
 
 **Default UAT URLs (settings defaults):**
 - eFMS: `https://uat-efms.logtechub.com/`
@@ -472,8 +515,14 @@ auotmation-techub/
 ┌──────────────────────────▼──────────────────────────────────┐
 │  Page Objects (src/automation/pages/{app}/)                   │
 │  Selectors, @log_method actions, verifications               │
+│  Compose Common Components for repeated widgets (ng-select)   │
 │  Module bases: commercial_menu_page, logistics_menu_page,     │
 │                services_menu_page (extend, not in Manager)    │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ composes + inherits
+┌──────────────────────────▼──────────────────────────────────┐
+│  Common Components (pages/common/) — NOT in PageManager       │
+│  NgSelectComponent, NativeSelectComponent, SwalModalComponent │
 └──────────────────────────┬──────────────────────────────────┘
                            │ inherits
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -486,7 +535,8 @@ auotmation-techub/
 └─────────────────────────────────────────────────────────────┘
 
 Supporting layers (not in UI test path):
-  reporting/ → reportportal_support.py (ReportPortal) + pytest-html hooks in conftest
+  utils/     → pure helpers (text, dates) — no browser
+  reporting/ → reportportal_support.py + metadata_support.py (ReportPortal) + pytest-html hooks in conftest
 ```
 
 **Test pyramid (current scope):**
@@ -508,6 +558,7 @@ Supporting layers (not in UI test path):
 | Observability | `@log_method` step logs → HTML report + console + `logs/automation.log` |
 | Failure diagnostics | Screenshot on failure (`test-results/screenshots/`) |
 | Extensibility | New menu module = base class + feature pages + PageManager registration |
+| Reusable widgets | Shared UI in `pages/common/`; pure logic in `utils/` |
 | CI-ready | Jenkinsfile + headless viewport + marker-based suite selection |
 
 ### 2.2 Implemented Test Inventory
@@ -520,13 +571,14 @@ Supporting layers (not in UI test path):
 | SMK_NAV_005 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_logistics_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | SMK_NAV_006 | Navigation | High | `TestEfmsNavigate.test_smk_nav_verify_services_menu_efms` | `tests/efms/test_efms_navigate.py` |
 | FMS_BR_001–005 | Booking Receipt | High | `TestEfmsBookingReceipt` | `tests/efms/test_efms_booking_receipt.py` |
-| ETMS-LOGIN-001 | Login | High | `test_login_etms` | `tests/etms/test_etms_login.py` |
+| SMK_AUTH_001 | Login | Critical | `TestEtmsAuth.test_smk_auth_001_login_success_etms` | `tests/etms/test_etms_auth.py` |
+| SMK_AUTH_002 | Login | Critical | `TestEtmsAuth.test_smk_auth_002_select_branch_etms` | `tests/etms/test_etms_auth.py` |
 
-**Run by priority (from JSON, auto-applied via `DataProvider.efms_cases`):**
+**Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
 ```bash
-uv run pytest -m critical -v --browser chrome --browser-headless true   # SMK_AUTH_001/002
-uv run pytest -m high -v --browser chrome --browser-headless true       # navigation + ETMS-LOGIN-001
+uv run pytest -m critical -v --browser chrome --browser-headless true   # SMK_AUTH_001/002 (eFMS + eTMS)
+uv run pytest -m high -v --browser chrome --browser-headless true       # SMK_NAV_001–006
 uv run pytest -m navigation -v --browser chrome --browser-headless true # SMK_NAV_001–006
 uv run pytest -m login -v --browser chrome --browser-headless true      # all login/logout tests
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
@@ -540,11 +592,13 @@ uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS
 ### 3.1 Page Object Model (POM)
 
 ```
-Test File  →  pages fixture  →  PageManager  →  {App}Page  →  BasePage  →  Playwright Page
+Test File  →  pages fixture  →  PageManager  →  {App}Page  →  Common Components  →  BasePage  →  Playwright Page
 ```
 
 - **Test layer:** assertions + orchestration only
-- **Page layer:** selectors, user actions, element waits
+- **Page layer:** selectors, user actions, element waits; compose shared widgets from `pages/common/`
+- **Component layer:** reusable UI widgets (ng-select, `<select>`, SweetAlert) — **not** in PageManager
+- **Util layer:** pure Python helpers in `utils/` — no selectors, no Playwright
 - **Base layer:** shared navigation, polling, DOM waits
 
 ### 3.2 Data-Driven Pattern
@@ -574,8 +628,12 @@ def test_smk_auth_001_login_success_efms(pages, data, efms_account_password):
     )
 
 # CORRECT — eTMS login (skips if ETMS_ACCOUNT_PASSWORD missing)
-def test_login_etms(pages, data, etms_account_password):
-    pages.etms_home_page.open().login(settings.etms_username, etms_account_password)
+def test_smk_auth_001_login_success_etms(pages, data, etms_account_password):
+    pages.etms_login_page.open()
+    pages.etms_login_page.enter_username(settings.etms_username)
+    pages.etms_login_page.enter_password(etms_account_password)
+    pages.etms_login_page.click_login()
+    assert pages.etms_login_page.is_branch_hub_selection_displayed()
 
 # WRONG — hardcoded password
 def test_login(pages, data):
@@ -921,7 +979,7 @@ Group related test cases in one **test class per module** when they share marker
 |--------|-------|------|---------|
 | Auth (Login/Logout) | `TestEfmsAuth` | `tests/efms/test_efms_auth.py` | `test_smk_auth_001_*`, `test_smk_auth_002_*` |
 | Navigation | `TestEfmsNavigate` | `tests/efms/test_efms_navigate.py` | commercial, logistics, services nav tests |
-| eTMS Login | — | `tests/etms/test_etms_login.py` | `test_login_etms` |
+| Auth (Login + Branch) | `TestEtmsAuth` | `tests/etms/test_etms_auth.py` | `test_smk_auth_001_*`, `test_smk_auth_002_*` |
 
 **Rules:**
 
@@ -929,9 +987,8 @@ Group related test cases in one **test class per module** when they share marker
 2. **Method-level markers** — `@pytest.mark.tc_id("SMK_AUTH_001")` per test case when needed for report fallback.
 3. **Parametrize** — use `DataProvider.efms_cases()` / `etms_cases()` (auto priority markers from JSON).
 4. **First parameter** — always `self` in class methods.
-5. **Standalone tests** — single TC (e.g. `test_etms_login.py`) may remain function-based with `@pytest.mark.smoke`.
 
-**Canonical class template:**
+**Canonical class template (eFMS):**
 
 ```python
 @pytest.mark.login
@@ -951,8 +1008,21 @@ class TestEfmsAuth:
 | Situation | Use |
 |-----------|-----|
 | 2+ related TCs in same module (Auth, Navigation) | Test class |
-| Single TC (e.g. ETMS-LOGIN-001) | Standalone function |
-| New module with only 1 TC planned | Standalone function — refactor to class when 2nd TC added |
+| Single TC in a new module | Standalone function — refactor to class when 2nd TC added |
+
+**eTMS auth class template:**
+
+```python
+@pytest.mark.login
+@pytest.mark.etms
+class TestEtmsAuth:
+    @pytest.mark.parametrize(
+        "data", DataProvider.etms_cases("test_smk_auth_001_login_success_etms"),
+    )
+    @pytest.mark.tc_id("SMK_AUTH_001")
+    def test_smk_auth_001_login_success_etms(self, pages, data, etms_account_password):
+        ...
+```
 
 ---
 
@@ -1625,6 +1695,41 @@ class EfmsShipmentPage(BasePage):
         )
 ```
 
+### 7.1 Common Components & Utils (when to use what)
+
+| Layer | Location | Register in PageManager? | Use when |
+|-------|----------|--------------------------|----------|
+| **Page Object** | `pages/{app}/` | Yes (screens) | Full screen / route — login, home, booking receipt |
+| **Module base** | `pages/{app}/commercial/` etc. | No | Shared navigation within one menu module |
+| **Common Component** | `pages/common/` | No | Same UI widget on multiple pages — `ng-select`, `<select>`, SweetAlert |
+| **Util** | `utils/` | N/A | Pure Python — normalize text, dates, file paths; **no selectors, no Playwright** |
+| **BasePage** | `base_page.py` | N/A | Low-level wait/navigation primitives every page inherits |
+
+**Compose components inside Page Objects** — selectors stay on the Page Object; pass `self` as owner:
+
+```python
+from automation.pages.common.ng_select_component import NgSelectComponent
+
+@property
+def _branch_select(self) -> NgSelectComponent:
+    return NgSelectComponent(self, self.branch_hub_selectors, "eTMS Branch/Hub dropdown")
+
+@log_method("Select branch")
+def select_branch(self, branch_code: str) -> "EtmsLoginPage":
+    self._branch_select.select_option_by_text(branch_code)
+    return self
+```
+
+**Available components:**
+
+| Class | Widget | Used by |
+|-------|--------|---------|
+| `NgSelectComponent` | Angular `ng-select` | eTMS branch picker; migrate eFMS form fields when touching those pages |
+| `NativeSelectComponent` | HTML `<select>` | eFMS company dropdown |
+| `SwalModalComponent` | SweetAlert2 popup | eFMS confirm/delete — use in new code; `efms_booking_receipt_page` can migrate incrementally |
+
+**Do NOT** put `page.locator()` in tests or utils. **Do NOT** register components in `PageManager`.
+
 ### BasePage methods available
 
 | Method | Usage |
@@ -1700,7 +1805,7 @@ from tests.data_provider import DataProvider
 
 # Always use *_cases() — auto priority markers from JSON
 @pytest.mark.parametrize("data", DataProvider.efms_cases("test_smk_auth_001_login_success_efms"))
-@pytest.mark.parametrize("data", DataProvider.etms_cases("test_login_etms"))
+@pytest.mark.parametrize("data", DataProvider.etms_cases("test_smk_auth_001_login_success_etms"))
 ```
 
 ---
@@ -1743,7 +1848,7 @@ from tests.data_provider import DataProvider
 @pytest.mark.navigation     # eFMS menu navigation suite
 @pytest.mark.efms           # eFMS application
 @pytest.mark.etms           # eTMS application (NOT etmss)
-@pytest.mark.smoke          # smoke suite (manual — e.g. test_etms_login.py)
+@pytest.mark.smoke          # smoke suite (manual — optional on specific tests)
 @pytest.mark.regression     # regression suite
 @pytest.mark.tc_id("SMK_AUTH_001")       # fallback when JSON tc_id absent
 @pytest.mark.description("Login eFMS Successfully")  # fallback description
@@ -1753,9 +1858,9 @@ from tests.data_provider import DataProvider
 
 | Command | Collects |
 |---------|----------|
-| `-m critical` | SMK_AUTH_001, SMK_AUTH_002 |
-| `-m high` | SMK_NAV_001–006, ETMS-LOGIN-001 |
-| `-m login` | SMK_AUTH_001/002 + ETMS-LOGIN-001 |
+| `-m critical` | SMK_AUTH_001/002 (eFMS + eTMS) |
+| `-m high` | SMK_NAV_001–006, FMS_BR_001–005 |
+| `-m login` | All auth tests (`TestEfmsAuth`, `TestEtmsAuth`) |
 | `-m navigation` | SMK_NAV commercial/logistics/services |
 | `-m "login and efms"` | eFMS auth tests only |
 | `-m efms` / `-m etms` | All tests for one app; ReportPortal uses separate launch name |
@@ -1765,10 +1870,22 @@ from tests.data_provider import DataProvider
 
 | Hook | Behavior |
 |------|----------|
+| `pytest_configure` | Report metadata: Environment, Browser, Headless, Timeout, **Base URL** (initial guess) |
+| `pytest_collection_modifyitems` | Refine **Base URL** from collected tests (accurate per run) |
 | `pytest_html_report_title` | Report title: "Automation Report" |
 | `pytest_runtest_makereport` | Enriches report: TC_ID, description, method logs, failure screenshot |
 | `pytest_html_results_table_*` | Custom "Test Case" column (not raw nodeid) |
 | Multi-scenario tests | Shows `test_case_ids[]` + per-scenario breakdown in extras |
+
+**HTML metadata `Base URL`** (`metadata_support.resolve_report_base_url`):
+
+| Run scope | `Base URL` value |
+|-----------|------------------|
+| `pytest -m efms` or `tests/efms/` only | `settings.efms_base_url` |
+| `pytest -m etms` or `tests/etms/` only | `settings.etms_base_url` |
+| Mixed suite (both apps) or unit tests only | `eFMS: {efms_base_url} \| eTMS: {etms_base_url}` |
+
+Priority: collected test paths → CLI paths → `-m` marker expression.
 
 **Report outputs:**
 - HTML: `reports/report.html` (via `--html=... --self-contained-html`)
@@ -2092,23 +2209,39 @@ uv run pytest tests/efms/test_efms_auth.py -v \
 
 ---
 
-### Example B — eTMS Login Test ✅ Current Pattern
+### Example B — eTMS Auth (Login + Branch) ✅ CANONICAL
 
 **Test data** — `tests/testdata/dataTest-etms.json`:
 ```json
 {
-    "test_login_etms": [
+    "test_smk_auth_001_login_success_etms": [
         {
-            "test_case_id": "ETMS-LOGIN-001",
+            "test_case_id": "SMK_AUTH_001",
             "description": "Login eTMS successfully",
-            "priority": "High",
-            "expected_url_contains": "staging-itllog-etms.logtechub.com"
+            "module": "Login",
+            "priority": "critical",
+            "preconditions": "User active"
+        }
+    ],
+    "test_smk_auth_002_select_branch_etms": [
+        {
+            "test_case_id": "SMK_AUTH_002",
+            "description": "Select Branch/Hub VNHCM successfully",
+            "module": "Login",
+            "priority": "critical",
+            "preconditions": "Login success",
+            "branch": "VNHCM",
+            "expected_url_contains": "app/default/home"
         }
     ]
 }
 ```
 
-**Test file** — `tests/etms/test_etms_login.py`:
+**Page objects:**
+- `EtmsLoginPage` — login form + branch picker (`NgSelectComponent` for `ng-select`)
+- `EtmsHomePage` — verify home URL + dashboard after branch select
+
+**Test file** — `tests/etms/test_etms_auth.py`:
 ```python
 import pytest
 
@@ -2116,19 +2249,47 @@ from automation.config import settings
 from tests.data_provider import DataProvider
 
 
-@pytest.mark.parametrize("data", DataProvider.etms_cases("test_login_etms"))
 @pytest.mark.login
-@pytest.mark.smoke
 @pytest.mark.etms
-def test_login_etms(pages, data, etms_account_password):
-    pages.etms_home_page.open().login(
-        settings.etms_username,
-        etms_account_password,
+class TestEtmsAuth:
+    @pytest.mark.parametrize(
+        "data", DataProvider.etms_cases("test_smk_auth_001_login_success_etms"),
     )
+    @pytest.mark.tc_id("SMK_AUTH_001")
+    def test_smk_auth_001_login_success_etms(self, pages, data, etms_account_password):
+        # Step 1: Open Login Page
+        pages.etms_login_page.open()
+        # Step 2–4: Enter credentials and login
+        pages.etms_login_page.enter_username(settings.etms_username)
+        pages.etms_login_page.enter_password(etms_account_password)
+        pages.etms_login_page.click_login()
+        # Expected: Branch/Hub selection screen
+        assert pages.etms_login_page.is_branch_hub_selection_displayed()
 
-    assert not pages.etms_home_page.is_password_field_visible()
-    assert data["expected_url_contains"] in pages.etms_home_page.current_url
+    @pytest.mark.parametrize(
+        "data", DataProvider.etms_cases("test_smk_auth_002_select_branch_etms"),
+    )
+    @pytest.mark.tc_id("SMK_AUTH_002")
+    def test_smk_auth_002_select_branch_etms(self, pages, data, etms_account_password):
+        pages.etms_login_page.open().login(
+            settings.etms_username,
+            etms_account_password,
+        )
+        assert pages.etms_login_page.is_branch_hub_selection_displayed()
+        pages.etms_login_page.select_branch(data["branch"])
+        assert pages.etms_login_page.is_branch_selected(data["branch"])
+        pages.etms_login_page.click_select_branch()
+        assert pages.etms_home_page.is_home_url(data["expected_url_contains"])
+        assert pages.etms_home_page.is_dashboard_displayed()
 ```
+
+**Run:**
+```bash
+uv run pytest tests/etms/test_etms_auth.py -v \
+  --browser chrome --browser-headless false -m etms --reportportal
+```
+
+> **Branch verify:** UI hiển thị tên tiếng Việt (vd. "Hồ Chí Minh"), không phải mã `VNHCM`. Dùng `_branch_display_hints` + `text_utils.text_contains_any()` trong `EtmsLoginPage`.
 
 ---
 
@@ -2186,26 +2347,10 @@ def test_login_efms_invalid_company(pages, data, efms_account_password):
 
 ---
 
-### Example E — eTMS Data-Driven Login ✅ IMPLEMENTED (same as Example C)
+### Example E — eTMS Data-Driven Auth ✅ IMPLEMENTED (same as Example B)
 
-**Test data** — `tests/testdata/dataTest-etms.json`:
-```json
-{
-    "test_login_etms": [
-        {
-            "test_case_id": "ETMS-LOGIN-001",
-            "description": "Login eTMS successfully",
-            "priority": "High",
-            "expected_url_contains": "staging-itllog-etms.logtechub.com"
-        }
-    ]
-}
-```
-
-**Test file** — `tests/etms/test_etms_login.py`:
-```python
-@pytest.mark.parametrize("data", DataProvider.etms_cases("test_login_etms"))
-```
+Use `TestEtmsAuth` + JSON keys `test_smk_auth_001_login_success_etms` / `test_smk_auth_002_select_branch_etms`.  
+**Removed:** `test_etms_login.py`, `ETMS-LOGIN-001`, login logic on `EtmsHomePage`.
 
 ---
 
@@ -2324,7 +2469,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 | 2 | Headless with `no_viewport=True` | Sidebar click "outside viewport" | Headless uses `headless_viewport_width/height` in conftest |
 | 3 | `@pytest.mark.etmss` typo | Marker filter `-m etms` won't match | Always use `@pytest.mark.etms` |
 | 4 | Login tests without `efms_account_password` fixture | Tests fail instead of skip | Always inject `efms_account_password` fixture |
-| 5 | `dataTest-etms.json` wrong key / hardcoded password | DataProvider fails or security risk | **Fixed** — `test_login_etms` + no credentials in JSON |
+| 5 | `dataTest-etms.json` wrong key / hardcoded password | DataProvider fails or security risk | **Fixed** — keys `test_smk_auth_*`; no credentials in JSON |
 | 6 | `open_url()` settle wait + reload | Every navigation is slow | Tune via `settings.open_url_settle_ms` — do not hardcode ms |
 | 7 | Jenkins `MARKER` dropdown missing `critical`/`navigation` | CI cannot select by priority from UI | **Fixed** — MARKER includes critical, high, navigation |
 | 8 | `EfmsNavigationPage` removed | Old docs reference deleted class | Use module-specific pages under `commercial/`, `logistics/`, `services/` |
@@ -2363,7 +2508,11 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 
 ### P1 — High (consistency)
 
-- [x] **Fix `dataTest-etms.json`** — rename key to `test_login_etms`, remove hardcoded password, add `priority`
+- [x] **Fix `dataTest-etms.json`** — SMK_AUTH_001/002 keys, no hardcoded password, `priority: critical`
+- [x] **Migrate eTMS auth** — `TestEtmsAuth`, `EtmsLoginPage`, branch flow via `NgSelectComponent`
+- [x] **Common Components layer** — `pages/common/` (ng-select, native select, SweetAlert)
+- [x] **Utils layer** — `utils/text_utils.py` (`normalize_text`, `text_contains_any`)
+- [x] **HTML Base URL metadata** — `metadata_support.py` picks eFMS vs eTMS URL per run
 - [x] **Migrate login tests** to `DataProvider.*_cases()` + product password fixtures
 - [x] **ReportPortal integration** — auto-enable, display names, per-app launches
 - [x] **Update Jenkinsfile** — add `critical`, `navigation`, `high` to MARKER choices
@@ -2377,6 +2526,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 - [ ] **Shared `conftest.py` per app** (`tests/efms/conftest.py`) for login precondition fixture
 - [ ] **Extract `MENU_ACTIONS` dicts** to shared module if duplicated across new nav tests
 - [ ] **AGENTS.md** reference to this `ruleAi.md`
+- [ ] **Migrate Booking Receipt** — inline ng-select/swal → `NgSelectComponent` / `SwalModalComponent` when touching that page
 - [ ] **Tighten fallback selectors** — remove overly broad `input[type='text']` where possible
 
 ### P3 — Low (nice to have)
@@ -2400,35 +2550,42 @@ When implementing a new test or Page Object method, run this checklist **in orde
 
 ```
 1. Search Page Objects     → src/automation/pages/{efms|etms}/
-2. Search BasePage         → src/automation/pages/base_page.py
-3. Search PageManager      → src/automation/pages/page_manager.py
-4. Search existing tests   → tests/{app}/  (see how similar flows are done)
-5. Search fixtures         → tests/conftest.py
-6. Search utilities        → src/automation/{logging,reporting}/
-7. Search test data        → tests/testdata/dataTest-{app}.json
+2. Search Common Components→ src/automation/pages/common/  (ng-select, swal, native select)
+3. Search Utils            → src/automation/utils/  (pure helpers — no Playwright)
+4. Search BasePage         → src/automation/pages/base_page.py
+5. Search PageManager      → src/automation/pages/page_manager.py
+6. Search existing tests   → tests/{app}/  (see how similar flows are done)
+7. Search fixtures         → tests/conftest.py
+8. Search reporting/config → src/automation/{reporting,config}/  (metadata_support, secret_redaction, RP)
+9. Search test data        → tests/testdata/dataTest-{app}.json
 ```
 
-**Only after steps 1–7 return no match** → write a new method or file.
+**Only after steps 1–9 return no match** → write a new method or file.
 
 ### 16.2 Where to look (reuse map)
 
 | Need | Search here first | Reuse example |
 |------|-------------------|---------------|
-| Login | `EfmsLoginPage` | `open()`, `login()`, `click_login()`, `is_login_page_displayed()` |
-| Logout / dashboard | `EfmsHomePage` | `is_dashboard_displayed()`, `wait_for_dashboard_ready()`, `click_logout()` |
+| Login (eFMS) | `EfmsLoginPage` | `open()`, `login()`, `NativeSelectComponent` for company |
+| Login (eTMS) | `EtmsLoginPage` | `open()`, `login()`, `select_branch()`, `NgSelectComponent` |
+| eTMS home | `EtmsHomePage` | `is_dashboard_displayed()`, `is_home_url()` |
+| ng-select dropdown | `NgSelectComponent` | `select_option_by_text()`, `get_selected_text()` |
+| HTML `<select>` | `NativeSelectComponent` | `select_by_label()` |
+| SweetAlert2 popup | `SwalModalComponent` | `click_confirm()`, `is_message_visible()` |
+| Text matching (branch labels) | `utils/text_utils.py` | `normalize_text()`, `text_contains_any()` |
+| Logout / dashboard (eFMS) | `EfmsHomePage` | `is_dashboard_displayed()`, `wait_for_dashboard_ready()`, `click_logout()` |
 | Commercial navigation | `EfmsAgentPage`, `EfmsCustomerPage`, … | `click_*_menu()`, `is_*_displayed()` — extend `EfmsCommercialMenuPage` |
 | Commercial menu base | `commercial_menu_page.py` | `open_commercial_menu()`, `wait_for_sidebar_ready()` — extend, do not duplicate |
 | Logistics navigation | `EfmsJobManagementPage`, `EfmsCustomClearancePage`, `EfmsTruckingInlandPage` | Same pattern — extend `EfmsLogisticsMenuPage` |
 | Logistics menu base | `logistics_menu_page.py` | `open_logistics_menu()` — extend, do not duplicate |
 | Services navigation | `EfmsServicesDocumentationPage` | All 8 doc pages — extend `EfmsServicesMenuPage` |
 | Services menu base | `services_menu_page.py` | `open_services_menu()` — extend, do not duplicate |
-| eTMS login | `EtmsHomePage` | `open()`, `login()` |
 | Wait for element | `BasePage` | `wait_for_visible()`, `wait_for_page_stable()`, `wait_for_dom_content_loaded()` |
 | Open URL + reload | `BasePage` | `open_url()` — tune `open_url_settle_ms`, do not copy wait logic |
 | Credentials | `conftest.py` + `settings` | `efms_account_password` / `etms_account_password`, `settings.efms_username` |
 | Test data loading | `DataProvider` | `DataProvider.efms_cases("test_...")` / `etms_cases("test_...")` |
 | Step logging | `step_logger.py` | `@log_method` decorator |
-| Page access in test | `PageManager` | `pages.efms_login_page`, `pages.efms_home_page`, `pages.efms_agent_page`, … |
+| Page access in test | `PageManager` | `pages.efms_login_page`, `pages.etms_login_page`, `pages.etms_home_page`, … |
 
 ### 16.3 Reuse rules (DO)
 
@@ -2441,9 +2598,39 @@ When implementing a new test or Page Object method, run this checklist **in orde
 | Multi TC in one test (SMK_NAV_001–004) | JSON `test_case_ids[]` + `scenarios[]`; `goto #/home` between commercial scenarios |
 | Multi step in one TC (SMK_NAV_005/006) | JSON `scenarios[]` + `menu_action` dict in test file; open parent menu once |
 | Similar selector on same page | Add to existing `*_selectors` list — do not duplicate selector arrays |
+| Similar widget on 2+ pages (ng-select, swal) | Extend or use existing class in `pages/common/` — do not copy-paste open/click/wait |
+| Text normalize / hint matching | `utils/text_utils.py` — not inline in Page Object unless one-off |
 | Same JSON company / metadata | Reuse existing JSON fields — do not duplicate rows with identical data |
 
 ### 16.4 Anti-patterns (DO NOT)
+
+```python
+# WRONG — duplicate ng-select open/option/close logic in every Page Object
+def select_branch(self, code):
+    self.page.locator("ng-select").click()
+    self.page.locator(".ng-option").filter(has_text=code).click()
+
+# CORRECT — compose NgSelectComponent (Section 7.1)
+def select_branch(self, code):
+    self._branch_select.select_option_by_text(code)
+    return self
+```
+
+```python
+# WRONG — put Playwright locators in utils/
+# utils/dropdown_utils.py with page.locator(...)
+
+# CORRECT — utils are pure Python only
+from automation.utils.text_utils import text_contains_any
+```
+
+```python
+# WRONG — register NgSelectComponent in PageManager
+@property
+def branch_select(self) -> NgSelectComponent: ...
+
+# CORRECT — private @property on Page Object, compose internally
+```
 
 ```python
 # WRONG — duplicate login logic in test instead of reusing login()
@@ -2558,7 +2745,10 @@ Before finishing any automation task, verify:
 [ ] Searched existing Page Objects / BasePage / fixtures — reused before creating (Section 16)
 [ ] No hard-coded waits — all timing from settings or condition-based waits (Section 3.6)
 [ ] Dashboard verify uses dashboard_ready_selectors (headless-safe), not h3 is_visible alone
-[ ] Login on EfmsLoginPage, dashboard/logout on EfmsHomePage — not mixed on one page
+[ ] Searched pages/common/ + utils/ before adding widget or text logic (Section 7.1, 16.1)
+[ ] ng-select / native select / SweetAlert use Common Components — not duplicated inline
+[ ] utils/ has no Playwright imports — pure helpers only
+[ ] Login on EfmsLoginPage / EtmsLoginPage — dashboard on EfmsHomePage / EtmsHomePage
 [ ] No duplicate login, wait, or selector logic — composite methods call step methods
 [ ] New Page Object file only when existing page cannot own the feature
 [ ] Read manual test case sheet and mapped all columns (Section 5.1)
@@ -2675,4 +2865,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-18 | Framework: efms-etms-automation 1.0.0 | Retry: TEST_RERUNS=1 | Secret redaction: secret_redaction.py + apply_reportportal_patches()*
+*Last updated: 2026-06-16 | POM: pages/common + utils | eTMS: TestEtmsAuth | HTML Base URL: metadata_support.py | Retry + secret redaction*

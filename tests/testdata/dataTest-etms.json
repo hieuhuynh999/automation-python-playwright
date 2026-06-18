@@ -1,10 +1,22 @@
 {
-    "test_login_etms": [
+    "test_smk_auth_001_login_success_etms": [
         {
-            "test_case_id": "ETMS-LOGIN-001",
+            "test_case_id": "SMK_AUTH_001",
             "description": "Login eTMS successfully",
-            "priority": "High",
-            "expected_url_contains": "staging-itllog-etms.logtechub.com"
+            "module": "Login",
+            "priority": "critical",
+            "preconditions": "User active"
+        }
+    ],
+    "test_smk_auth_002_select_branch_etms": [
+        {
+            "test_case_id": "SMK_AUTH_002",
+            "description": "Select Branch/Hub VNHCM successfully",
+            "module": "Login",
+            "priority": "critical",
+            "preconditions": "Login success",
+            "branch": "VNHCM",
+            "expected_url_contains": "app/default/home"
         }
     ]
 }

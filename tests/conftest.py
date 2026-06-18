@@ -14,6 +14,7 @@ from automation.config import get_settings, settings
 from automation.config.secret_redaction import sanitize_test_report
 from automation.logging import get_step_logs, logger, reset_step_logs, safe_terminal_print
 from automation.pages import PageManager
+from automation.reporting.metadata_support import resolve_report_base_url
 from automation.reporting.reportportal_support import (
     attach_failure_screenshot,
     attach_text_artifact,
@@ -55,7 +56,22 @@ def pytest_configure(config: pytest.Config) -> None:
     metadata["Browser"] = browser_name
     metadata["Headless"] = str(headless)
     metadata["Timeout"] = str(settings.browser_timeout)
-    metadata["Base URL"] = settings.efms_base_url
+    metadata["Base URL"] = resolve_report_base_url(
+        markexpr=config.option.markexpr or "",
+        test_paths=tuple(str(arg) for arg in config.args),
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    metadata = config.stash[metadata_key]
+    metadata["Base URL"] = resolve_report_base_url(
+        markexpr=config.option.markexpr or "",
+        test_paths=tuple(str(arg) for arg in config.args),
+        collected_item_paths=tuple(str(item.path) for item in items),
+    )
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:

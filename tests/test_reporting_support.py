@@ -1,6 +1,7 @@
 """Unit tests for retry helpers and secret redaction in reports."""
 
 from automation.config.secret_redaction import redact_secrets, sanitize_test_report
+from automation.reporting.metadata_support import resolve_report_base_url
 from automation.reporting.rerun_support import is_rerun_report
 
 
@@ -50,3 +51,27 @@ def test_sanitize_test_report_redacts_longreprtext() -> None:
     sanitize_test_report(report)
     assert "dummy-value-for-redaction-test" not in report.longreprtext
     assert "efms_account_password = '***'" in report.longreprtext
+
+
+def test_resolve_report_base_url_efms_marker() -> None:
+    url = resolve_report_base_url(markexpr="efms")
+    assert "uat-efms" in url
+    assert "etms" not in url.lower() or "efms" in url.lower()
+
+
+def test_resolve_report_base_url_etms_path() -> None:
+    url = resolve_report_base_url(
+        collected_item_paths=("tests/etms/test_etms_auth.py",),
+    )
+    assert "etms" in url.lower()
+
+
+def test_resolve_report_base_url_mixed_suite() -> None:
+    url = resolve_report_base_url(
+        collected_item_paths=(
+            "tests/efms/test_efms_auth.py",
+            "tests/etms/test_etms_auth.py",
+        ),
+    )
+    assert "eFMS:" in url
+    assert "eTMS:" in url
