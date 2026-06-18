@@ -8,10 +8,14 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from reportportal_client import RPLogger
 
+from automation.config.secret_redaction import redact_secrets, sanitize_test_report
+from automation.reporting.rerun_support import is_rerun_report
+
 if TYPE_CHECKING:
     from playwright.sync_api import Page
 
 _RP_LOGGER: logging.Logger | None = None
+_RP_PATCH_APPLIED = False
 
 
 def _load_dotenv_early() -> None:
@@ -294,3 +298,47 @@ def attach_text_artifact(name: str, content: str) -> None:
             "mime": "text/plain",
         },
     )
+
+
+def apply_reportportal_patches() -> None:
+    """Patch ReportPortal agent: skip rerun attempts + redact passwords in failure logs."""
+    global _RP_PATCH_APPLIED
+    if _RP_PATCH_APPLIED:
+        return
+
+    try:
+        from pytest_reportportal.service import PyTestService
+    except ImportError:
+        return
+
+    original_process = PyTestService.process_results
+    original_post_log = PyTestService.post_log
+
+    def process_results_patched(
+        self: Any,
+        test_item: pytest.Item,
+        report: pytest.TestReport,
+    ) -> None:
+        if is_rerun_report(report):
+            return
+        sanitize_test_report(report)
+        original_process(self, test_item, report)
+
+    def post_log_patched(
+        self: Any,
+        test_item: pytest.Item,
+        message: str,
+        log_level: str = "INFO",
+        attachment: Any | None = None,
+    ) -> None:
+        original_post_log(
+            self,
+            test_item,
+            redact_secrets(str(message)),
+            log_level=log_level,
+            attachment=attachment,
+        )
+
+    PyTestService.process_results = process_results_patched  # type: ignore[method-assign]
+    PyTestService.post_log = post_log_patched  # type: ignore[method-assign]
+    _RP_PATCH_APPLIED = True

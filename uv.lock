@@ -230,12 +230,12 @@ dependencies = [
     { name = "pytest-html" },
     { name = "pytest-metadata" },
     { name = "pytest-reportportal" },
+    { name = "pytest-rerunfailures" },
 ]
 
 [package.optional-dependencies]
 dev = [
     { name = "pyright" },
-    { name = "pytest-rerunfailures" },
     { name = "pytest-xdist" },
     { name = "ruff" },
 ]
@@ -250,7 +250,7 @@ requires-dist = [
     { name = "pytest-html", specifier = ">=4.1.1" },
     { name = "pytest-metadata", specifier = ">=3.1.1" },
     { name = "pytest-reportportal", specifier = ">=5.6.8" },
-    { name = "pytest-rerunfailures", marker = "extra == 'dev'", specifier = ">=15.1" },
+    { name = "pytest-rerunfailures", specifier = ">=15.1" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.13" },
 ]

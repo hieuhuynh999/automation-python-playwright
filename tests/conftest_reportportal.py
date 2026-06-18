@@ -10,15 +10,19 @@ from automation.config import get_settings
 from automation.logging import logger
 from automation.reporting.reportportal_support import (
     apply_reportportal_display_names,
+    apply_reportportal_patches,
     configure_reportportal_ini,
     load_dotenv_for_reportportal,
 )
+from automation.reporting.rerun_support import configure_pytest_reruns
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
     load_dotenv_for_reportportal()
     get_settings.cache_clear()
+    configure_pytest_reruns(config)
+    apply_reportportal_patches()
     rp_ready = configure_reportportal_ini(config)
 
     api_key = config.getini("rp_api_key") or os.getenv("RP_API_KEY")

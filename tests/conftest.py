@@ -11,6 +11,7 @@ from pytest_html import extras
 from pytest_metadata.plugin import metadata_key
 
 from automation.config import get_settings, settings
+from automation.config.secret_redaction import sanitize_test_report
 from automation.logging import get_step_logs, logger, reset_step_logs, safe_terminal_print
 from automation.pages import PageManager
 from automation.reporting.reportportal_support import (
@@ -21,6 +22,7 @@ from automation.reporting.reportportal_support import (
     log_step_lines,
     resolve_test_display_name,
 )
+from automation.reporting.rerun_support import is_rerun_report
 
 pytest_plugins = ["tests.conftest_reportportal"]
 
@@ -57,6 +59,11 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
+    reruns = session.config.getoption("reruns", default=0)
+    if reruns:
+        delay = session.config.getoption("reruns_delay", default=0)
+        logger.info("Test rerun enabled: reruns={} delay={}s", reruns, delay)
+
     if is_reportportal_enabled(session.config):
         get_rp_logger()
         endpoint = str(session.config.getini("rp_endpoint")).rstrip("/")
@@ -260,6 +267,8 @@ def pytest_runtest_makereport(
 ):
     outcome = yield
     report = outcome.get_result()
+    if report.failed:
+        sanitize_test_report(report)
     if report.when not in {"setup", "call"}:
         return
 
@@ -332,7 +341,7 @@ def pytest_runtest_makereport(
                     name="Scenarios",
                 )
             )
-        if is_reportportal_enabled(item.config):
+        if is_reportportal_enabled(item.config) and not is_rerun_report(report):
             attach_text_artifact("Test Case IDs", test_case_ids_text)
             if scenario_lines:
                 attach_text_artifact("Scenarios", "\n".join(scenario_lines))
@@ -347,14 +356,16 @@ def pytest_runtest_makereport(
 
         cast(Any, report).method_logs = method_logs
 
-    if method_logs and is_reportportal_enabled(item.config):
+    if method_logs and is_reportportal_enabled(item.config) and not is_rerun_report(report):
         log_step_lines(method_logs)
 
     # ==========================
     # Console Logging
     # ==========================
 
-    if report.passed:
+    if is_rerun_report(report):
+        logger.warning("RERUN (attempt {}): {}", getattr(report, "rerun", "?"), report.test_name)
+    elif report.passed:
         logger.success(message)
 
     elif report.skipped:
@@ -364,10 +375,10 @@ def pytest_runtest_makereport(
         logger.error(message)
 
     # ==========================
-    # Screenshot Failed Only
+    # Screenshot Failed Only (final attempt — skip intermediate rerun failures)
     # ==========================
 
-    if not report.failed:
+    if not report.failed or is_rerun_report(report):
         return
 
     page = cast(Any, item).funcargs.get("page")
@@ -391,7 +402,7 @@ def pytest_runtest_makereport(
 
     report.extras.append(extras.image(str(screenshot_path.absolute()), name="Failure Screenshot"))
 
-    if is_reportportal_enabled(item.config):
+    if is_reportportal_enabled(item.config) and not is_rerun_report(report):
         attach_failure_screenshot(page, report.test_name)
 
 
@@ -410,7 +421,11 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     tc_id = getattr(report, "tc_id", "")
     test_name = report.nodeid.split("::")[-1]
 
-    safe_terminal_print(f"[{report.outcome.upper()}] [{tc_id}] {test_name}")
+    if report.outcome == "rerun":
+        attempt = getattr(report, "rerun", "?")
+        safe_terminal_print(f"[RERUN attempt {attempt}] [{tc_id}] {test_name}")
+    else:
+        safe_terminal_print(f"[{report.outcome.upper()}] [{tc_id}] {test_name}")
 
 
 def pytest_html_results_table_header(cells):

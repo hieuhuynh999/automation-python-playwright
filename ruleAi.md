@@ -354,7 +354,8 @@ auotmation-techub/
 ├── conftest.py                     # Early hooks — load .env, auto-enable ReportPortal
 ├── src/automation/                 # Framework package (import as `automation`)
 │   ├── config/
-│   │   └── settings.py             # Pydantic Settings — all env config
+│   │   ├── settings.py             # Pydantic Settings — all env config
+│   │   └── secret_redaction.py     # Redact passwords in pytest/RP failure output
 │   ├── logging/
 │   │   ├── logger.py               # Loguru file logger
 │   │   └── step_logger.py          # @log_method decorator + step logs
@@ -381,7 +382,8 @@ auotmation-techub/
 │   │   └── etms/
 │   │       └── etms_home_page.py
 │   └── reporting/
-│       └── reportportal_support.py # ReportPortal ini, display names, step logs, screenshots
+│       ├── reportportal_support.py # ReportPortal ini, patches, step logs, screenshots
+│       └── rerun_support.py        # pytest-rerunfailures config (TEST_RERUNS)
 │
 ├── tests/
 │   ├── conftest.py                 # Playwright fixtures + HTML/RP report hooks
@@ -1788,6 +1790,8 @@ from tests.data_provider import DataProvider
 | Display name | `{test_case_id} - {description}` from JSON via `@pytest.mark.name` |
 | Step logs | `log_step_lines()` → ReportPortal on test finish |
 | Failure screenshot | `attach_failure_screenshot()` → full-page PNG |
+| Test retry | `pytest-rerunfailures` — default **1** retry via `TEST_RERUNS`; pytest logs every attempt, ReportPortal only final pass/fail |
+| Secret redaction | `secret_redaction.sanitize_test_report()` + `apply_reportportal_patches()` — che password trong traceback/HTML/ReportPortal |
 | View results | `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all` |
 
 **Env vars (per-app launches only):**
@@ -1800,6 +1804,38 @@ from tests.data_provider import DataProvider
 | `RP_LAUNCH_DESCRIPTION_ETMS` | eTMS UI automation | eTMS launch |
 
 **Dashboard tip:** Filter launch name `efms-automation` vs `etms-automation`, or filter test attribute `Application:efms` / `Application:etms`.
+
+### Test retry (pytest-rerunfailures)
+
+| Item | Behavior |
+|------|----------|
+| Default | `TEST_RERUNS=1`, `TEST_RERUNS_DELAY=2` in `.env` (via `settings.test_reruns`) |
+| Configure | `tests/conftest_reportportal.py` → `configure_pytest_reruns()` in `pytest_configure` |
+| Pytest terminal | Both attempts logged — `[RERUN attempt N]` then `[PASSED]` / `[FAILED]` |
+| ReportPortal | `apply_reportportal_patches()` skips `outcome=="rerun"` — portal shows **one** test with final status |
+| Disable | `TEST_RERUNS=0` or CLI `--reruns 0` |
+| Override | CLI `--reruns N --reruns-delay S` overrides `.env` if passed explicitly |
+
+### Secret redaction (passwords in failure output)
+
+| Item | Behavior |
+|------|----------|
+| Problem | Pytest in fixture/locals khi test fail: `efms_account_password = '...'` |
+| Module | `src/automation/config/secret_redaction.py` — `redact_secrets()`, `sanitize_test_report()` |
+| Pytest HTML | `tests/conftest.py` → `pytest_runtest_makereport` gọi `sanitize_test_report()` khi failed |
+| ReportPortal | `reportportal_support.apply_reportportal_patches()` patch `process_results` + `post_log` |
+| Password source | Vẫn đọc từ `.env` (`EFMS_ACCOUNT_PASSWORD`) — chỉ **che output lỗi**, không hardcode |
+| Pattern che | `efms_account_password`, `etms_account_password`, `password = '...'`, `EFMS_ACCOUNT_PASSWORD=...` |
+
+> **Không** log password trong step logger. Fixture password là `str` thuần từ `.env`; đổi pass trong `.env` không cần sửa code.
+
+```bash
+# Default: 1 retry from .env
+uv run pytest -m efms --browser chrome --browser-headless true
+
+# Override retry count
+uv run pytest -m efms --reruns 2 --reruns-delay 3 --browser chrome --browser-headless true
+```
 
 ### CLI options
 
@@ -1990,7 +2026,8 @@ bash scripts/ci-run-tests.sh
 
 ```bash
 uv run pytest -m "critical and efms" -n auto --browser chrome --browser-headless true
-uv run pytest --reruns 2 --reruns-delay 3 ...
+# Retry is enabled by default (TEST_RERUNS=1); override with --reruns if needed
+uv run pytest -m efms --reruns 2 --reruns-delay 3 --browser chrome --browser-headless true
 ```
 
 ---
@@ -2345,7 +2382,8 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 ### P3 — Low (nice to have)
 
 - [ ] **Configure `pytest-xdist`** in Jenkins for parallel UI runs (careful: shared UAT env)
-- [ ] **Configure `pytest-rerunfailures`** for flaky test retry in CI
+- [x] **Configure `pytest-rerunfailures`** — default 1 retry; ReportPortal final result only
+- [x] **Secret redaction** — che password trong pytest/HTML/ReportPortal failure logs
 - [ ] **ReportPortal dashboards** — eFMS / eTMS widgets on CI (optional)
 - [ ] **Visual regression** (Playwright screenshot compare) for critical pages
 - [ ] **Allure report** as alternative to pytest-html
@@ -2620,10 +2658,21 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 | `RP_LAUNCH_DESCRIPTION_EFMS` | eFMS UI automation | eFMS launch description |
 | `RP_LAUNCH_DESCRIPTION_ETMS` | eTMS UI automation | eTMS launch description |
 
+### Test retry
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TEST_RERUNS` | `1` | Số lần chạy lại test failed (pytest-rerunfailures) |
+| `TEST_RERUNS_DELAY` | `2` | Delay (giây) giữa các lần retry |
+
+> **ReportPortal retry:** Lần fail trung gian (`outcome=rerun`) không gửi lên portal — chỉ kết quả lần chạy cuối. Pytest terminal/HTML vẫn ghi đủ 2 lần.
+
+> **Secret redaction:** Traceback/ReportPortal hiển thị `efms_account_password = '***'`, không lộ giá trị từ `.env`.
+
 > **Removed:** `RP_LAUNCH` / `RP_LAUNCH_DESCRIPTION` combined launch — always run eFMS and eTMS separately for correct ReportPortal dashboards.
 
 **View launches:** `{RP_ENDPOINT}/ui/#{RP_PROJECT}/launches/all`
 
 ---
 
-*Last updated: 2026-06-17 | Framework: efms-etms-automation 1.0.0 | Tests: SMK_AUTH_001/002, SMK_NAV_001–006, FMS_BR_001–005, ETMS-LOGIN-001 | ReportPortal: per-app launches (efms-automation / etms-automation)*
+*Last updated: 2026-06-18 | Framework: efms-etms-automation 1.0.0 | Retry: TEST_RERUNS=1 | Secret redaction: secret_redaction.py + apply_reportportal_patches()*

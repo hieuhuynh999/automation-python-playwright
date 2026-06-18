@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     rp_api_key: str | None = Field(default=None, repr=False)
     rp_verify_ssl: bool = False
 
+    test_reruns: int = 1
+    test_reruns_delay: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
