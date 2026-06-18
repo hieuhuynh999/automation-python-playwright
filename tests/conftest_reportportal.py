@@ -13,8 +13,47 @@ from automation.reporting.reportportal_support import (
     apply_reportportal_patches,
     configure_reportportal_ini,
     load_dotenv_for_reportportal,
+    should_enable_reportportal,
 )
 from automation.reporting.rerun_support import configure_pytest_reruns
+
+
+def _invocation_args(config: pytest.Config) -> list[str]:
+    return list(config.invocation_params.args)
+
+
+def _apply_reportportal_session(
+    config: pytest.Config,
+    items: list[pytest.Item] | None = None,
+) -> None:
+    api_key = get_settings().rp_api_key or os.getenv("RP_API_KEY")
+    no_reportportal = bool(getattr(config.option, "no_reportportal", False))
+    args = _invocation_args(config)
+
+    enable, reason = should_enable_reportportal(
+        args,
+        api_key=api_key,
+        no_reportportal=no_reportportal,
+    )
+    if not enable:
+        config.option.rp_enabled = False
+        logger.info("ReportPortal SKIPPED: {}", reason)
+        return
+
+    rp_ready = configure_reportportal_ini(config, items)
+    if not rp_ready:
+        config.option.rp_enabled = False
+        logger.warning(
+            "ReportPortal SKIPPED: chạy riêng từng app — "
+            "pytest -m efms hoặc pytest -m etms (hoặc tests/efms, tests/etms)",
+        )
+        return
+
+    config.option.rp_enabled = True
+    launch_name = config.getini("rp_launch")
+    logger.info("ReportPortal ENABLED: {} ({})", launch_name, reason)
+    if items is not None:
+        apply_reportportal_display_names(items)
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -23,35 +62,8 @@ def pytest_configure(config: pytest.Config) -> None:
     get_settings.cache_clear()
     configure_pytest_reruns(config)
     apply_reportportal_patches()
-    rp_ready = configure_reportportal_ini(config)
-
-    api_key = config.getini("rp_api_key") or os.getenv("RP_API_KEY")
-    if api_key and rp_ready:
-        config.option.rp_enabled = True
-    elif api_key:
-        config.option.rp_enabled = False
-    elif getattr(config.option, "rp_enabled", False):
-        config.option.rp_enabled = False
-        logger.warning(
-            "ReportPortal disabled: set RP_API_KEY in .env (ReportPortal UI → Profile → API Keys)"
-        )
+    _apply_reportportal_session(config)
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    api_key = config.getini("rp_api_key") or os.getenv("RP_API_KEY")
-    if not api_key:
-        return
-
-    rp_ready = configure_reportportal_ini(config, items)
-    if rp_ready:
-        config.option.rp_enabled = True
-        apply_reportportal_display_names(items)
-        launch_name = config.getini("rp_launch")
-        logger.info("ReportPortal launch: {}", launch_name)
-        return
-
-    config.option.rp_enabled = False
-    logger.warning(
-        "ReportPortal disabled: chạy riêng từng app — "
-        "pytest -m efms hoặc pytest -m etms (hoặc tests/efms, tests/etms)"
-    )
+    _apply_reportportal_session(config, items)

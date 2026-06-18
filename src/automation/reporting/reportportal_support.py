@@ -17,6 +17,68 @@ if TYPE_CHECKING:
 _RP_LOGGER: logging.Logger | None = None
 _RP_PATCH_APPLIED = False
 
+_NON_EXECUTION_FLAGS = frozenset({
+    "--collect-only",
+    "--co",
+    "--fixtures",
+    "--funcargs",
+    "--markers",
+    "--version",
+    "--help",
+    "--setup-only",
+    "--setup-show",
+})
+
+
+def is_pytest_execution_run(args: list[str]) -> bool:
+    """False for IDE discovery and other non-execute pytest invocations."""
+    for arg in args:
+        if arg in _NON_EXECUTION_FLAGS or arg == "-h":
+            return False
+    return True
+
+
+def non_execution_reason(args: list[str]) -> str:
+    for arg in args:
+        if arg == "--collect-only" or arg == "--co":
+            return "pytest --collect-only (IDE test discovery)"
+        if arg in _NON_EXECUTION_FLAGS or arg == "-h":
+            return f"pytest {arg} (not a test execution)"
+    return "not a test execution"
+
+
+def should_auto_enable_reportportal(args: list[str]) -> bool:
+    """Whether root conftest should inject --reportportal into CLI args."""
+    if "--no-reportportal" in args:
+        return False
+    if "--reportportal" in args:
+        return True
+    if not os.getenv("RP_API_KEY"):
+        return False
+    return is_pytest_execution_run(args)
+
+
+def should_enable_reportportal(
+    args: list[str],
+    *,
+    api_key: str | None,
+    no_reportportal: bool = False,
+) -> tuple[bool, str]:
+    """Decide if ReportPortal should run; second value is log reason."""
+    if no_reportportal:
+        return False, "disabled via --no-reportportal"
+    if not is_pytest_execution_run(args):
+        return False, non_execution_reason(args)
+    if not api_key:
+        if "--reportportal" in args:
+            return False, "RP_API_KEY not set (--reportportal ignored)"
+        return False, "RP_API_KEY not set"
+    return True, "test execution with RP_API_KEY"
+
+
+def load_dotenv_for_reportportal() -> None:
+    _load_dotenv_early()
+
 
 def _load_dotenv_early() -> None:
     env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -29,10 +91,6 @@ def _load_dotenv_early() -> None:
             continue
         key, _, value = line.partition("=")
         os.environ.setdefault(key.strip(), value.strip())
-
-
-def load_dotenv_for_reportportal() -> None:
-    _load_dotenv_early()
 
 
 def detect_application_from_marker(marker_expr: str | None) -> str | None:

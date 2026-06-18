@@ -2,6 +2,11 @@
 
 from automation.config.secret_redaction import redact_secrets, sanitize_test_report
 from automation.reporting.metadata_support import resolve_report_base_url
+from automation.reporting.reportportal_support import (
+    is_pytest_execution_run,
+    should_auto_enable_reportportal,
+    should_enable_reportportal,
+)
 from automation.reporting.rerun_support import is_rerun_report
 
 
@@ -75,3 +80,31 @@ def test_resolve_report_base_url_mixed_suite() -> None:
     )
     assert "eFMS:" in url
     assert "eTMS:" in url
+
+
+def test_is_pytest_execution_run_collect_only() -> None:
+    assert is_pytest_execution_run(["--collect-only", "tests"]) is False
+    assert is_pytest_execution_run(["-v", "tests/etms"]) is True
+
+
+def test_should_auto_enable_reportportal_skips_collect_only() -> None:
+    assert should_auto_enable_reportportal(["--collect-only", "tests"]) is False
+
+
+def test_should_enable_reportportal_no_flag() -> None:
+    enabled, reason = should_enable_reportportal(
+        ["tests/etms"],
+        api_key="key",
+        no_reportportal=True,
+    )
+    assert enabled is False
+    assert "no-reportportal" in reason
+
+
+def test_should_enable_reportportal_execution() -> None:
+    enabled, reason = should_enable_reportportal(
+        ["tests/etms", "-m", "etms"],
+        api_key="key",
+    )
+    assert enabled is True
+    assert "RP_API_KEY" in reason

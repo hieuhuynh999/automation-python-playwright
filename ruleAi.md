@@ -450,7 +450,7 @@ auotmation-techub/
 | `tests/testdata/` | Shared JSON test data per application |
 | `tests/conftest.py` | Global Playwright fixtures + HTML/ReportPortal report hooks |
 | `tests/conftest_reportportal.py` | ReportPortal configuration hooks |
-| `conftest.py` (root) | Early `.env` load + auto `--reportportal` when `RP_API_KEY` is set |
+| `conftest.py` (root) | Early `.env` load + auto `--reportportal` on **test execution** only (not `--collect-only`) |
 
 > **Migration note:** Tests moved from `tests/ui/{app}/` → `tests/{app}/`. Do **not** recreate the `tests/ui/` layer.
 
@@ -1897,7 +1897,9 @@ Priority: collected test paths → CLI paths → `-m` marker expression.
 
 | Item | Behavior |
 |------|----------|
-| Auto-enable | When `RP_API_KEY` is set in `.env` — no `--reportportal` flag needed |
+| Auto-enable | `RP_API_KEY` in `.env` + **real test run** (not `--collect-only` / IDE discovery) |
+| Skip RP | `--no-reportportal` or no `RP_API_KEY` — log: `ReportPortal SKIPPED: <reason>` |
+| Enabled log | `ReportPortal ENABLED: efms-automation (test execution with RP_API_KEY)` |
 | Early load | Root `conftest.py` → `pytest_load_initial_conftests` |
 | Config hook | `tests/conftest_reportportal.py` → detect app → inject ini |
 | App detection | `-m efms` / `-m etms` → marker; `tests/efms/` path → efms; collected test markers → fallback |
@@ -1970,7 +1972,11 @@ uv run playwright install --with-deps chrome msedge
 
 # Setup env (once)
 copy .env.example .env   # Windows
-# Fill EFMS_ACCOUNT_*, ETMS_ACCOUNT_*, RP_API_KEY
+# Local without ReportPortal (even when RP_API_KEY is in .env)
+uv run pytest tests/etms/ -m etms -v --no-reportportal
+
+# Local with ReportPortal (auto when RP_API_KEY set)
+uv run pytest tests/etms/ -m etms -v
 
 # Run all login tests (both apps)
 uv run pytest -m login --browser chrome --browser-headless true
