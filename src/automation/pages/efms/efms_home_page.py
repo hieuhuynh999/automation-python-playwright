@@ -61,6 +61,12 @@ class EfmsHomePage(BasePage):
         self.wait_for_page_stable()
         return self
 
+    @log_method("Navigate to eFMS dashboard")
+    def goto_dashboard(self) -> "EfmsHomePage":
+        base = settings.efms_base_url.rstrip("/").split("#")[0]
+        self.open_url(f"{base}#/home")
+        return self.wait_for_dashboard_ready()
+
     @log_method("Click user menu")
     def click_user_menu(self) -> "EfmsHomePage":
         self.wait_for_visible(

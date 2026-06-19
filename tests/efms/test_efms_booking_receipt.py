@@ -1,6 +1,5 @@
 import pytest
 
-from automation.config import settings
 from tests.data_provider import DataProvider
 
 
@@ -11,14 +10,6 @@ class TestEfmsBookingReceipt:
 
     booking_no: str | None = None
 
-    def _login_efms(self, pages, data: dict, efms_account_password: str) -> None:
-        pages.efms_login_page.open().login(
-            settings.efms_username,
-            efms_account_password,
-            data["company"],
-        )
-        assert pages.efms_home_page.is_dashboard_displayed()
-
     @pytest.mark.parametrize(
         "data",
         DataProvider.efms_cases("test_fms_br_001_open_add_booking_receipt_efms"),
@@ -28,9 +19,9 @@ class TestEfmsBookingReceipt:
         self,
         pages,
         data,
-        efms_account_password,
+        login_efms,
     ):
-        self._login_efms(pages, data, efms_account_password)
+        login_efms(data["company"])
 
         # Step 1: Open Booking Receipt page
         pages.efms_booking_receipt_page.open_list_page()
@@ -53,9 +44,9 @@ class TestEfmsBookingReceipt:
         self,
         pages,
         data,
-        efms_account_password,
+        login_efms,
     ):
-        self._login_efms(pages, data, efms_account_password)
+        login_efms(data["company"])
         br_page = pages.efms_booking_receipt_page
 
         br_page.open_list_page()
@@ -94,13 +85,13 @@ class TestEfmsBookingReceipt:
         self,
         pages,
         data,
-        efms_account_password,
+        login_efms,
     ):
         booking_no = TestEfmsBookingReceipt.booking_no
         if not booking_no:
             pytest.skip("Requires booking_no from FMS_BR_002")
 
-        self._login_efms(pages, data, efms_account_password)
+        login_efms(data["company"])
         br_page = pages.efms_booking_receipt_page
 
         # Step 1: Open Booking Receipt page
@@ -124,13 +115,13 @@ class TestEfmsBookingReceipt:
         self,
         pages,
         data,
-        efms_account_password,
+        login_efms,
     ):
         booking_no = TestEfmsBookingReceipt.booking_no
         if not booking_no:
             pytest.skip("Requires booking_no from FMS_BR_002")
 
-        self._login_efms(pages, data, efms_account_password)
+        login_efms(data["company"])
         br_page = pages.efms_booking_receipt_page
 
         br_page.open_list_page()
@@ -164,13 +155,13 @@ class TestEfmsBookingReceipt:
         self,
         pages,
         data,
-        efms_account_password,
+        login_efms,
     ):
         booking_no = TestEfmsBookingReceipt.booking_no
         if not booking_no:
             pytest.skip("Requires booking_no from FMS_BR_002")
 
-        self._login_efms(pages, data, efms_account_password)
+        login_efms(data["company"])
         br_page = pages.efms_booking_receipt_page
 
         # Step 1: Open list, refresh grid, then delete with full wait chain (popup/API/toast/grid)

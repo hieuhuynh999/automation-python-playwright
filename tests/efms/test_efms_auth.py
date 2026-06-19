@@ -4,6 +4,7 @@ from automation.config import settings
 from tests.data_provider import DataProvider
 
 
+@pytest.mark.smoke
 @pytest.mark.login
 @pytest.mark.efms
 class TestEfmsAuth:
@@ -36,14 +37,9 @@ class TestEfmsAuth:
         DataProvider.efms_cases("test_smk_auth_002_logout_success_efms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_002")
-    def test_smk_auth_002_logout_success_efms(self, pages, data, efms_account_password):
+    def test_smk_auth_002_logout_success_efms(self, pages, data, login_efms):
         # Precondition: Login success
-        pages.efms_login_page.open().login(
-            settings.efms_username,
-            efms_account_password,
-            data["company"],
-        )
-        assert pages.efms_home_page.is_dashboard_displayed()
+        login_efms(data["company"])
 
         # Step 1: Click User Menu
         pages.efms_home_page.click_user_menu()

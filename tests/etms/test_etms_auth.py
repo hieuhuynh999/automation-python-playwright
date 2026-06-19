@@ -4,6 +4,7 @@ from automation.config import settings
 from tests.data_provider import DataProvider
 
 
+@pytest.mark.smoke
 @pytest.mark.login
 @pytest.mark.etms
 class TestEtmsAuth:

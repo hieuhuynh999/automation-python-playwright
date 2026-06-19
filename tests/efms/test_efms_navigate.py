@@ -1,6 +1,5 @@
 import pytest
 
-from automation.config import settings
 from automation.logging.step_logger import record_step_log
 from tests.data_provider import DataProvider
 
@@ -89,6 +88,7 @@ SERVICES_MENU_ACTIONS = {
 }
 
 
+@pytest.mark.smoke
 @pytest.mark.navigation
 @pytest.mark.efms
 class TestEfmsNavigate:
@@ -96,15 +96,9 @@ class TestEfmsNavigate:
         "data",
         DataProvider.efms_cases("test_smk_nav_verify_commercial_menu_efms"),
     )
-    def test_smk_nav_verify_commercial_menu_efms(self, pages, data, efms_account_password):
+    def test_smk_nav_verify_commercial_menu_efms(self, pages, data, login_efms):
         # Precondition: Login success
-        pages.efms_login_page.open().login(
-            settings.efms_username,
-            efms_account_password,
-            data["company"],
-        )
-        assert pages.efms_home_page.is_dashboard_displayed()
-        pages.efms_home_page.wait_for_dashboard_ready()
+        login_efms(data["company"])
 
         # Step 1: Open Commercial Menu
         pages.efms_agent_page.open_commercial_menu()
@@ -115,12 +109,7 @@ class TestEfmsNavigate:
 
             # Reset to dashboard before each scenario except the first
             if index > 0:
-                base_url = pages.efms_agent_page.page.url.split("#")[0]
-                pages.efms_agent_page.page.goto(
-                    f"{base_url}#/home",
-                    wait_until="domcontentloaded",
-                )
-                pages.efms_home_page.wait_for_dashboard_ready()
+                pages.efms_home_page.goto_dashboard()
                 pages.efms_agent_page.wait_for_sidebar_ready()
                 pages.efms_agent_page.open_commercial_menu()
 
@@ -141,15 +130,9 @@ class TestEfmsNavigate:
         DataProvider.efms_cases("test_smk_nav_verify_logistics_menu_efms"),
     )
     @pytest.mark.tc_id("SMK_NAV_005")
-    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, efms_account_password):
+    def test_smk_nav_verify_logistics_menu_efms(self, pages, data, login_efms):
         # Precondition: Login success
-        pages.efms_login_page.open().login(
-            settings.efms_username,
-            efms_account_password,
-            data["company"],
-        )
-        assert pages.efms_home_page.is_dashboard_displayed()
-        pages.efms_home_page.wait_for_dashboard_ready()
+        login_efms(data["company"])
 
         # Step 1: Open Logistics Menu
         pages.efms_job_management_page.open_logistics_menu()
@@ -177,15 +160,9 @@ class TestEfmsNavigate:
         DataProvider.efms_cases("test_smk_nav_verify_services_menu_efms"),
     )
     @pytest.mark.tc_id("SMK_NAV_006")
-    def test_smk_nav_verify_services_menu_efms(self, pages, data, efms_account_password):
+    def test_smk_nav_verify_services_menu_efms(self, pages, data, login_efms):
         # Precondition: Login success
-        pages.efms_login_page.open().login(
-            settings.efms_username,
-            efms_account_password,
-            data["company"],
-        )
-        assert pages.efms_home_page.is_dashboard_displayed()
-        pages.efms_home_page.wait_for_dashboard_ready()
+        login_efms(data["company"])
 
         # Step 1: Open Services Menu
         pages.efms_services_documentation_page.open_services_menu()

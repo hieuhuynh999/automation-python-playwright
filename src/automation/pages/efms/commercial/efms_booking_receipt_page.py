@@ -7,6 +7,7 @@ from typing import Any
 
 from automation.config import settings
 from automation.logging import log_method
+from automation.pages.common.swal_modal_component import SwalModalComponent
 from automation.pages.efms.commercial.commercial_menu_page import EfmsCommercialMenuPage
 
 
@@ -89,6 +90,23 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         "xpath=//div[contains(@class,'loading-mask')]",
     ]
 
+    @property
+    def _confirm_swal(self) -> SwalModalComponent:
+        return SwalModalComponent(
+            self,
+            "Confirm popup",
+            confirm_selectors=self.yes_button_selectors,
+        )
+
+    @property
+    def _delete_confirm_swal(self) -> SwalModalComponent:
+        return SwalModalComponent(
+            self,
+            "Delete Booking Receipt confirm popup",
+            popup_selectors=self.delete_confirm_popup_selectors,
+            confirm_selectors=self.delete_confirm_yes_selectors,
+        )
+
     def _is_booking_receipt_delete_response(self, response) -> bool:
         url = response.url.lower()
         normalized = url.replace("-", "")
@@ -101,21 +119,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         return False
 
     def _wait_delete_confirm_popup_closed(self, timeout: int | None = None) -> None:
-        timeout = timeout or settings.page_load_timeout
-        try:
-            self.page.wait_for_function(
-                "() => !document.querySelector('.swal2-popup')",
-                timeout=timeout,
-            )
-            return
-        except Exception:
-            pass
-
-        deadline = time.monotonic() + timeout / 1000
-        while time.monotonic() < deadline:
-            if self.find_visible(self.delete_confirm_popup_selectors) is None:
-                return
-            self.page.wait_for_timeout(settings.polling_interval)
+        self._delete_confirm_swal.wait_until_closed(timeout=timeout)
 
     def _wait_for_grid_ready(self, timeout: int | None = None) -> None:
         timeout = timeout or settings.browser_timeout
@@ -133,11 +137,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         expected_message: str | None = None,
     ) -> EfmsBookingReceiptPage:
         popup_timeout = settings.page_load_timeout
-        self.wait_for_visible(
-            self.delete_confirm_popup_selectors,
-            "Delete Booking Receipt confirm popup",
-            timeout=popup_timeout,
-        )
+        self._delete_confirm_swal.wait_for_popup(timeout=popup_timeout)
         yes_btn = self._wait_actionable(
             self.delete_confirm_yes_selectors,
             "Yes on Delete Booking Receipt popup",
@@ -432,7 +432,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
 
     @log_method("Click Yes on confirm popup")
     def click_confirm_yes(self) -> EfmsBookingReceiptPage:
-        self.wait_for_visible(self.yes_button_selectors, "Yes confirm button").click(force=True)
+        self._confirm_swal.click_confirm(force=True)
         return self
 
     def _toolbar_delete_selectors(self) -> list[str]:
@@ -467,11 +467,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         popup_timeout = settings.page_load_timeout
         toolbar = self._wait_toolbar_delete_ready(timeout=popup_timeout)
         toolbar.click(force=True)
-        self.wait_for_visible(
-            self.delete_confirm_popup_selectors,
-            "Delete Booking Receipt confirm popup",
-            timeout=popup_timeout,
-        )
+        self._delete_confirm_swal.wait_for_popup(timeout=popup_timeout)
 
     def _wait_actionable(
         self,
@@ -550,6 +546,8 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
 
     @log_method("Verify system message is displayed")
     def is_message_displayed(self, message: str) -> bool:
+        if self._confirm_swal.is_message_visible(message):
+            return True
         message_selectors = [
             f"#toast-container .toast-message:has-text('{message}')",
             f"#toast-container *:has-text('{message}')",
