@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import sys
+from typing import Protocol
 
 import pytest
 
 from automation.config import get_settings
 
 
-def is_rerun_report(report: pytest.TestReport | None) -> bool:
+class _ReportOutcome(Protocol):
+    outcome: str
+
+
+def is_rerun_report(report: _ReportOutcome | None) -> bool:
     """True for intermediate failed attempts that pytest-rerunfailures will retry."""
-    return bool(report and getattr(report, "outcome", None) == "rerun")
+    return bool(report and report.outcome == "rerun")
 
 
 def configure_pytest_reruns(config: pytest.Config) -> None:
