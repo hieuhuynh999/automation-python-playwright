@@ -66,6 +66,23 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         "button.btn-outline-danger:has(i.la-trash)",
     ]
 
+    save_confirm_popup_selectors = [
+        "xpath=//h5[text()='Confirm ']//ancestor::div",
+        "xpath=//h5[normalize-space()='Confirm']//ancestor::div",
+        "xpath=//div[contains(@class,'swal2-popup') and .//h5[contains(normalize-space(),'Confirm')]]",
+        ".swal2-popup:has(.swal2-title:has-text('Confirm'))",
+    ]
+
+    save_confirm_yes_selectors = [
+        "xpath=//h5[text()='Confirm ']//ancestor::div//button[normalize-space()='Yes']",
+        "xpath=//h5[normalize-space()='Confirm']//ancestor::div//button[normalize-space()='Yes']",
+        "xpath=//h5[text()='Confirm ']//ancestor::div//span[normalize-space()='Yes']",
+        (
+            "xpath=//div[contains(@class,'swal2-popup') and .//h5[contains(.,'Confirm')]]"
+            "//button[contains(@class,'swal2-confirm')]"
+        ),
+    ]
+
     delete_confirm_popup_selectors = [
         "xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div",
         "xpath=//div[contains(@class,'swal2-popup') and .//h2[contains(.,'Delete Booking Receipt')]]",
@@ -81,12 +98,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         ".swal2-popup:has(.swal2-title:has-text('Delete Booking Receipt')) .swal2-confirm",
     ]
 
-    yes_button_selectors = [
-        ".swal2-confirm",
-        "button:has-text('Yes')",
-        "[aria-label='Yes']",
-        "xpath=//button[normalize-space()='Yes']",
-    ]
+    yes_button_selectors = save_confirm_yes_selectors
 
     loading_overlay_selectors = [
         ".m-blockui",
@@ -100,7 +112,8 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         return SwalModalComponent(
             self,
             "Confirm popup",
-            confirm_selectors=self.yes_button_selectors,
+            popup_selectors=self.save_confirm_popup_selectors,
+            confirm_selectors=self.save_confirm_yes_selectors,
         )
 
     @property
@@ -122,6 +135,18 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         if response.request.method in ("POST", "PUT"):
             return response.status in (200, 204) and "delete" in url
         return False
+
+    def _is_booking_receipt_save_response(self, response) -> bool:
+        url = response.url.lower()
+        method = response.request.method.upper()
+        if method not in ("POST", "PUT", "PATCH"):
+            return False
+        if response.status not in (200, 201, 204):
+            return False
+        if "delete" in url:
+            return False
+        normalized = url.replace("-", "").replace("_", "")
+        return "bookingreceipt" in normalized or "booking/receipt" in url
 
     def _wait_delete_confirm_popup_closed(self, timeout: int | None = None) -> None:
         self._delete_confirm_swal.wait_until_closed(timeout=timeout)
@@ -237,6 +262,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
             "Add New Booking Receipt form",
             timeout=settings.page_load_timeout,
         )
+        self._install_booking_receipt_submit_guard()
         return True
 
     @log_method("Verify Detail Booking Receipt is displayed")
@@ -247,6 +273,9 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
             timeout=settings.page_load_timeout,
         )
         return True
+
+    def _is_detail_view_visible(self) -> bool:
+        return self.find_visible(self.detail_title_selectors) is not None
 
     def _resolve_date_value(self, value: str) -> str:
         if str(value).strip().upper() == "TODAY":
@@ -272,6 +301,20 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
             resolved,
         )
         self.page.keyboard.press("Escape")
+        return self
+
+    @log_method("Activate Good Info tab")
+    def _activate_good_info_tab(self) -> EfmsBookingReceiptPage:
+        tab_selectors = [
+            "xpath=//ul[contains(@class,'nav-tabs')]//a[contains(normalize-space(),'Good Info')]",
+            "xpath=//a[contains(@class,'nav-link') and contains(normalize-space(),'Good Info')]",
+        ]
+        tab = self.find_visible(tab_selectors)
+        if tab is None:
+            return self
+        if "active" not in (tab.get_attribute("class") or ""):
+            tab.click(force=True)
+            self.wait_for_page_stable()
         return self
 
     def _field_container(self, label: str):
@@ -401,21 +444,30 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
             f"xpath=//input[@formcontrolname and contains(@placeholder,'{label}')]",
         ]
         field = self.wait_for_visible(input_selectors, f"{label} input")
+        field.scroll_into_view_if_needed()
         field.click()
         field.fill(str(value))
+        field.dispatch_event("input")
+        field.dispatch_event("change")
+        field.dispatch_event("blur")
         return self
 
     @log_method("Fill Booking Receipt create form")
     def fill_create_form(self, data: dict[str, Any]) -> EfmsBookingReceiptPage:
+        self._install_booking_receipt_submit_guard()
         self.select_dropdown_field("Customer/Payer", data["customer_payer"])
+        self.wait_for_page_stable()
         self.select_dropdown_field("Salesman", data["salesman"])
         self.fill_date_field("Booking Date", str(data["booking_date"]))
         self.select_dropdown_field("Shipment Type", data["shipment_type"])
         self.select_dropdown_field("Departure Location", data["departure_location"])
         self.select_dropdown_field("Arrival Location", data["arrival_location"])
         self.select_dropdown_field("Shipper", data["shipper"])
+        self._activate_good_info_tab()
         self.fill_input_field("Weight", data["weight"])
         self.fill_input_field("Package Qty", data["package_qty"])
+        self.page.keyboard.press("Escape")
+        self.wait_for_page_stable()
         return self
 
     @log_method("Fill Booking Receipt update form")
@@ -426,16 +478,223 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         self.fill_input_field("CBM", data["cbm"])
         return self
 
+    def _install_booking_receipt_submit_guard(self) -> None:
+        """Neutralize Save ``type=submit`` only — must not block submit after Confirm Yes."""
+        self.page.evaluate(
+            """() => {
+                document.querySelectorAll('.m-portlet').forEach((portlet) => {
+                    const title = portlet.querySelector('h3')?.textContent || '';
+                    if (!title.includes('Booking Receipt')) {
+                        return;
+                    }
+                    portlet.querySelectorAll('button').forEach((btn) => {
+                        const label = (btn.textContent || '').trim();
+                        if (
+                            btn.type === 'submit'
+                            && label === 'Save'
+                        ) {
+                            btn.type = 'button';
+                        }
+                    });
+                });
+            }"""
+        )
+
+    def _wait_save_confirm_closed(self, timeout: int | None = None) -> None:
+        timeout = timeout or settings.page_load_timeout
+        try:
+            self.page.wait_for_function(
+                """() => {
+                    const titles = [...document.querySelectorAll('h5')].filter(
+                        (el) => el.textContent.trim().startsWith('Confirm')
+                    );
+                    return titles.every((el) => {
+                        const rect = el.getBoundingClientRect();
+                        return rect.width === 0 || rect.height === 0;
+                    });
+                }""",
+                timeout=timeout,
+            )
+        except Exception:
+            self._confirm_swal.wait_until_closed(timeout=timeout)
+
+    def _click_save_confirm_yes_and_wait(self) -> EfmsBookingReceiptPage:
+        popup_timeout = settings.page_load_timeout
+        yes_btn = self._wait_actionable(
+            self.save_confirm_yes_selectors,
+            "Yes on Save Confirm popup",
+            timeout=popup_timeout,
+        )
+        yes_btn.click(force=True)
+        try:
+            self.page.wait_for_response(
+                self._is_booking_receipt_save_response,
+                timeout=popup_timeout,
+            )
+        except Exception:
+            pass
+
+        self._wait_save_confirm_closed(timeout=popup_timeout)
+        deadline = time.monotonic() + popup_timeout / 1000
+        while time.monotonic() < deadline:
+            if self.find_visible(self.loading_overlay_selectors) is None:
+                break
+            self.page.wait_for_timeout(settings.polling_interval)
+        self.wait_for_page_stable()
+        return self
+
+    def _success_message_selectors(self, message: str) -> list[str]:
+        return [
+            f"#toast-container .toast-message:has-text('{message}')",
+            f"#toast-container *:has-text('{message}')",
+            f"xpath=//*[contains(@class,'toast') and contains(.,'{message}')]",
+            f"xpath=//*[contains(@class,'alert') and contains(.,'{message}')]",
+            f".swal2-html-container:has-text('{message}')",
+            f"xpath=//*[contains(normalize-space(),'{message}')]",
+            "xpath=//*[contains(@class,'toast-success')]",
+            "#toast-container .toast-success",
+        ]
+
+    @log_method("Wait for Booking Receipt create to complete")
+    def wait_for_booking_created(
+        self,
+        expected_message: str,
+        shipper: str,
+    ) -> EfmsBookingReceiptPage:
+        """Wait for toast, detail booking no, or list row after Confirm Yes."""
+        timeout = settings.page_load_timeout
+        deadline = time.monotonic() + timeout / 1000
+        message_selectors = self._success_message_selectors(expected_message)
+        row_selectors = [
+            f"xpath=//table//tbody//tr[contains(.,'{shipper}')]",
+            f"xpath=//tr[contains(.,'{shipper}')]",
+        ]
+
+        while time.monotonic() < deadline:
+            if self.find_visible(message_selectors) is not None:
+                return self
+            if self.get_booking_no_from_current_view():
+                return self
+            if self._is_detail_view_visible():
+                return self
+            if self.find_visible(row_selectors) is not None:
+                return self
+            self.page.wait_for_timeout(settings.polling_interval)
+
+        raise AssertionError(
+            "Booking Receipt was not created after Confirm Yes. "
+            f"No success message, detail page, or grid row for shipper '{shipper}'."
+        )
+
+    @log_method("Wait for save success")
+    def wait_for_save_success(self, expected_message: str) -> EfmsBookingReceiptPage:
+        timeout = settings.page_load_timeout
+        deadline = time.monotonic() + timeout / 1000
+        message_selectors = self._success_message_selectors(expected_message)
+        message_selectors.append(
+            f"xpath=//h5[contains(normalize-space(),'Confirm')]/ancestor::div//*[contains(.,'{expected_message}')]"
+        )
+
+        while time.monotonic() < deadline:
+            if self.find_visible(message_selectors) is not None:
+                return self
+            if self._is_detail_view_visible():
+                return self
+            self.page.wait_for_timeout(settings.polling_interval)
+
+        raise AssertionError(
+            f"Save did not complete — no success message and not on detail page. "
+            f"Expected: '{expected_message}'"
+        )
+
+    @log_method("Verify booking row is displayed on list")
+    def is_booking_row_displayed_on_list(
+        self,
+        shipper: str,
+        booking_no: str | None = None,
+    ) -> bool:
+        self._wait_for_grid_ready(timeout=settings.page_load_timeout)
+        if booking_no:
+            row_selectors = [
+                f"xpath=//table//tbody//tr[.//span[normalize-space()='{booking_no}']]",
+                f"xpath=//tr[.//span[normalize-space()='{booking_no}']]",
+                f"xpath=//table//tbody//tr[.//a[normalize-space()='{booking_no}']]",
+            ]
+            self.wait_for_visible(row_selectors, f"Booking row: {booking_no}")
+            return True
+
+        booking_no = self.get_booking_no_from_grid_row_containing(shipper)
+        if not booking_no:
+            raise AssertionError(
+                f"No Booking Receipt row found on list containing shipper '{shipper}'."
+            )
+        return True
+
+    @log_method("Capture booking from list after create")
+    def capture_booking_from_list(self, shipper: str) -> str:
+        self.click_booking_receipt_menu()
+        assert self.is_booking_receipt_displayed()
+        self._wait_for_grid_ready(timeout=settings.page_load_timeout)
+        booking_no = self.get_booking_no_from_grid_row_containing(shipper)
+        if not booking_no:
+            booking_no = self.get_first_booking_no_from_grid()
+        if not booking_no:
+            raise AssertionError(
+                f"Cannot capture booking_no from list for shipper '{shipper}'."
+            )
+        self.is_booking_row_displayed_on_list(shipper, booking_no)
+        return booking_no
+
     @log_method("Click Save button")
     def click_save(self) -> EfmsBookingReceiptPage:
-        self.wait_for_visible(self.save_button_selectors, "Save button").click(force=True)
+        self._install_booking_receipt_submit_guard()
+        save_button = self.wait_for_visible(self.save_button_selectors, "Save button")
+        save_button.scroll_into_view_if_needed()
+        save_button.evaluate(
+            """(btn) => {
+                if (btn instanceof HTMLButtonElement && btn.type === 'submit') {
+                    btn.type = 'button';
+                }
+            }"""
+        )
+        url_before = self.page.url
+        save_button.click(force=True)
+
+        confirm_deadline = time.monotonic() + 10
+        while time.monotonic() < confirm_deadline:
+            if self.find_visible(self.save_confirm_popup_selectors) is not None:
+                if self.page.url != url_before:
+                    raise AssertionError(
+                        "Page navigated after Save before Confirm popup: "
+                        f"{url_before} -> {self.page.url}"
+                    )
+                return self
+            self.page.wait_for_timeout(settings.polling_interval)
+
         self.wait_for_page_stable()
+        try:
+            self.page.wait_for_response(
+                self._is_booking_receipt_save_response,
+                timeout=min(15000, settings.page_load_timeout),
+            )
+        except Exception:
+            pass
+        return self
+
+    @log_method("Click Yes on confirm popup if present")
+    def click_confirm_yes_if_present(self) -> EfmsBookingReceiptPage:
+        if self.find_visible(self.save_confirm_popup_selectors) is not None:
+            return self._click_save_confirm_yes_and_wait()
         return self
 
     @log_method("Click Yes on confirm popup")
     def click_confirm_yes(self) -> EfmsBookingReceiptPage:
-        self._confirm_swal.click_confirm(force=True)
-        return self
+        self.wait_for_visible(
+            self.save_confirm_popup_selectors,
+            "Confirm popup",
+            timeout=settings.page_load_timeout,
+        )
+        return self._click_save_confirm_yes_and_wait()
 
     def _toolbar_delete_selectors(self) -> list[str]:
         return list(self.delete_button_selectors)
@@ -548,20 +807,18 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
 
     @log_method("Verify system message is displayed")
     def is_message_displayed(self, message: str) -> bool:
+        message_selectors = self._success_message_selectors(message)
+        message_selectors.append(
+            f"xpath=//h5[contains(normalize-space(),'Confirm')]/ancestor::div//*[contains(.,'{message}')]"
+        )
+        if self.find_visible(message_selectors) is not None:
+            return True
         if self._confirm_swal.is_message_visible(message):
             return True
-        message_selectors = [
-            f"#toast-container .toast-message:has-text('{message}')",
-            f"#toast-container *:has-text('{message}')",
-            f"xpath=//*[contains(@class,'toast') and contains(.,'{message}')]",
-            f"xpath=//*[contains(@class,'alert') and contains(.,'{message}')]",
-            f".swal2-html-container:has-text('{message}')",
-            f"xpath=//*[contains(normalize-space(),'{message}')]",
-        ]
         self.wait_for_visible(
             message_selectors,
             f"System message: {message}",
-            timeout=15000,
+            timeout=settings.page_load_timeout,
         )
         return True
 

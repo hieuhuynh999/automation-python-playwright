@@ -40,13 +40,14 @@ class SwalModalComponent(BaseComponent):
         )
 
     @log_method("Click SweetAlert confirm")
-    def click_confirm(self, *, force: bool = False) -> None:
-        self.wait_for_popup()
+    def click_confirm(self, *, force: bool = False, wait_for_popup: bool = True) -> None:
+        if wait_for_popup:
+            self.wait_for_popup()
         self._owner.wait_for_visible(
             self.confirm_selectors,
             f"{self.element_name} confirm button",
         ).click(force=force)
-        self._owner.wait_for_page_stable()
+        self.wait_until_closed()
 
     @log_method("Wait for SweetAlert popup closed")
     def wait_until_closed(self, timeout: int | None = None) -> None:
