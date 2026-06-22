@@ -35,6 +35,7 @@
    - [5.12 Menu Module POM Pattern](#512-menu-module-pom-pattern)
    - [5.13 Booking Receipt CRUD (FMS_BR_001–005)](#513-booking-receipt-crud-fms_br_001005)
    - [5.14 XPath Catalog — Booking Receipt](#514-xpath-catalog--booking-receipt)
+   - [5.15 Cost Of Route CRUD (COR_LP_001)](#515-cost-of-route-crud-cor_lp_001)
    - [5.15 End-to-End Walkthrough](#515-end-to-end-walkthrough--one-new-tc-from-scratch)
 6. [How to Write a UI Test (Step-by-Step)](#6-how-to-write-a-ui-test-step-by-step)
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
@@ -138,6 +139,7 @@ Step 8  RUN & verify
 | **C — CRUD ordered flow** | Create → read → update → delete same record | `TestEfmsBookingReceipt` — Section 5.13 | Class variable `booking_no`; run tests in order |
 | **D — Single form / action** | One screen, fill + save + verify | FMS_BR_001/002 patterns | `fill_*_form(data)`, assert message |
 | **E — eTMS auth (login + branch)** | eTMS login / branch / home | `TestEtmsAuth` — Example B, Section 4.1 | `EtmsLoginPage` + `EtmsHomePage`; `NgSelectComponent` for branch |
+| **G — eTMS create + delete (single TC)** | One record create then delete same run | `TestEtmsCostOfRoute` — Section 5.15 | `login_etms` fixture; menu search; `action-btn` → Delete on row |
 | **F — New module page** | New sidebar screen | Example F — Section 13 | New POM + PageManager + extend menu base if under Commercial/Logistics/Services |
 
 **Precondition "Login success" (all eFMS tests except auth):**
@@ -153,6 +155,10 @@ pages.efms_home_page.wait_for_dashboard_ready()
 **Precondition "Login success" (eTMS tests that need home dashboard):**
 
 ```python
+# Preferred — reuse fixture in tests/etms/conftest.py
+login_etms(data["branch"])
+
+# Or inline (same steps as login_etms fixture)
 pages.etms_login_page.open().login(
     settings.etms_username, etms_account_password,
 )
@@ -434,7 +440,9 @@ auotmation-techub/
 │   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
 │   │   └── test_efms_booking_receipt.py                 # FMS_BR_001–005
 │   └── etms/                       # eTMS UI tests
-│       └── test_etms_auth.py       # TestEtmsAuth — SMK_AUTH_001/002
+│       ├── conftest.py             # login_etms fixture
+│       ├── test_etms_auth.py       # TestEtmsAuth — SMK_AUTH_001/002
+│       └── test_etms_cost_of_route.py  # COR_LP_001
 │
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
@@ -468,7 +476,7 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page` | `dataTest-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
@@ -494,6 +502,7 @@ auotmation-techub/
 |-------|------|----------------|
 | `EtmsLoginPage` | `etms/etms_login_page.py` | Login form, branch/hub picker (`NgSelectComponent`), branch verify |
 | `EtmsHomePage` | `etms/etms_home_page.py` | Home URL + dashboard after branch select |
+| `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
 **Common Components (compose inside Page Objects — not in PageManager):**
 
@@ -582,12 +591,13 @@ Supporting layers (not in UI test path):
 | FMS_BR_001–005 | Booking Receipt | High | `TestEfmsBookingReceipt` | `tests/efms/test_efms_booking_receipt.py` |
 | SMK_AUTH_001 | Login | Critical | `TestEtmsAuth.test_smk_auth_001_login_success_etms` | `tests/etms/test_etms_auth.py` |
 | SMK_AUTH_002 | Login | Critical | `TestEtmsAuth.test_smk_auth_002_select_branch_etms` | `tests/etms/test_etms_auth.py` |
+| COR_LP_001 | Cost Of Route | High | `TestEtmsCostOfRoute.test_cor_lp_001_create_cost_of_route_etms` | `tests/etms/test_etms_cost_of_route.py` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
 ```bash
 uv run pytest -m critical -v --browser chrome --browser-headless true   # SMK_AUTH_001/002 (eFMS + eTMS)
-uv run pytest -m high -v --browser chrome --browser-headless true       # SMK_NAV_001–006
+uv run pytest -m high -v --browser chrome --browser-headless true       # SMK_NAV_001–006, FMS_BR_001–005, COR_LP_001
 uv run pytest -m navigation -v --browser chrome --browser-headless true # SMK_NAV_001–006
 uv run pytest -m login -v --browser chrome --browser-headless true      # all login/logout tests
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
@@ -1608,6 +1618,59 @@ uv run pytest tests/efms/test_efms_booking_receipt.py -v \
   --browser chrome --browser-headless false
 ```
 
+### 5.15 Cost Of Route CRUD (COR_LP_001)
+
+> Reference: `tests/etms/test_etms_cost_of_route.py`, `etms_cost_of_route_page.py`,
+> `tests/etms/conftest.py` (`login_etms` fixture),
+> `tests/testdata/dataTest-etms.json` key `test_cor_lp_001_create_cost_of_route_etms`.
+
+| Step | Action | Key Page methods |
+|------|--------|------------------|
+| 1 | Menu search → Cost Of Route list | `open_via_menu_search()`, `is_list_page_displayed()` |
+| 2 | Add New → Choose Route popup | `click_add_new()`, `is_choose_route_popup_displayed()` |
+| 3 | Filter Code, tick row, Choose | `choose_route(route_code)` |
+| 4 | Vehicle / Container / Weight Range | `fill_route_mapping_fields(data)` — `search-field` ng-select pattern |
+| 5 | Generate + verify Total (Price) | `click_generate_surcharge()`, `is_total_price_displayed()` |
+| 6 | Save + success toast | `click_save()`, `wait_for_add_modal_closed()`, `is_success_message_displayed()` |
+| 7 | Delete same record | `ensure_list_page_displayed()`, `click_row_action_btn()`, `click_row_delete_button()`, confirm OK |
+
+**Delete flow (step 7 — mandatory order):**
+
+1. Click row `action-btn` — reveals Delete button on row
+2. Click Delete: `a.btn-ftl-icon.text-danger[title='Delete']` or `a[id*='btnButtonRowDelete']`
+3. Confirm SweetAlert **"Do you want delete?"** → OK
+4. Verify toast **"Data delete success"**
+
+**Do NOT** filter Route Code on list before delete when record was just created in the same test run.
+
+**COR_LP_001 test template (canonical):**
+
+```python
+login_etms(data["branch"])
+cor_page = pages.etms_cost_of_route_page
+
+cor_page.open_via_menu_search(data["menu_search"])
+cor_page.click_add_new()
+cor_page.choose_route(data["route_code"])
+cor_page.fill_route_mapping_fields(data)
+cor_page.click_generate_surcharge()
+cor_page.click_save()
+cor_page.wait_for_add_modal_closed()
+
+cor_page.ensure_list_page_displayed(data["menu_search"])
+cor_page.click_row_action_btn(data["route_code"], data["vehicle_type"])
+cor_page.click_row_delete_button(data["route_code"], data["vehicle_type"])
+cor_page.click_delete_confirm_ok()
+assert cor_page.is_success_message_displayed(data["expected_delete_message"])
+```
+
+**Run:**
+
+```bash
+uv run pytest tests/etms/test_etms_cost_of_route.py -v \
+  --browser chrome --browser-headless false --reportportal
+```
+
 ### 5.14 XPath Catalog — Booking Receipt
 
 > All selectors live in `EfmsBookingReceiptPage` class attributes.
@@ -1993,6 +2056,7 @@ from tests.data_provider import DataProvider
 | `pages` | function | **always use this** | `PageManager` instance |
 | `efms_account_password` | function | eFMS login tests — skips if `EFMS_ACCOUNT_PASSWORD` missing |
 | `etms_account_password` | function | eTMS login tests — skips if `ETMS_ACCOUNT_PASSWORD` missing |
+| `login_etms` | function | `tests/etms/conftest.py` — login + branch + dashboard ready; call `login_etms(data["branch"])` |
 
 ### Markers — two sources
 
@@ -2017,7 +2081,7 @@ from tests.data_provider import DataProvider
 | Command | Collects |
 |---------|----------|
 | `-m critical` | SMK_AUTH_001/002 (eFMS + eTMS) |
-| `-m high` | SMK_NAV_001–006, FMS_BR_001–005 |
+| `-m high` | SMK_NAV_001–006, FMS_BR_001–005, COR_LP_001 |
 | `-m login` | All auth tests (`TestEfmsAuth`, `TestEtmsAuth`) |
 | `-m navigation` | SMK_NAV commercial/logistics/services |
 | `-m "login and efms"` | eFMS auth tests only |
@@ -2674,6 +2738,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 
 - [x] **Fix `dataTest-etms.json`** — SMK_AUTH_001/002 keys, no hardcoded password, `priority: critical`
 - [x] **Migrate eTMS auth** — `TestEtmsAuth`, `EtmsLoginPage`, branch flow via `NgSelectComponent`
+- [x] **COR_LP_001 Cost Of Route** — `TestEtmsCostOfRoute`, `EtmsCostOfRoutePage`, `login_etms` fixture
 - [x] **Common Components layer** — `pages/common/` (ng-select, native select, SweetAlert)
 - [x] **Utils layer** — `utils/text_utils.py` (`normalize_text`, `text_contains_any`)
 - [x] **HTML Base URL metadata** — `metadata_support.py` picks eFMS vs eTMS URL per run
@@ -2687,7 +2752,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 ### P2 — Medium (developer experience)
 
 - [ ] **Playwright trace on failure** (optional — add `trace_dir` to settings when needed)
-- [x] **Shared `conftest.py` per app** (`tests/efms/conftest.py`) for login precondition fixture
+- [x] **Shared `conftest.py` per app** (`tests/efms/conftest.py`, `tests/etms/conftest.py`) for login precondition fixture
 - [ ] **Extract `MENU_ACTIONS` dicts** to shared module if duplicated across new nav tests
 - [ ] **AGENTS.md** reference to this `ruleAi.md`
 - [ ] **Migrate Booking Receipt** — inline ng-select/swal → `NgSelectComponent` / `SwalModalComponent` when touching that page
@@ -2733,6 +2798,7 @@ When implementing a new test or Page Object method, run this checklist **in orde
 | Login (eFMS) | `EfmsLoginPage` | `open()`, `login()`, `NativeSelectComponent` for company |
 | Login (eTMS) | `EtmsLoginPage` | `open()`, `login()`, `select_branch()`, `NgSelectComponent` |
 | eTMS home | `EtmsHomePage` | `is_dashboard_displayed()`, `is_home_url()` |
+| Cost Of Route (eTMS) | `EtmsCostOfRoutePage` | `open_via_menu_search()`, `choose_route()`, `fill_route_mapping_fields()`, `delete_cost_of_route()` |
 | ng-select dropdown | `NgSelectComponent` | `select_option_by_text()`, `get_selected_text()` |
 | HTML `<select>` | `NativeSelectComponent` | `select_by_label()` |
 | SweetAlert2 popup | `SwalModalComponent` | `click_confirm()`, `is_message_visible()` |
@@ -3168,4 +3234,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-16 | POM: pages/common + utils | eTMS: TestEtmsAuth | HTML Base URL: metadata_support.py | Retry + secret redaction*
+*Last updated: 2026-06-16 | POM: pages/common + utils | eTMS: TestEtmsAuth + COR_LP_001 | HTML Base URL: metadata_support.py | Retry + secret redaction*

@@ -18,5 +18,22 @@
             "branch": "VNHCM",
             "expected_url_contains": "app/default/home"
         }
+    ],
+    "test_cor_lp_001_create_cost_of_route_etms": [
+        {
+            "test_case_id": "COR_LP_001",
+            "description": "Create Cost Of Route with default route mapping and surcharge generate",
+            "module": "Cost Of Route",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "branch": "VNHCM",
+            "menu_search": "Cost Of Route",
+            "route_code": "R0000268",
+            "weight_range": "1.00 - 100.00 Kilogram",
+            "vehicle_type": "Remooc 3 trục",
+            "container_type": "Xe tải 500 kilogram",
+            "expected_success_message": "New data added",
+            "expected_delete_message": "Data delete success"
+        }
     ]
 }

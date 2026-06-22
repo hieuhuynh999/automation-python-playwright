@@ -12,7 +12,7 @@ from automation.pages.efms import (
     EfmsTruckingInlandPage,
     EfmsWorkOrderPage,
 )
-from automation.pages.etms import EtmsHomePage, EtmsLoginPage
+from automation.pages.etms import EtmsCostOfRoutePage, EtmsHomePage, EtmsLoginPage
 
 
 class PageManager:
@@ -28,6 +28,7 @@ class PageManager:
         self._efms_custom_clearance_page: EfmsCustomClearancePage | None = None
         self._efms_trucking_inland_page: EfmsTruckingInlandPage | None = None
         self._efms_services_documentation_page: EfmsServicesDocumentationPage | None = None
+        self._etms_cost_of_route_page: EtmsCostOfRoutePage | None = None
         self._etms_home_page: EtmsHomePage | None = None
         self._etms_login_page: EtmsLoginPage | None = None
 
@@ -90,6 +91,12 @@ class PageManager:
         if self._efms_services_documentation_page is None:
             self._efms_services_documentation_page = EfmsServicesDocumentationPage(self.page)
         return self._efms_services_documentation_page
+
+    @property
+    def etms_cost_of_route_page(self) -> EtmsCostOfRoutePage:
+        if self._etms_cost_of_route_page is None:
+            self._etms_cost_of_route_page = EtmsCostOfRoutePage(self.page)
+        return self._etms_cost_of_route_page
 
     @property
     def etms_login_page(self) -> EtmsLoginPage:
