@@ -24,6 +24,16 @@ xpath=//*[contains(@class,'m-portlet__head')]
   //button[contains(@class,'btn-outline-danger') and .//i[contains(@class,'la-trash')]]
 ```
 
+**Yes on Save Confirm popup:**
+```
+xpath=//h5[text()='Confirm ']//ancestor::div//button[normalize-space()='Yes']
+```
+
+**Save Confirm popup title:**
+```
+xpath=//h5[text()='Confirm ']//ancestor::div
+```
+
 **Delete popup title:**
 ```
 xpath=//h5[text()='Delete Booking Receipt ']//ancestor::div

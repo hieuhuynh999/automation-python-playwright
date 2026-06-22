@@ -63,18 +63,21 @@ class TestEfmsBookingReceipt:
         # Step 11: Confirm Yes
         br_page.click_confirm_yes()
 
-        # Expected 1: Success message
-        assert br_page.is_message_displayed(data["expected_success_message"])
+        # Expected 1: Create completed (toast, detail, or row)
+        br_page.wait_for_booking_created(
+            data["expected_success_message"],
+            data["shipper"],
+        )
 
-        # Expected 2: Capture booking_no from grid row matching created data
-        br_page.open_list_page()
-        assert br_page.is_booking_receipt_displayed()
-        TestEfmsBookingReceipt.booking_no = br_page.get_booking_no_from_grid_row_containing(
+        # Expected 2: Open list via Booking Receipt menu and verify row on grid
+        TestEfmsBookingReceipt.booking_no = br_page.capture_booking_from_list(
             data["shipper"]
         )
-        if not TestEfmsBookingReceipt.booking_no:
-            TestEfmsBookingReceipt.booking_no = br_page.get_first_booking_no_from_grid()
         assert TestEfmsBookingReceipt.booking_no, "Cannot capture booking_no after create"
+        assert br_page.is_booking_row_displayed_on_list(
+            data["shipper"],
+            TestEfmsBookingReceipt.booking_no,
+        )
 
     @pytest.mark.parametrize(
         "data",
@@ -132,11 +135,10 @@ class TestEfmsBookingReceipt:
         # Steps 1–4: Update fields (BR_UPDATE_001)
         br_page.fill_update_form(data)
 
-        # Step 5: Save
+        # Step 5: Save (+ Confirm Yes only when popup appears on update)
         br_page.click_save()
-
-        # Expected 1: Success message
-        assert br_page.is_message_displayed(data["expected_success_message"])
+        br_page.click_confirm_yes_if_present()
+        br_page.wait_for_save_success(data["expected_success_message"])
 
         # Expected 2: Still on detail page
         assert br_page.is_detail_displayed()
