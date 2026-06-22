@@ -20,6 +20,11 @@ class EfmsTruckingInlandPage(EfmsLogisticsMenuPage):
         "th:has-text('Job ID')",
     ]
 
+    list_column_headers = [
+        "Job ID",
+        "Customer",
+    ]
+
     @log_method("Click Trucking Inland Menu")
     def click_trucking_inland_menu(self) -> "EfmsTruckingInlandPage":
         self._click_logistics_submenu(
@@ -36,4 +41,5 @@ class EfmsTruckingInlandPage(EfmsLogisticsMenuPage):
             self.list_table_selectors,
             "Trucking Inland title",
             "Trucking Inland table",
+            self.list_column_headers,
         )

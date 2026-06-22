@@ -21,6 +21,10 @@ class EfmsCustomClearancePage(EfmsLogisticsMenuPage):
         "xpath=//th[normalize-space()='Custom No']",
     ]
 
+    list_column_headers = [
+        "Clearance Date",
+    ]
+
     @log_method("Click Customs Clearance Menu")
     def click_custom_clearance_menu(self) -> "EfmsCustomClearancePage":
         self._click_logistics_submenu(
@@ -37,4 +41,5 @@ class EfmsCustomClearancePage(EfmsLogisticsMenuPage):
             self.list_table_selectors,
             "Customs Clearance title",
             "Customs Clearance table",
+            self.list_column_headers,
         )

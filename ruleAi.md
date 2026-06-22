@@ -23,6 +23,11 @@
    - [2.2 Implemented Test Inventory](#22-implemented-test-inventory)
 3. [Architecture Rules (MUST follow)](#3-architecture-rules-must-follow)
    - [3.6 Wait & Timing Strategy](#36-wait--timing-strategy-no-hard-coded-waits)
+   - [3.7 Assertions (Tests Only)](#37-assertions-tests-only)
+   - [3.8 Test Data Generation](#38-test-data-generation)
+   - [3.9 Locator Verification Checklist](#39-locator-verification-checklist-before-commit)
+   - [3.10 Playwright Development Workflow](#310-playwright-development-workflow)
+   - [3.11 Code Quality Before Delivery](#311-code-quality-before-delivery)
 4. [Naming Conventions](#4-naming-conventions)
    - [4.1 Test Class Organization](#41-test-class-organization)
 5. [Manual Test Case Sheet → Automation (CANONICAL)](#5-manual-test-case-sheet--automation-canonical)
@@ -45,6 +50,8 @@
 15. [Improvement Backlog](#15-improvement-backlog)
 16. [Clean Code & Reuse (DRY — No Duplication)](#16-clean-code--reuse-dry--no-duplication)
 17. [AI Checklist Before Submitting Code](#17-ai-checklist-before-submitting-code)
+18. [Flaky Test Diagnosis & Fix](#18-flaky-test-diagnosis--fix)
+19. [Framework Architect Quick Reference](#19-framework-architect-quick-reference)
 
 ---
 
@@ -78,6 +85,8 @@
 | 7 | **No hard-coded waits** — use `settings.*_timeout`, `wait_for_visible`, condition waits (Section 3.6) |
 | 8 | **Selectors in Page Object `*_selectors` lists** — priority order Section 3.4 |
 | 9 | **Reuse UI widgets via `pages/common/`** — ng-select, native select, SweetAlert; do not duplicate in each Page Object (Section 7.1) |
+| 10 | **Assertions in test files only** — Page Objects return `bool` / raise wait errors; use `assert` with messages in tests (Section 3.7) |
+| 11 | **Verify locators from live DOM** before committing new selectors — never guess (Section 3.9–3.10) |
 
 ### 0.3 Mandatory eight-step pipeline
 
@@ -827,6 +836,34 @@ def login(self, username: str, password: str, company: str) -> "EfmsHomePage":
 | `headless_viewport_width` / `height` | `1920` / `1080` | Headless browser viewport in `conftest.py` |
 | `screenshot_dir` | `test-results/screenshots` | Failure screenshot path |
 
+#### Timeout tiers (semantic — map to `settings`, never hardcode ms)
+
+| Tier | Setting | Default | Use for |
+|------|---------|---------|---------|
+| Poll / retry gap | `polling_interval` | `250` | Inside `wait_for_visible()` loops |
+| SPA settle | `navigation_settle_ms` | `1000` | After `readyState === complete` |
+| Post-goto settle | `open_url_settle_ms` | `5000` | `open_url()` SPA bootstrap |
+| Standard UI | `browser_timeout` | `60000` | Element visible, grid rows, shipment items |
+| Navigation / login | `page_load_timeout` | `60000` | `wait_for_url`, dashboard, delete API |
+
+Override per call: `wait_for_visible(..., timeout=settings.page_load_timeout)` — never `timeout=5000` literals.
+
+#### BasePage interaction helpers
+
+| Method | When to use |
+|--------|-------------|
+| `wait_for_visible(selectors, name, timeout=...)` | Element must appear |
+| `click_when_ready(selectors, name, timeout=..., force=False)` | Visible **and enabled**, then click |
+| `find_visible(selectors)` | Non-blocking probe inside components |
+
+```python
+# CORRECT — enabled + click via BasePage
+self.click_when_ready(self.save_button_selectors, "Save button")
+
+# WRONG — click without visibility/enabled guarantee
+self.page.locator("button").click()
+```
+
 #### Correct patterns
 
 ```python
@@ -950,6 +987,126 @@ class TestEfmsBookingReceipt:
     # Run in order: BR_001 → BR_002 → BR_003 → BR_004 → BR_005
     # BR_005: refresh_list_page() before delete_booking_receipt_from_grid()
 ```
+
+### 3.7 Assertions (Tests Only)
+
+| Layer | Allowed | Pattern |
+|-------|---------|---------|
+| **Test class** | **Yes** — primary place for assertions | `assert pages.efms_home_page.is_dashboard_displayed()` |
+| **Page Object** | **No business assertions** | Use `wait_for_visible()` → raises on failure |
+| **Page Object** | `is_*_displayed() -> bool` | Test calls `assert page.is_*_displayed(), "message"` |
+| **Page Object** | Composite flow guards | Rare — e.g. `refresh_list_page()` asserts list loaded before delete continues |
+
+**Rules:**
+
+1. Every test **must end with at least one assertion** (or explicit `pytest.skip`).
+2. Use `assert` with a **descriptive message** so HTML/ReportPortal shows context:
+
+```python
+# CORRECT
+assert pages.efms_agent_page.is_agent_list_displayed(), (
+    f"Step {step}: Agent list with grid data — verification failed"
+)
+
+# WRONG — no context on failure
+assert result
+```
+
+3. Use `pytest.skip(reason)` when a runtime precondition cannot be met — **not** `assert False`:
+
+```python
+if not TestEfmsBookingReceipt.booking_no:
+    pytest.skip("Requires booking_no from FMS_BR_002")
+```
+
+4. **Never** put `assert expected == actual` for business rules inside Page Objects — keep verification methods returning `bool` or raising via waits.
+
+### 3.8 Test Data Generation
+
+| Data type | Source | Rule |
+|-----------|--------|------|
+| Credentials | `.env` → `settings` + `efms_account_password` fixture | **Never** in JSON or test files |
+| Static business data | `tests/testdata/dataTest-{app}.json` | Company name, expected messages, menu actions |
+| **Unique / disposable fields** | Generated at runtime | **Never hardcode** values that must be unique per run |
+
+Generate unique data for create flows (booking no captured from UI, emails, display names):
+
+```python
+from datetime import datetime
+import uuid
+
+suffix = datetime.now().strftime("%Y%m%d_%H%M%S")
+unique_ref = f"AUTO_{suffix}_{uuid.uuid4().hex[:6]}"
+```
+
+**Parallel-safe:** each test method that creates records should use its own generated data — do not share hardcoded unique strings across tests.
+
+**Ordered CRUD** (Booking Receipt): use class variable `booking_no` set in create test, consumed by later tests — see Section 3.6 / 5.13.
+
+### 3.9 Locator Verification Checklist (Before Commit)
+
+Before adding a locator to `*_selectors`, verify on **live UAT** (headed browser or Playwright MCP):
+
+| # | Check |
+|---|--------|
+| 1 | Matches **exactly one** interactive target in scope (portlet, open submenu, form) — not zero, not many |
+| 2 | Target is the element the **user actually clicks/types** — not overlay, spinner, or hidden clone |
+| 3 | Still resolves after **reload / navigate away and back** |
+| 4 | Stable across page states: loading → loaded → with data (and empty state if applicable) |
+
+**Core principle (semantic over styling):** build locators on `data-testid`, `name`, `aria-*`, `href`, `formcontrolname`, visible label text — **not** on layout/theme classes (`m-menu__*`, `m-portlet__*`) as primary strategy.
+
+**eFMS / eTMS Angular priority** (when `data-testid` absent — common on legacy screens):
+
+1. `aria-label`, `role`, `getByRole` / `getByLabel` (when they resolve)
+2. `data-testid`, `data-qa`, `data-test`
+3. Stable `id`, `name`, `formcontrolname`
+4. Visible text (`:has-text`, `normalize-space()`)
+5. Scoped CSS (`select[formcontrolname='companyId']`)
+6. Relative XPath anchored to stable parent (`href`, `h3`, `th`)
+7. `contains(@class, ...)` — **fallback only**
+
+**FORBIDDEN:**
+
+- Dynamic/hashed classes (`css-1n2xyz`, random `ng-*` ids)
+- Absolute positional XPath (`/html/body/div[3]/...`, `//div[3]/button[2]`)
+- `nth-child` / index as primary selector
+- Overly broad selectors (`input[type='text']`, bare `button`) unless documented last-resort fallback
+
+### 3.10 Playwright Development Workflow
+
+**Stack:** `playwright.sync_api` via pytest `browser` / `page` fixtures in `tests/conftest.py` — use `pages` fixture in tests, not raw `page` for actions.
+
+| Rule | Detail |
+|------|--------|
+| **Headed first** | Develop and debug with `--browser-headless false` until stable |
+| **Headless CI** | Only after headed pass, or in CI with viewport fix below |
+| **Viewport** | Headless uses `1920×1080` via `settings.headless_viewport_width/height` — required for sidebar/menu |
+| **Never guess locators** | Inspect live DOM; do not copy from memory or old code without re-verifying |
+| **Never blind copy** | Selectors from other products (ExtJS, etc.) do not apply to Angular eFMS |
+
+**Recommended order when inspecting UI (Playwright MCP / browser tools):**
+
+```
+1. Navigate to URL (login if needed)
+2. Set viewport 1920×1080 (mandatory for menu/sidebar)
+3. Snapshot / pick locator from live DOM
+4. Confirm unique + interactable
+5. Add to Page Object *_selectors in priority order (Section 3.4, 3.9)
+```
+
+### 3.11 Code Quality Before Delivery
+
+Before finishing any automation task:
+
+- Remove debug `print()` — use `automation.logging.logger` / `@log_method`
+- Remove commented-out code and unused `*_selectors`
+- Remove temporary probe scripts (`scripts/probe_*.py`, `_probe_*.py`) unless user asked to keep
+- **Do not delete** source files without explicit user confirmation
+- Check directory structure before creating files — extend existing Page Object when possible (Section 16)
+- Run `uv run ruff check . && uv run ruff format .` before commit
+
+**Security:** never hardcode credentials, tokens, or API keys — `.env` only via `settings` (gitignored).
 
 ---
 
@@ -1406,8 +1563,9 @@ PageManager               → Register feature pages only (NOT base menu class)
 
 | Page type | Verify with | Example |
 |-----------|-------------|---------|
-| List page (Agent, Job Management) | `h3` title + table column header | `Job ID`, `Clearance Date` |
-| Documentation page (Services) | `h3` title + URL hash fragment | `#/home/documentation/air-export` |
+| List page (Agent, Job Management) | `h3` + grid columns + **data rows** via `EfmsNavigateVerifyMixin` | `Partner ID`, `Name ABBR` |
+| Services documentation | `h3` + **`shipment-item-wrapper`** cards with content | `efms_services_documentation_page.py` |
+| Documentation page (legacy note) | — | Prefer shipment list over title-only |
 | Booking Receipt grid row | Exact `normalize-space()` on `span`/`a` | Never `contains()` for booking_no verify |
 | Booking Receipt delete | Toolbar delete after checkbox | Never row `btn-outline-danger` (opens Duplicate) |
 
@@ -2480,7 +2638,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 | 7 | Jenkins `MARKER` dropdown missing `critical`/`navigation` | CI cannot select by priority from UI | **Fixed** — MARKER includes critical, high, navigation |
 | 8 | `EfmsNavigationPage` removed | Old docs reference deleted class | Use module-specific pages under `commercial/`, `logistics/`, `services/` |
 | 9 | Commercial scenarios without dashboard reset | Booking Receipt fails after Work Order | `goto #/home` between commercial scenarios (index > 0) |
-| 10 | Services pages have no stable data table | Table-based verify fails | Verify title + URL hash only |
+| 10 | Services pages — datatable không phù hợp | Table-based verify fails | `ShipmentListComponent` + `shipment-item-wrapper` via `EfmsNavigateVerifyMixin` (Section 5.12) |
 | 11 | Row delete / row trash on Booking Receipt | Wrong popup (Duplicate) or no popup | **Toolbar delete only** after row select + `_wait_toolbar_delete_ready()` |
 | 12 | `click_delete` + `click_delete_confirm_yes` without wait chain | Run FAIL / debug PASS race | Use `delete_booking_receipt_from_grid()` |
 | 13 | `is_checked()` on grid checkbox | False while Angular syncing | Verify via toolbar Delete **enabled** |
@@ -2529,7 +2687,7 @@ def test_click_bay_button_efms(pages, data, efms_account_password):
 ### P2 — Medium (developer experience)
 
 - [ ] **Playwright trace on failure** (optional — add `trace_dir` to settings when needed)
-- [ ] **Shared `conftest.py` per app** (`tests/efms/conftest.py`) for login precondition fixture
+- [x] **Shared `conftest.py` per app** (`tests/efms/conftest.py`) for login precondition fixture
 - [ ] **Extract `MENU_ACTIONS` dicts** to shared module if duplicated across new nav tests
 - [ ] **AGENTS.md** reference to this `ruleAi.md`
 - [ ] **Migrate Booking Receipt** — inline ng-select/swal → `NgSelectComponent` / `SwalModalComponent` when touching that page
@@ -2781,7 +2939,136 @@ Before finishing any automation task, verify:
 [ ] Toolbar delete only after row select — never row btn-outline-danger for delete
 [ ] ReportPortal: run with `-m efms` or `-m etms` — not mixed full suite without app filter
 [ ] Delivered: JSON + POM + test + run command (Section 0.6 response format)
+[ ] Assertions only in tests with descriptive messages — not business assert in Page Objects (Section 3.7)
+[ ] Unique create data generated at runtime — not hardcoded (Section 3.8)
+[ ] New locators verified on live DOM — checklist Section 3.9
+[ ] Headed debug first; headless only after stable (Section 3.10)
+[ ] No debug prints / probe scripts left behind (Section 3.11)
+[ ] Navigate list pages use EfmsNavigateVerifyMixin — grid rows or shipment items, not title-only (Section 5.12)
+[ ] Flaky fix: classified root cause (Section 18) — verified 5+ headed + 1 headless run
+[ ] BR/grid delete uses stable helper chain — not raw click_delete (Section 18.10)
 ```
+
+---
+
+## 18. Flaky Test Diagnosis & Fix
+
+> **Purpose:** Adapted from NBR/ExtJS flaky-test-analyzer skill — mapped to **Angular/eFMS/eTMS** patterns in this repo. Full Cursor skill: `.cursor/skills/flaky-test-analyzer/SKILL.md`.
+
+### 18.1 When to use
+
+- Test passes and fails intermittently
+- CI results inconsistent; local headed pass / headless fail (or reverse)
+- Test fails only when another test runs first (ordering dependency)
+- **Run FAIL, debug step-by-step PASS** — classic race condition
+
+### 18.2 Analysis workflow
+
+| Step | Action |
+|------|--------|
+| 1 Reproduce | Headed first: `--browser-headless false` (Section 3.10) |
+| 2 Inspect | Stack trace, `test-results/screenshots/`, pytest-html |
+| 3 Classify | Match category in 18.3 (Angular — not ExtJS `x-mask` / `set_combo`) |
+| 4 Fix | Reuse existing Page Object helpers — do not invent parallel patterns |
+| 5 Verify | **5+ consecutive** headed runs, then **≥1** headless run |
+
+```bash
+uv run pytest tests/efms/test_efms_navigate.py -m navigation -v --browser chrome --browser-headless false
+```
+
+CI safety net: `TEST_RERUNS=1` (default) via `pytest-rerunfailures` — fixes must not rely on reruns alone.
+
+### 18.3 Root cause categories (eFMS/eTMS)
+
+| # | Category | Symptom | Fix (this repo) |
+|---|----------|---------|-----------------|
+| 1 | Unstable locator | StrictMode / timeout xen kẽ | Section 3.4 priority; no `#mat-input-N`, no positional XPath |
+| 2 | Hard waits | Pass local, fail CI | `settings.*_timeout` / `*_ms` — no `time.sleep()`, no literal ms |
+| 3 | Grid not ready | Title OK, 0 data rows | `ListGridComponent.wait_until_ready()` + `wait_for_data_rows()` |
+| 4 | ng-select misfire | Value visible, form unchanged | `NgSelectComponent.select_option_by_text()` |
+| 5 | Block UI overlay | Click intercepted | Wait `.block-ui-active` gone; `_wait_for_grid_ready()` |
+| 6 | SPA route race | Assert before hash changes | `wait_for_url` + `wait_for_page_stable()` |
+| 7 | Headless title trap | h3 exists, `is_visible()` False | `dashboard_ready_selectors` + `inner_text()` (Issue #1) |
+| 8 | Commercial menu state | BR fails after WO in same class | `goto_dashboard` between scenarios (Issue #9) |
+| 9 | Services wrong widget | Table verify on card layout | `ShipmentListComponent` + `shipment-item-wrapper` |
+| 10 | Grid delete race | Delete popup/API/grid stale | `delete_booking_receipt_from_grid()` — Section 5.13 |
+| 11 | Test data conflict | Fail in suite, pass alone | Runtime `uuid` / `timestamp` (Section 3.8) |
+| 12 | Stale element | Detached from DOM | Locators only — re-query after navigation |
+
+**NBR/ExtJS patterns — do NOT port:**
+
+| NBR (ExtJS) | eFMS/eTMS equivalent |
+|-------------|----------------------|
+| `x-mask`, `Ext.ComponentQuery` | `.m-blockui`, `.block-ui-active`, `wait_for_function` |
+| `set_combo()` / `fill_visible()` | `NgSelectComponent`, `NativeSelectComponent` |
+| Bounding-rect `.x-grid-cell-inner` | `ListGridComponent.wait_for_data_rows()` |
+| `config/timeouts.py` tiers | `settings.browser_timeout`, `page_load_timeout`, `*_ms` keys |
+| Allure `@allure.step` | `@log_method` + pytest-html + ReportPortal |
+| Session autouse cleanup | Per-suite pattern — add when CRUD leaves UAT data |
+
+### 18.4 Locator fix quick reference
+
+| Element | Correct pattern |
+|---------|-----------------|
+| Button | `xpath=//button[contains(.,'Label')]` + `.first` if needed |
+| Grid row by text | `xpath=//tr[contains(@class,'datatable')]//span[normalize-space()='{value}']` |
+| Grid data ready | `ListGridComponent.wait_for_data_rows(min_rows=1)` |
+| ng-select | `NgSelectComponent.select_option_by_text()` |
+| Native `<select>` | `NativeSelectComponent.select_by_label()` |
+| SweetAlert | `SwalModalComponent.click_confirm()` |
+| Services card | `div[@class='shipment-item-wrapper']` via `ShipmentListComponent` |
+
+### 18.5 Stability checklist (after fix)
+
+```
+[ ] Locator stable — Section 3.9 verified on live DOM
+[ ] No time.sleep() / literal wait_for_timeout(ms)
+[ ] Grid navigate: column headers + data rows (or shipment items)
+[ ] Headless: 1920×1080 viewport + dashboard_ready_selectors
+[ ] Commercial multi-scenario: dashboard reset between items
+[ ] BR delete: delete_booking_receipt_from_grid() full chain
+[ ] Unique runtime test data for creates
+[ ] 5+ consecutive headed passes + 1+ headless pass
+```
+
+---
+
+## 19. Framework Architect Quick Reference
+
+> **Purpose:** Condensed scaffold guide — full skill: `.cursor/skills/framework-architect/SKILL.md`. **Source of truth remains `ruleAi.md`.**
+
+### 19.1 Fixed stack
+
+Python 3.12+ · `playwright.sync_api` · pytest · pytest-html · ReportPortal · Pydantic `settings` · JSON `DataProvider` · **no** Allure · **no** `infra/` unless requested.
+
+### 19.2 Layer map
+
+```text
+Test (assertions) → pages fixture → PageManager → {App}Page → Common Components → BasePage → Playwright
+Pure helpers: src/automation/utils/ (no Playwright imports)
+```
+
+### 19.3 New module checklist
+
+1. `tests/{app}/test_{app}_{module}.py` + JSON key = function name
+2. Page Object under `src/automation/pages/{app}/` — extend menu base when applicable
+3. Register in `PageManager` if new page class
+4. Markers: `@pytest.mark.efms` / `etms` + priority from JSON or `@pytest.mark.smoke`
+5. Login precondition: `login_efms` fixture or explicit login in test
+6. List navigate: extend menu page + `EfmsNavigateVerifyMixin`
+7. Widgets: compose `NgSelectComponent`, `SwalModalComponent`, `ListGridComponent` — no inline duplicate
+8. Run command documented in test docstring or PR
+
+### 19.4 Anti-patterns (forbidden)
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `page.locator()` in tests | `pages` → Page Object method |
+| Assertions in Page Objects | `bool` return + `assert` in test |
+| Title-only navigate verify | Grid rows / shipment items (Section 5.12) |
+| Raw BR delete clicks | `delete_booking_receipt_from_grid()` |
+| Hardcoded credentials / URLs | `settings` + `.env` |
+| `time.sleep()` | Condition waits (Section 3.6) |
 
 ---
 
@@ -2793,6 +3080,16 @@ Project AI rules are maintained in **`ruleAi.md`** (this file). For Cursor IDE, 
 |------|-------|---------|
 | `efms-playwright-waits.mdc` | `src/automation/pages/**/*.py`, `tests/**/*.py` | Wait strategy, no sleep, grid/delete race conditions |
 | `efms-booking-receipt-xpath.mdc` | `**/efms_booking_receipt*.py` | XPath catalog Section 5.14, delete flow Section 5.13 |
+| `locator-strategy.mdc` | `src/automation/pages/**/*.py` | Locator priority, forbidden patterns, verify checklist (Section 3.9) |
+| `qa-general.mdc` | `tests/**/*.py`, `src/automation/**/*.py` | POM layers, assertions, test data, code quality (Sections 3.7–3.11) |
+| `flaky-test-analyzer.mdc` | `tests/**/*.py`, `pages/**/*.py` | Flaky diagnosis quick reference (Section 18) |
+
+**Cursor skills** (`.cursor/skills/`):
+
+| Skill | Purpose |
+|-------|---------|
+| `flaky-test-analyzer/SKILL.md` | Full flaky workflow + Angular root causes |
+| `framework-architect/SKILL.md` | Scaffold POM, fixtures, compliance checklist |
 
 When updating Booking Receipt automation, update **both** `ruleAi.md` and the matching `.cursor/rules/*.mdc` files.
 

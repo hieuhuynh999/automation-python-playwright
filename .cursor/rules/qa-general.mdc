@@ -1,0 +1,42 @@
+---
+description: General QA automation rules — POM, assertions, test data, quality
+globs: tests/**/*.py, src/automation/**/*.py
+alwaysApply: false
+---
+
+# General QA Rules (eFMS / eTMS)
+
+Full reference: `ruleAi.md` Sections 3.7–3.11, 16.
+
+## Architecture
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| Page objects | `src/automation/pages/` | Locators + UI actions only |
+| Tests | `tests/{app}/` | Test logic + **assertions** |
+| Fixtures | `tests/conftest.py`, `tests/{app}/conftest.py` | Browser, login, `pages` |
+| Config | `src/automation/config/settings.py` | Credentials via `.env` |
+| Test data | `tests/testdata/dataTest-*.json` | Business data — no secrets |
+
+## Assertions
+
+- **Tests only** — `assert` with descriptive message
+- Page Objects: `wait_for_visible()` raises; `is_*_displayed() -> bool`
+- Use `pytest.skip(reason)` — not `assert False` — for missing preconditions
+
+## Test data
+
+- Credentials: `efms_account_password` / `etms_account_password` fixtures only
+- Unique fields: generate with timestamp / `uuid` — never hardcode
+- JSON key = test function name exactly
+
+## Waits
+
+- No `time.sleep()` or raw ms literals — use `settings.*_timeout` / `settings.*_ms`
+- Prefer `wait_for_visible`, `click_when_ready`, condition waits (Section 3.6)
+
+## Before delivery
+
+- No debug `print()`, commented code, or probe scripts left behind
+- Do not delete source files without user confirmation
+- Run `uv run ruff check . && uv run ruff format .`

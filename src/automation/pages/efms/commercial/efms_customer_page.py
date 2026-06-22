@@ -20,6 +20,11 @@ class EfmsCustomerPage(EfmsCommercialMenuPage):
         "th:has-text('Partner ID')",
     ]
 
+    list_column_headers = [
+        "Partner ID",
+        "Name ABBR",
+    ]
+
     @log_method("Click Customer Menu")
     def click_customer_menu(self) -> "EfmsCustomerPage":
         self._click_commercial_submenu(
@@ -36,4 +41,5 @@ class EfmsCustomerPage(EfmsCommercialMenuPage):
             self.list_table_selectors,
             "Customer list title",
             "Customer list table",
+            self.list_column_headers,
         )

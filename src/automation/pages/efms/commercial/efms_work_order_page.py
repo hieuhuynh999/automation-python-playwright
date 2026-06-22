@@ -20,6 +20,11 @@ class EfmsWorkOrderPage(EfmsCommercialMenuPage):
         "th:has-text('Work Order No.')",
     ]
 
+    list_column_headers = [
+        "Work Order No.",
+        "Customer",
+    ]
+
     @log_method("Click Work Order Menu")
     def click_work_order_menu(self) -> "EfmsWorkOrderPage":
         self._click_commercial_submenu(
@@ -36,4 +41,5 @@ class EfmsWorkOrderPage(EfmsCommercialMenuPage):
             self.list_table_selectors,
             "Work Order list title",
             "Work Order list table",
+            self.list_column_headers,
         )

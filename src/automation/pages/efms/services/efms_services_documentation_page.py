@@ -3,6 +3,13 @@ from automation.pages.efms.services.services_menu_page import EfmsServicesMenuPa
 
 
 class EfmsServicesDocumentationPage(EfmsServicesMenuPage):
+    shipment_item_selectors = [
+        "xpath=//div[contains(@class,'m-portlet__body')]//div[@class='shipment-item-wrapper']",
+        "xpath=//div[contains(@class,'m-portlet__body')]//div[contains(@class,'shipment-item-wrapper')]",
+        "xpath=//div[@class='shipment-item-wrapper']",
+        ".m-portlet__body .shipment-item-wrapper",
+    ]
+
     def _menu_selectors(self, href_fragment: str, label: str) -> list[str]:
         return [
             f"xpath=//div[contains(@class,'m-menu__submenu')]//a[contains(@href,'{href_fragment}')]",
@@ -28,6 +35,8 @@ class EfmsServicesDocumentationPage(EfmsServicesMenuPage):
             hash_fragment,
             self._title_selectors(label),
             f"{label} title",
+            self.shipment_item_selectors,
+            f"{label} shipment list",
         )
 
     @log_method("Click Air Export Menu")

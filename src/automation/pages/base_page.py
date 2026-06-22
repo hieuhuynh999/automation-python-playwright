@@ -90,3 +90,37 @@ class BasePage:
                 logger.debug(f"Selector not found: {selector}")
 
         return None
+
+    @log_method("Wait for element enabled")
+    def wait_for_enabled(
+        self,
+        selectors: list[str],
+        element_name: str,
+        timeout: int | None = None,
+    ) -> Locator:
+        locator = self.wait_for_visible(selectors, element_name, timeout=timeout)
+        timeout = timeout or settings.browser_timeout
+        deadline = time.monotonic() + timeout / 1000
+
+        while time.monotonic() < deadline:
+            try:
+                if locator.is_enabled():
+                    return locator
+            except Exception:
+                pass
+            self.page.wait_for_timeout(settings.polling_interval)
+
+        raise AssertionError(f"Element '{element_name}' not enabled after {timeout}ms.")
+
+    @log_method("Click when visible and enabled")
+    def click_when_ready(
+        self,
+        selectors: list[str],
+        element_name: str,
+        timeout: int | None = None,
+        *,
+        force: bool = False,
+    ) -> Locator:
+        target = self.wait_for_enabled(selectors, element_name, timeout=timeout)
+        target.click(force=force)
+        return target

@@ -1,0 +1,26 @@
+---
+description: Flaky test diagnosis — Angular/eFMS race conditions, locators, grid/delete
+globs: tests/**/*.py, src/automation/pages/**/*.py
+alwaysApply: false
+---
+
+# Flaky Test Analyzer (eFMS/eTMS)
+
+Full workflow: `.cursor/skills/flaky-test-analyzer/SKILL.md` · `ruleAi.md` Section 18.
+
+## Quick diagnose (order)
+
+1. Positional XPath / dynamic `_ngcontent` / `nth-child` → rewrite (Section 3.4)
+2. `time.sleep()` or literal `wait_for_timeout(ms)` → `settings` + condition waits
+3. **Run FAIL, debug PASS** → race — not slower sleep
+4. Grid empty but title OK → `ListGridComponent.wait_for_data_rows()`
+5. ng-select wrong value → `NgSelectComponent`, not raw click
+6. Overlay intercept → wait `.block-ui-active` gone
+7. Headless sidebar/title → viewport 1920×1080 + `dashboard_ready_selectors`
+8. Commercial nav order → `goto_dashboard` between scenarios
+9. Services → `shipment-item-wrapper`, not datatable
+10. BR delete → `delete_booking_receipt_from_grid()` only
+
+## Verify fix
+
+5+ consecutive headed runs + 1 headless run before marking done.

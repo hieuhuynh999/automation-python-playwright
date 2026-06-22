@@ -1,0 +1,39 @@
+---
+description: Locator priority and verification for eFMS/eTMS Angular POM
+globs: src/automation/pages/**/*.py
+alwaysApply: false
+---
+
+# Locator Strategy (eFMS / eTMS)
+
+Full reference: `ruleAi.md` Sections 3.4, 3.9.
+
+## Priority (semantic first — not styling)
+
+1. `aria-label`, `role`, Playwright `getByRole` / `getByLabel` when they resolve
+2. `data-testid`, `data-qa`, `data-test`
+3. Stable `id`, `name`, `formcontrolname`
+4. Visible text (`:has-text`, `normalize-space()`)
+5. Scoped CSS
+6. Relative XPath anchored to `href`, `h3`, `th`, form container
+7. `contains(@class, ...)` — fallback only
+
+## FORBIDDEN
+
+- Dynamic/hashed classes, random auto-generated ids
+- Absolute positional XPath (`/html/body/...`, `//div[3]/button[2]`)
+- `nth` / index as primary selector
+- Broad selectors (`input[type='text']`, bare `button`) except documented last resort
+
+## Before commit — verify on live DOM
+
+1. Exactly one match in scope
+2. User-interactable element (not overlay/spinner)
+3. Survives reload / re-navigation
+4. Stable: loading → loaded → with data
+
+## Rules
+
+- All locators in Page Object `*_selectors: list[str]` — best first
+- Never `page.locator()` in tests — use `pages` fixture
+- Never guess — inspect UAT at 1920×1080 headed first

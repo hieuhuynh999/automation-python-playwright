@@ -29,6 +29,11 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         "th:has-text('Booking No')",
     ]
 
+    list_column_headers = [
+        "Booking No",
+        "Customer",
+    ]
+
     add_new_button_selectors = [
         "button:has-text('Add new')",
         "button:has-text('add new')",
@@ -122,15 +127,11 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         self._delete_confirm_swal.wait_until_closed(timeout=timeout)
 
     def _wait_for_grid_ready(self, timeout: int | None = None) -> None:
-        timeout = timeout or settings.browser_timeout
-        deadline = time.monotonic() + timeout / 1000
-        while time.monotonic() < deadline:
-            overlay = self.find_visible(self.loading_overlay_selectors)
-            table = self.find_visible(self.list_table_selectors)
-            if overlay is None and table is not None:
-                return
-            self.page.wait_for_timeout(settings.polling_interval)
-        self.wait_for_page_stable()
+        self.list_grid.wait_until_ready(
+            self.list_table_selectors,
+            "Booking Receipt table",
+            timeout=timeout,
+        )
 
     def _click_delete_confirm_yes_and_wait(
         self,
@@ -207,6 +208,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
             self.list_table_selectors,
             "Booking Receipt title",
             "Booking Receipt table",
+            self.list_column_headers,
         )
 
     @log_method("Click Add new button")

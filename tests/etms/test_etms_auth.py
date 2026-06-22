@@ -9,7 +9,8 @@ from tests.data_provider import DataProvider
 @pytest.mark.etms
 class TestEtmsAuth:
     @pytest.mark.parametrize(
-        "data", DataProvider.etms_cases("test_smk_auth_001_login_success_etms"),
+        "data",
+        DataProvider.etms_cases("test_smk_auth_001_login_success_etms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_001")
     def test_smk_auth_001_login_success_etms(self, pages, data, etms_account_password):
@@ -29,7 +30,8 @@ class TestEtmsAuth:
         assert pages.etms_login_page.is_branch_hub_selection_displayed()
 
     @pytest.mark.parametrize(
-        "data", DataProvider.etms_cases("test_smk_auth_002_select_branch_etms"),
+        "data",
+        DataProvider.etms_cases("test_smk_auth_002_select_branch_etms"),
     )
     @pytest.mark.tc_id("SMK_AUTH_002")
     def test_smk_auth_002_select_branch_etms(self, pages, data, etms_account_password):

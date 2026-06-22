@@ -1,9 +1,10 @@
 from automation.config import settings
 from automation.logging import log_method
 from automation.pages.base_page import BasePage
+from automation.pages.efms.efms_navigate_verify_mixin import EfmsNavigateVerifyMixin
 
 
-class EfmsLogisticsMenuPage(BasePage):
+class EfmsLogisticsMenuPage(EfmsNavigateVerifyMixin, BasePage):
     logistics_menu_selectors = [
         "xpath=//a[contains(@class,'m-menu__toggle') and .//span[normalize-space()='Logistics']]",
         "xpath=//span[normalize-space()='Logistics']/ancestor::a[contains(@class,'m-menu__toggle')][1]",
@@ -71,7 +72,15 @@ class EfmsLogisticsMenuPage(BasePage):
         table_selectors: list[str],
         title_name: str,
         table_name: str,
+        column_headers: list[str],
+        min_rows: int = 1,
     ) -> bool:
-        self.wait_for_visible(title_selectors, title_name)
-        self.wait_for_visible(table_selectors, table_name)
-        return hash_fragment in self.current_url
+        return self._verify_list_page_displayed(
+            hash_fragment,
+            title_selectors,
+            table_selectors,
+            title_name,
+            table_name,
+            column_headers,
+            min_rows=min_rows,
+        )

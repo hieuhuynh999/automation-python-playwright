@@ -20,6 +20,11 @@ class EfmsAgentPage(EfmsCommercialMenuPage):
         "th:has-text('Partner ID')",
     ]
 
+    list_column_headers = [
+        "Partner ID",
+        "Name ABBR",
+    ]
+
     @log_method("Click Agent Menu")
     def click_agent_menu(self) -> "EfmsAgentPage":
         self._click_commercial_submenu(
@@ -36,4 +41,5 @@ class EfmsAgentPage(EfmsCommercialMenuPage):
             self.list_table_selectors,
             "Agent list title",
             "Agent list table",
+            self.list_column_headers,
         )

@@ -20,6 +20,12 @@ class EfmsJobManagementPage(EfmsLogisticsMenuPage):
         "th:has-text('Job ID')",
     ]
 
+    list_column_headers = [
+        "Job ID",
+        "Customer",
+        "Process Status",
+    ]
+
     @log_method("Click Job Management Menu")
     def click_job_management_menu(self) -> "EfmsJobManagementPage":
         self._click_logistics_submenu(
@@ -36,4 +42,5 @@ class EfmsJobManagementPage(EfmsLogisticsMenuPage):
             self.list_table_selectors,
             "Job Management title",
             "Job Management table",
+            self.list_column_headers,
         )

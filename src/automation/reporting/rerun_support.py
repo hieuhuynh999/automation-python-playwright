@@ -25,9 +25,7 @@ def configure_pytest_reruns(config: pytest.Config) -> None:
     settings = get_settings()
     argv = sys.argv
     reruns_on_cli = any(arg == "--reruns" or arg.startswith("--reruns=") for arg in argv)
-    delay_on_cli = any(
-        arg == "--reruns-delay" or arg.startswith("--reruns-delay=") for arg in argv
-    )
+    delay_on_cli = any(arg == "--reruns-delay" or arg.startswith("--reruns-delay=") for arg in argv)
 
     if not reruns_on_cli:
         config.option.reruns = settings.test_reruns

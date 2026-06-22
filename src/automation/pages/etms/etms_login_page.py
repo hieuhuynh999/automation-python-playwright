@@ -41,6 +41,7 @@ class EtmsLoginPage(BasePage):
         "button.btn-ftl-primary:has-text('Select')",
         "button:has-text('Select')",
     ]
+
     @property
     def _branch_select(self) -> NgSelectComponent:
         return NgSelectComponent(
@@ -81,11 +82,7 @@ class EtmsLoginPage(BasePage):
 
     @log_method("Login to eTMS")
     def login(self, username: str, password: str) -> "EtmsLoginPage":
-        return (
-            self.enter_username(username)
-            .enter_password(password)
-            .click_login()
-        )
+        return self.enter_username(username).enter_password(password).click_login()
 
     @log_method("Verify Branch/Hub selection page is displayed")
     def is_branch_hub_selection_displayed(self) -> bool:

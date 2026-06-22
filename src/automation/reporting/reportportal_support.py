@@ -17,17 +17,19 @@ if TYPE_CHECKING:
 _RP_LOGGER: logging.Logger | None = None
 _RP_PATCH_APPLIED = False
 
-_NON_EXECUTION_FLAGS = frozenset({
-    "--collect-only",
-    "--co",
-    "--fixtures",
-    "--funcargs",
-    "--markers",
-    "--version",
-    "--help",
-    "--setup-only",
-    "--setup-show",
-})
+_NON_EXECUTION_FLAGS = frozenset(
+    {
+        "--collect-only",
+        "--co",
+        "--fixtures",
+        "--funcargs",
+        "--markers",
+        "--version",
+        "--help",
+        "--setup-only",
+        "--setup-show",
+    }
+)
 
 
 def is_pytest_execution_run(args: list[str]) -> bool:
