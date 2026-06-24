@@ -82,8 +82,13 @@ def load_dotenv_for_reportportal() -> None:
     _load_dotenv_early()
 
 
+def _project_env_path() -> Path:
+    # reportportal_support.py → reporting → automation → src → repo root
+    return Path(__file__).resolve().parents[3] / ".env"
+
+
 def _load_dotenv_early() -> None:
-    env_path = Path(__file__).resolve().parents[2] / ".env"
+    env_path = _project_env_path()
     if not env_path.exists():
         return
 
@@ -92,7 +97,8 @@ def _load_dotenv_early() -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip())
+        # Project .env is the local source of truth (overrides stale shell vars).
+        os.environ[key.strip()] = value.strip()
 
 
 def detect_application_from_marker(marker_expr: str | None) -> str | None:

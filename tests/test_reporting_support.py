@@ -1,9 +1,14 @@
 """Unit tests for retry helpers and secret redaction in reports."""
 
+import os
+
 from automation.config.secret_redaction import redact_secrets, sanitize_test_report
 from automation.reporting.metadata_support import resolve_report_base_url
 from automation.reporting.reportportal_support import (
+    _load_dotenv_early,
+    _project_env_path,
     is_pytest_execution_run,
+    resolve_launch_for_run,
     should_auto_enable_reportportal,
     should_enable_reportportal,
 )
@@ -108,3 +113,25 @@ def test_should_enable_reportportal_execution() -> None:
     )
     assert enabled is True
     assert "RP_API_KEY" in reason
+
+
+def test_project_env_path_points_to_repo_root() -> None:
+    assert _project_env_path().name == ".env"
+    assert _project_env_path().parent.name == "automation-techub"
+
+
+def test_load_dotenv_early_overrides_stale_rp_launch_etms(monkeypatch) -> None:
+    monkeypatch.delenv("RP_LAUNCH_ETMS", raising=False)
+    monkeypatch.setenv("RP_LAUNCH_ETMS", "etms-automation")
+
+    _load_dotenv_early()
+
+    launch = resolve_launch_for_run(
+        marker_expr="",
+        args=["tests/etms/test_etms_performance.py"],
+        items=None,
+        settings=type("S", (), {"env": "UAT"})(),
+    )
+    assert launch is not None
+    assert launch[0] != "etms-automation"
+    assert os.getenv("RP_LAUNCH_ETMS") != "etms-automation"
