@@ -53,8 +53,7 @@
 17. [AI Checklist Before Submitting Code](#17-ai-checklist-before-submitting-code)
 18. [Flaky Test Diagnosis & Fix](#18-flaky-test-diagnosis--fix)
 19. [Framework Architect Quick Reference](#19-framework-architect-quick-reference)
-20. [eTMS Performance Tests (Transport Network)](#20-etms-performance-tests-transport-network)
-20. [eTMS Performance Tests (Transport Network)](#20-etms-performance-tests-transport-network)
+20. [eTMS Performance Tests](#20-etms-performance-tests)
 
 ---
 
@@ -422,7 +421,8 @@ auotmation-techub/
 │   │   └── etms/
 │   │       ├── etms_login_page.py
 │   │       ├── etms_home_page.py
-│   │       ├── etms_catalogue_menu_page.py       # Catalogue sidebar (nav-link) — internal base
+│   │       ├── etms_catalogue_menu_page.py       # Catalogue sidebar — internal base
+│   │       ├── etms_partner_list_page.py         # Catalogue > Partner generic list pages
 │   │       ├── etms_places_page.py               # Transport Network > Places
 │   │       ├── etms_distance_between_places_page.py
 │   │       ├── etms_transport_network_list_page.py  # Generic TN list pages (config registry)
@@ -489,7 +489,7 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)`, `etms_partner_list_page(page_key)` | `dataTest-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
@@ -515,10 +515,11 @@ auotmation-techub/
 |-------|------|----------------|
 | `EtmsLoginPage` | `etms/etms_login_page.py` | Login form, branch/hub picker (`NgSelectComponent`), branch verify |
 | `EtmsHomePage` | `etms/etms_home_page.py` | Home URL + dashboard after branch select |
-| `EtmsCatalogueMenuPage` | `etms/etms_catalogue_menu_page.py` | Catalogue + Transport Network sidebar — **internal base** |
+| `EtmsCatalogueMenuPage` | `etms/etms_catalogue_menu_page.py` | Catalogue sidebar — `open_catalogue_menu()`, `open_transport_network_menu()`, `open_partner_menu()` — **internal base** |
 | `EtmsPlacesPage` | `etms/etms_places_page.py` | Transport Network > Places list |
 | `EtmsDistanceBetweenPlacesPage` | `etms/etms_distance_between_places_page.py` | Transport Network > Distance Between Places |
 | `EtmsTransportNetworkListPage` | `etms/etms_transport_network_list_page.py` | Generic TN list pages via `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` |
+| `EtmsPartnerListPage` | `etms/etms_partner_list_page.py` | Generic Partner list pages via `PARTNER_LIST_PAGE_CONFIGS` |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
 **Common Components (compose inside Page Objects — not in PageManager):**
@@ -612,6 +613,8 @@ Supporting layers (not in UI test path):
 | COR_LP_001 | Cost Of Route | High | `TestEtmsCostOfRoute.test_cor_lp_001_create_cost_of_route_etms` | `tests/etms/test_etms_cost_of_route.py` |
 | PERF_TN_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_transport_network_pages` | `tests/etms/test_etms_performance.py` |
 | PERF_PLC_001 … PERF_RPI_001 | Performance | High | (sub-checks inside PERF_TN_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_PT_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_partner_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_PG_001 … PERF_BI_001 | Performance | High | (sub-checks inside PERF_PT_001) | `dataTest-etms.json` → `pages[]` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
@@ -3162,17 +3165,19 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 
 ---
 
-## 20. eTMS Performance Tests (Transport Network)
+## 20. eTMS Performance Tests
 
-> **TC:** `PERF_TN_001` — login once, measure all configured Transport Network list pages, assert thresholds at end.
+> **TCs:** `PERF_TN_001` (Catalogue > Transport Network) · `PERF_PT_001` (Catalogue > Partner) — login once, measure configured list pages, assert thresholds at end.
 
 ### 20.1 Architecture (factory pattern)
 
 ```text
 test_etms_performance.py
-  → etms_performance_support.run_etms_transport_network_performance_suite()
+  → etms_performance_support.run_etms_catalogue_performance_suite()   # generic
+      OR run_etms_transport_network_performance_suite()               # PERF_TN_001 wrapper
+      OR run_etms_partner_performance_suite()                         # PERF_PT_001 wrapper
       → etms_performance_registry.resolve_performance_page(pages, page_key)
-      → PageManager.etms_transport_network_list_page(page_key)  # cached dict factory
+      → PageManager factory (TN / Partner / dedicated Places / DBP)
       → page.load_page_for_performance(min_rows)                # no @log_method noise
       → etms_performance_registry.verify_performance_page_loaded()  # URL + scoped row count
       → StepPerformanceTracker.assert_all_within_threshold()
@@ -3181,10 +3186,19 @@ test_etms_performance.py
 | File | Role |
 |------|------|
 | `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` |
-| `tests/etms/etms_performance_support.py` | Suite orchestration only |
+| `tests/etms/etms_performance_support.py` | Suite orchestration — `suite` key drives submenu opener |
 | `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
 | `src/automation/pages/etms/etms_transport_network_list_page.py` | `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` + generic `EtmsTransportNetworkListPage` |
-| `src/automation/performance/step_performance_tracker.py` | Timing + summary log |
+| `src/automation/pages/etms/etms_partner_list_page.py` | `PARTNER_LIST_PAGE_CONFIGS` + generic `EtmsPartnerListPage` |
+| `src/automation/pages/etms/etms_catalogue_menu_page.py` | `open_catalogue_menu()` + `open_transport_network_menu()` / `open_partner_menu()` via `_open_sidebar_submenu()` |
+| `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
+
+**Suite → catalogue submenu (JSON `suite` field):**
+
+| `suite` | Menu path | Opener |
+|---------|-----------|--------|
+| `transport_network` | Catalogue > Transport Network | `open_transport_network_menu()` |
+| `partner` | Catalogue > Partner | `open_partner_menu()` |
 
 **Page resolution rules:**
 
@@ -3192,18 +3206,22 @@ test_etms_performance.py
 |------------|---------------------|
 | `places` | `pages.etms_places_page` |
 | `distance_between_places` | `pages.etms_distance_between_places_page` |
-| Other TN keys in `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` | `pages.etms_transport_network_list_page(page_key)` |
+| TN keys in `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` | `pages.etms_transport_network_list_page(page_key)` |
+| Partner keys in `PARTNER_LIST_PAGE_CONFIGS` | `pages.etms_partner_list_page(page_key)` |
 
-Adding a **new generic TN list page:** add one entry to `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
+Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
 
 Dedicated screens (Places, DBP) keep their own POM class until merged into the generic config.
 
-### 20.2 JSON schema (`test_etms_performance_transport_network_pages_etms`)
+### 20.2 JSON schema
+
+**Transport Network (`test_etms_performance_transport_network_pages_etms`):**
 
 ```json
 {
   "test_case_id": "PERF_TN_001",
   "test_case_ids": ["PERF_PLC_001", "PERF_DBP_001", "..."],
+  "suite": "transport_network",
   "branch": "VNHCM",
   "min_table_rows": 1,
   "pages": [
@@ -3212,8 +3230,27 @@ Dedicated screens (Places, DBP) keep their own POM class until merged into the g
 }
 ```
 
+**Partner (`test_etms_performance_partner_pages_etms`):**
+
+```json
+{
+  "test_case_id": "PERF_PT_001",
+  "test_case_ids": ["PERF_PG_001", "PERF_PL_001", "PERF_BA_001", "PERF_BI_001"],
+  "suite": "partner",
+  "branch": "VNHCM",
+  "min_table_rows": 1,
+  "pages": [
+    { "page_key": "partner_group", "check_label": "Partner Group Page", "max_step_seconds": 10 },
+    { "page_key": "partner_list", "check_label": "Partner list Page", "max_step_seconds": 10 },
+    { "page_key": "bank_account", "check_label": "Bank Account Page", "max_step_seconds": 10 },
+    { "page_key": "booking_information", "check_label": "Booking Information Page", "max_step_seconds": 10 }
+  ]
+}
+```
+
 - `max_step_seconds` **required per page** (not at root).
 - `min_table_rows` optional per page (defaults to root).
+- `suite` optional for TN wrapper (defaults `transport_network`); required `partner` for PERF_PT_001.
 
 ### 20.3 Verification layers (not URL-only)
 
@@ -3245,7 +3282,8 @@ list_table_selectors = [
 
 - Used only by performance tests — **no** `@log_method` (reduces log noise).
 - Every list POM must expose `page_hash` and `list_table_selectors`.
-- Menu navigation: `EtmsCatalogueMenuPage.open_catalogue_menu()` + `open_transport_network_menu()` before each page step.
+- Menu navigation before each timed step: `open_catalogue_menu()` + `open_transport_network_menu()` **or** `open_partner_menu()` (per JSON `suite`).
+- `EtmsCatalogueMenuPage` uses private `_open_sidebar_submenu()` — public methods keep separate `@log_method` step names for HTML/ReportPortal logs.
 
 ### 20.6 Run command
 
@@ -3364,4 +3402,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-24 | eTMS PERF_TN_001 Transport Network | ListGrid scoped rows | etms_performance_registry factory*
+*Last updated: 2026-06-24 | PERF_PT_001 Partner | PERF_TN_001 Transport Network | catalogue _open_sidebar_submenu | RP_LAUNCH .env fix*

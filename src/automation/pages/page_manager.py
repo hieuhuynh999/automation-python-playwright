@@ -17,6 +17,7 @@ from automation.pages.etms import (
     EtmsDistanceBetweenPlacesPage,
     EtmsHomePage,
     EtmsLoginPage,
+    EtmsPartnerListPage,
     EtmsPlacesPage,
     EtmsTransportNetworkListPage,
     EtmsVfcLoginPage,
@@ -40,6 +41,7 @@ class PageManager:
         self._etms_places_page: EtmsPlacesPage | None = None
         self._etms_distance_between_places_page: EtmsDistanceBetweenPlacesPage | None = None
         self._etms_transport_network_list_pages: dict[str, EtmsTransportNetworkListPage] = {}
+        self._etms_partner_list_pages: dict[str, EtmsPartnerListPage] = {}
         self._etms_home_page: EtmsHomePage | None = None
         self._etms_login_page: EtmsLoginPage | None = None
         self._etms_vfc_login_page: EtmsVfcLoginPage | None = None
@@ -129,6 +131,14 @@ class PageManager:
                 page_key,
             )
         return self._etms_transport_network_list_pages[page_key]
+
+    def etms_partner_list_page(self, page_key: str) -> EtmsPartnerListPage:
+        if page_key not in self._etms_partner_list_pages:
+            self._etms_partner_list_pages[page_key] = EtmsPartnerListPage(
+                self.page,
+                page_key,
+            )
+        return self._etms_partner_list_pages[page_key]
 
     @property
     def etms_login_page(self) -> EtmsLoginPage:

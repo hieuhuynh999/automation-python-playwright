@@ -13,6 +13,11 @@ from tests.etms.etms_performance_registry import (
     verify_performance_page_loaded,
 )
 
+_CATALOGUE_SUITE_NAVIGATORS: dict[str, Callable[[Any], None]] = {
+    "transport_network": lambda nav_page: nav_page.open_transport_network_menu(),
+    "partner": lambda nav_page: nav_page.open_partner_menu(),
+}
+
 
 def _resolve_page_threshold(page_config: dict[str, Any]) -> float:
     if "max_step_seconds" not in page_config:
@@ -23,14 +28,26 @@ def _resolve_page_threshold(page_config: dict[str, Any]) -> float:
     return float(page_config["max_step_seconds"])
 
 
-def run_etms_transport_network_performance_suite(
+def _open_catalogue_submenu(nav_page: Any, suite: str) -> None:
+    nav_page.open_catalogue_menu()
+    opener = _CATALOGUE_SUITE_NAVIGATORS.get(suite)
+    if opener is None:
+        known = ", ".join(sorted(_CATALOGUE_SUITE_NAVIGATORS))
+        raise AssertionError(
+            f"Unknown performance suite '{suite}'. Known catalogue suites: {known}"
+        )
+    opener(nav_page)
+
+
+def run_etms_catalogue_performance_suite(
     *,
     pages: PageManager,
     data: dict[str, Any],
     login_etms: Callable[[str], None],
 ) -> None:
-    """Login once, measure each configured page, then compare all results to thresholds."""
+    """Login once, open catalogue submenu, measure each configured page, assert thresholds."""
     branch = str(data["branch"])
+    suite = str(data.get("suite", "transport_network"))
     default_min_rows = int(data.get("min_table_rows", 1))
     page_configs = data.get("pages", [])
 
@@ -48,7 +65,7 @@ def run_etms_transport_network_performance_suite(
         if "max_step_seconds" in cfg
     )
     record_step_log(
-        f"[PERF CONFIG] branch={branch}, min_table_rows={default_min_rows}, "
+        f"[PERF CONFIG] suite={suite}, branch={branch}, min_table_rows={default_min_rows}, "
         f"pages={len(page_configs)}, thresholds=[{threshold_summary}]"
     )
 
@@ -60,8 +77,7 @@ def run_etms_transport_network_performance_suite(
         min_rows = int(page_config.get("min_table_rows", default_min_rows))
         page = resolve_performance_page(pages, page_key)
 
-        nav_page.open_catalogue_menu()
-        nav_page.open_transport_network_menu()
+        _open_catalogue_submenu(nav_page, suite)
 
         tracker.run_step(
             check_label,
@@ -78,3 +94,35 @@ def run_etms_transport_network_performance_suite(
         )
 
     tracker.assert_all_within_threshold()
+
+
+def run_etms_transport_network_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Backward-compatible wrapper for PERF_TN_001."""
+    payload = dict(data)
+    payload.setdefault("suite", "transport_network")
+    run_etms_catalogue_performance_suite(
+        pages=pages,
+        data=payload,
+        login_etms=login_etms,
+    )
+
+
+def run_etms_partner_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Catalogue > Partner performance suite (PERF_PT_001)."""
+    payload = dict(data)
+    payload["suite"] = "partner"
+    run_etms_catalogue_performance_suite(
+        pages=pages,
+        data=payload,
+        login_etms=login_etms,
+    )

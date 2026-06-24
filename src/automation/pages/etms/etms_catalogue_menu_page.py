@@ -1,4 +1,3 @@
-from automation.config import settings
 from automation.logging import log_method
 from automation.pages.base_page import BasePage
 
@@ -18,19 +17,47 @@ class EtmsCatalogueMenuPage(BasePage):
         "xpath=//li[@id='cat']//span[normalize-space()='Catalogue']/ancestor::a[contains(@class,'nav-link')][1]",
     ]
 
-    catalogue_submenu_selectors = [
+    catalogue_expanded_selectors = [
         "#catTransportNetwork > a.nav-link",
-        "xpath=//li[@id='cat']//li[@id='catTransportNetwork']//a[contains(@class,'nav-link')]",
+        "#catPartners > a.nav-link",
+        (
+            "xpath=//li[@id='cat']//ul[contains(@class,'menu-content')]"
+            "//a[contains(@class,'nav-link')]"
+        ),
     ]
 
     transport_network_toggle_selectors = [
         "#catTransportNetwork > a.nav-link",
-        "xpath=//li[@id='catTransportNetwork']//span[normalize-space()='Transport Network']/ancestor::a[contains(@class,'nav-link')][1]",
+        (
+            "xpath=//li[@id='catTransportNetwork']"
+            "//span[normalize-space()='Transport Network']"
+            "/ancestor::a[contains(@class,'nav-link')][1]"
+        ),
     ]
 
     transport_network_submenu_selectors = [
         "#catOtherPlace > a.nav-link",
-        "xpath=//li[@id='catTransportNetwork']//li[@id='catOtherPlace']//a[contains(@class,'nav-link')]",
+        (
+            "xpath=//li[@id='catTransportNetwork']"
+            "//li[@id='catOtherPlace']//a[contains(@class,'nav-link')]"
+        ),
+    ]
+
+    partner_toggle_selectors = [
+        "#catPartners > a.nav-link",
+        (
+            "xpath=//li[@id='catPartners']"
+            "//span[normalize-space()='Partner']"
+            "/ancestor::a[contains(@class,'nav-link')][1]"
+        ),
+    ]
+
+    partner_submenu_selectors = [
+        "#catPartnerGroup > a.nav-link",
+        (
+            "xpath=//li[@id='catPartners']"
+            "//li[@id='catPartnerGroup']//a[contains(@class,'nav-link')]"
+        ),
     ]
 
     @log_method("Wait for eTMS sidebar navigation ready")
@@ -52,32 +79,46 @@ class EtmsCatalogueMenuPage(BasePage):
         link.click(force=True)
         self.wait_for_page_stable()
 
+    def _open_sidebar_submenu(
+        self,
+        *,
+        toggle_selectors: list[str],
+        submenu_selectors: list[str],
+        toggle_label: str,
+        ready_label: str,
+    ) -> "EtmsCatalogueMenuPage":
+        """Expand a sidebar section when its leaf submenu is not yet visible."""
+        if not self._is_menu_item_visible(submenu_selectors):
+            self._click_sidebar_link(toggle_selectors, toggle_label)
+        self.wait_for_visible(submenu_selectors, ready_label)
+        return self
+
     @log_method("Open Catalogue menu")
     def open_catalogue_menu(self) -> "EtmsCatalogueMenuPage":
         self.wait_for_sidebar_ready()
-        if not self._is_menu_item_visible(self.catalogue_submenu_selectors):
-            self._click_sidebar_link(
-                self.catalogue_menu_selectors,
-                "Catalogue menu",
-            )
-
-        self.wait_for_visible(
-            self.catalogue_submenu_selectors,
-            "Transport Network menu under Catalogue",
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.catalogue_menu_selectors,
+            submenu_selectors=self.catalogue_expanded_selectors,
+            toggle_label="Catalogue menu",
+            ready_label="Catalogue submenu",
         )
-        return self
 
     @log_method("Open Transport Network menu")
     def open_transport_network_menu(self) -> "EtmsCatalogueMenuPage":
         self.open_catalogue_menu()
-        if not self._is_menu_item_visible(self.transport_network_submenu_selectors):
-            self._click_sidebar_link(
-                self.transport_network_toggle_selectors,
-                "Transport Network menu",
-            )
-
-        self.wait_for_visible(
-            self.transport_network_submenu_selectors,
-            "Places menu under Transport Network",
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.transport_network_toggle_selectors,
+            submenu_selectors=self.transport_network_submenu_selectors,
+            toggle_label="Transport Network menu",
+            ready_label="Places menu under Transport Network",
         )
-        return self
+
+    @log_method("Open Partner menu")
+    def open_partner_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_catalogue_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.partner_toggle_selectors,
+            submenu_selectors=self.partner_submenu_selectors,
+            toggle_label="Partner menu",
+            ready_label="Partner Group menu under Partner",
+        )

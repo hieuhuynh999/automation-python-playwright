@@ -126,6 +126,46 @@
             ]
         }
     ],
+    "test_etms_performance_partner_pages_etms": [
+        {
+            "test_case_id": "PERF_PT_001",
+            "test_case_ids": [
+                "PERF_PG_001",
+                "PERF_PL_001",
+                "PERF_BA_001",
+                "PERF_BI_001"
+            ],
+            "description": "Performance — Partner pages load (Catalogue > Partner)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "suite": "partner",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "partner_group",
+                    "check_label": "Partner Group Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "partner_list",
+                    "check_label": "Partner list Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "bank_account",
+                    "check_label": "Bank Account Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "check_label": "Booking Information Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
     "test_tms_cor_001_reject_switch_updating_cost_of_route_etms": [
         {
             "test_case_id": "TMS_COR_001",

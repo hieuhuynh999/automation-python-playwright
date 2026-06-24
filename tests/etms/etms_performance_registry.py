@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from automation.logging.step_logger import record_step_log
+from automation.pages.etms.etms_partner_list_page import PARTNER_LIST_PAGE_CONFIGS
 from automation.pages.etms.etms_transport_network_list_page import (
     TRANSPORT_NETWORK_LIST_PAGE_CONFIGS,
 )
@@ -24,12 +25,17 @@ class EtmsPerformancePageTarget:
 
 
 def build_performance_page_targets() -> dict[str, EtmsPerformancePageTarget]:
-    """Build registry from dedicated pages + Transport Network config dict."""
+    """Build registry from dedicated pages + catalogue list config dicts."""
     targets = {
         page_key: EtmsPerformancePageTarget(page_key, check_label)
         for page_key, check_label in _DEDICATED_PERF_PAGES.items()
     }
     for page_key, config in TRANSPORT_NETWORK_LIST_PAGE_CONFIGS.items():
+        targets[page_key] = EtmsPerformancePageTarget(
+            page_key=page_key,
+            check_label=f"{config.title} Page",
+        )
+    for page_key, config in PARTNER_LIST_PAGE_CONFIGS.items():
         targets[page_key] = EtmsPerformancePageTarget(
             page_key=page_key,
             check_label=f"{config.title} Page",
@@ -48,6 +54,8 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
 
     if page_key in TRANSPORT_NETWORK_LIST_PAGE_CONFIGS:
         return pages.etms_transport_network_list_page(page_key)
+    if page_key in PARTNER_LIST_PAGE_CONFIGS:
+        return pages.etms_partner_list_page(page_key)
     if page_key == "places":
         return pages.etms_places_page
     if page_key == "distance_between_places":
