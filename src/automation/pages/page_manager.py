@@ -12,7 +12,15 @@ from automation.pages.efms import (
     EfmsTruckingInlandPage,
     EfmsWorkOrderPage,
 )
-from automation.pages.etms import EtmsCostOfRoutePage, EtmsHomePage, EtmsLoginPage
+from automation.pages.etms import (
+    EtmsCostOfRoutePage,
+    EtmsDistanceBetweenPlacesPage,
+    EtmsHomePage,
+    EtmsLoginPage,
+    EtmsPlacesPage,
+    EtmsTransportNetworkListPage,
+    EtmsVfcLoginPage,
+)
 
 
 class PageManager:
@@ -29,8 +37,12 @@ class PageManager:
         self._efms_trucking_inland_page: EfmsTruckingInlandPage | None = None
         self._efms_services_documentation_page: EfmsServicesDocumentationPage | None = None
         self._etms_cost_of_route_page: EtmsCostOfRoutePage | None = None
+        self._etms_places_page: EtmsPlacesPage | None = None
+        self._etms_distance_between_places_page: EtmsDistanceBetweenPlacesPage | None = None
+        self._etms_transport_network_list_pages: dict[str, EtmsTransportNetworkListPage] = {}
         self._etms_home_page: EtmsHomePage | None = None
         self._etms_login_page: EtmsLoginPage | None = None
+        self._etms_vfc_login_page: EtmsVfcLoginPage | None = None
 
     @property
     def efms_login_page(self) -> EfmsLoginPage:
@@ -99,10 +111,36 @@ class PageManager:
         return self._etms_cost_of_route_page
 
     @property
+    def etms_places_page(self) -> EtmsPlacesPage:
+        if self._etms_places_page is None:
+            self._etms_places_page = EtmsPlacesPage(self.page)
+        return self._etms_places_page
+
+    @property
+    def etms_distance_between_places_page(self) -> EtmsDistanceBetweenPlacesPage:
+        if self._etms_distance_between_places_page is None:
+            self._etms_distance_between_places_page = EtmsDistanceBetweenPlacesPage(self.page)
+        return self._etms_distance_between_places_page
+
+    def etms_transport_network_list_page(self, page_key: str) -> EtmsTransportNetworkListPage:
+        if page_key not in self._etms_transport_network_list_pages:
+            self._etms_transport_network_list_pages[page_key] = EtmsTransportNetworkListPage(
+                self.page,
+                page_key,
+            )
+        return self._etms_transport_network_list_pages[page_key]
+
+    @property
     def etms_login_page(self) -> EtmsLoginPage:
         if self._etms_login_page is None:
             self._etms_login_page = EtmsLoginPage(self.page)
         return self._etms_login_page
+
+    @property
+    def etms_vfc_login_page(self) -> EtmsVfcLoginPage:
+        if self._etms_vfc_login_page is None:
+            self._etms_vfc_login_page = EtmsVfcLoginPage(self.page)
+        return self._etms_vfc_login_page
 
     @property
     def etms_home_page(self) -> EtmsHomePage:

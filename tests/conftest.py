@@ -218,6 +218,15 @@ def etms_account_password() -> str:
     return password
 
 
+@pytest.fixture()
+def vfc_etms_account_password() -> str:
+    cfg = get_settings()
+    password = cfg.vfc_etms_password or os.getenv("VFC_ETMS_ACCOUNT_PASSWORD")
+    if not password:
+        pytest.skip("Set VFC_ETMS_ACCOUNT_PASSWORD to run VFC eTMS login tests")
+    return password
+
+
 def _get_test_case_id(test_data: Any) -> str:
     if not isinstance(test_data, dict):
         return ""
@@ -410,7 +419,15 @@ def pytest_runtest_makereport(
 
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 
-    screenshot_name = report.test_name.replace(" ", "_").replace("/", "_").replace("|", "_")
+    screenshot_name = (
+        report.test_name.replace(" ", "_")
+        .replace("/", "_")
+        .replace("|", "_")
+        .replace(">", "_")
+        .replace("—", "_")
+        .replace("(", "_")
+        .replace(")", "_")
+    )
 
     screenshot_path = screenshot_dir / f"{screenshot_name}.png"
 

@@ -35,5 +35,121 @@
             "expected_success_message": "New data added",
             "expected_delete_message": "Data delete success"
         }
+    ],
+    "test_cor_cp_001_copy_cost_of_route_etms": [
+        {
+            "test_case_id": "COR_CP_001",
+            "description": "Copy Cost Of Route from Accepted tab — cancel, confirm copy, save, then delete copied record",
+            "module": "Cost Of Route",
+            "priority": "high",
+            "preconditions": "Login success + Accepted record exists for route R0000268",
+            "branch": "VNHCM",
+            "menu_search": "Cost Of Route",
+            "tab": "Accepted",
+            "tab_updating": "Updating",
+            "route_code": "R0000268",
+            "weight_range": "1.00 - 100.00 Kilogram",
+            "vehicle_type": "Xe đầu kéo FUSO",
+            "container_type": "Cont 20DC",
+            "expected_copy_confirm_message": "Do you want COPY this 'Cost Of Route'?",
+            "expected_save_success_message": "Cost of route has been coppied",
+            "delete_tab": "Draft",
+            "expected_delete_message": "Data delete success"
+        }
+    ],
+    "test_etms_performance_transport_network_pages_etms": [
+        {
+            "test_case_id": "PERF_TN_001",
+            "test_case_ids": [
+                "PERF_PLC_001",
+                "PERF_DBP_001",
+                "PERF_RI_001",
+                "PERF_TR_001",
+                "PERF_HUB_001",
+                "PERF_BR_001",
+                "PERF_AU_001",
+                "PERF_ZC_001",
+                "PERF_RPI_001"
+            ],
+            "description": "Performance — Transport Network pages load (Catalogue > Transport Network)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "places",
+                    "check_label": "Places Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distance_between_places",
+                    "check_label": "Distance Between Places Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "route_information",
+                    "check_label": "Route Information Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "transit_route",
+                    "check_label": "Transit Route Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "hub",
+                    "check_label": "Hub Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "branch",
+                    "check_label": "Branch Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "check_label": "Administrative Units Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "check_label": "Zone Code Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "route_project_information",
+                    "check_label": "Route Project Information Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_tms_cor_001_reject_switch_updating_cost_of_route_etms": [
+        {
+            "test_case_id": "TMS_COR_001",
+            "description": "Reject and Switch To Updating Cost Of Route — create, send request, reject, switch to updating, delete",
+            "module": "Cost Of Route",
+            "priority": "critical",
+            "preconditions": "Login success",
+            "branch": "VNHCM",
+            "menu_search": "Cost Of Route",
+            "route_code": "R0000268",
+            "weight_range": "1.00 - 100.00 Kilogram",
+            "vehicle_type": "Remooc 3 trục",
+            "container_type": "Xe tải 500 kilogram",
+            "tab_updating": "Updating",
+            "tab_pending": "Pending",
+            "tab_rejected": "Rejected",
+            "reject_reason": "automation reject",
+            "expected_success_message": "New data added",
+            "expected_send_request_message": "Your approval request(s) has been send",
+            "expected_reject_confirm_message": "Do you want REJECT this 'Cost Of Route'?",
+            "expected_reject_success_message": "You has been REJECTED successed",
+            "expected_switch_confirm_message": "Do you want switch to edit mode this 'Cost Of Route'?",
+            "expected_switch_success_message": "Cost of route has been switch to edit mode successfully",
+            "expected_delete_message": "Data delete success"
+        }
     ]
 }

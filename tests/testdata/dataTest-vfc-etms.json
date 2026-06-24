@@ -1,0 +1,14 @@
+{
+    "test_vfc_smk_auth_001_login_select_branch_etms": [
+        {
+            "test_case_id": "VFC_SMK_AUTH_001",
+            "description": "VFC eTMS login, select branch VNHCM, verify home title eTMS",
+            "module": "Login",
+            "priority": "critical",
+            "preconditions": "VFC user active",
+            "branch": "VNHCM",
+            "expected_url_contains": "app/default/home",
+            "expected_page_title": "eTMS"
+        }
+    ]
+}

@@ -32,12 +32,26 @@ class NgSelectComponent(BaseComponent):
     @log_method("Select ng-select option by text")
     def select_option_by_text(self, option_text: str) -> None:
         self.open()
+        panel = self.page.locator(self.dropdown_panel_selector)
+        search = panel.locator(
+            "input.search-field, input[type='search'], input[type='text']"
+        ).first
+        if search.count() > 0:
+            try:
+                search.fill(option_text)
+                self._owner.wait_for_page_stable()
+            except Exception:
+                pass
+
         option = (
-            self.page.locator(self.dropdown_panel_selector)
-            .locator(self.option_selector)
+            panel.locator(self.option_selector)
             .filter(has_text=option_text)
             .first
         )
+        if option.count() == 0:
+            option = panel.locator(
+                f"{self.option_selector}:has-text('{option_text}')"
+            ).first
         option.wait_for(state="visible", timeout=settings.browser_timeout)
         option.click()
         self.page.locator(self.dropdown_panel_selector).wait_for(

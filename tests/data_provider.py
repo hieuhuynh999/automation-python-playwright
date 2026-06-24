@@ -38,6 +38,7 @@ class DataProvider:
         file_mapping = {
             "efms": "dataTest-efms.json",
             "etms": "dataTest-etms.json",
+            "vfc_etms": "dataTest-vfc-etms.json",
         }
 
         if application not in file_mapping:
@@ -58,6 +59,10 @@ class DataProvider:
         if priority in PRIORITY_MARKERS:
             marks.append(getattr(pytest.mark, priority))
 
+        test_case_id = row.get("test_case_id")
+        if test_case_id:
+            marks.append(pytest.mark.tc_id(str(test_case_id)))
+
         param_id = _get_param_id(row, index)
         return pytest.param(row, marks=marks, id=param_id)
 
@@ -73,3 +78,7 @@ class DataProvider:
     @staticmethod
     def etms_cases(test_method: str) -> list[pytest.ParameterSet]:
         return DataProvider.parametrize("etms", test_method)
+
+    @staticmethod
+    def vfc_etms_cases(test_method: str) -> list[pytest.ParameterSet]:
+        return DataProvider.parametrize("vfc_etms", test_method)

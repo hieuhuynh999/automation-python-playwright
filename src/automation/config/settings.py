@@ -18,10 +18,13 @@ class Settings(BaseSettings):
     headless_viewport_height: int = 1080
     efms_base_url: str = "https://uat-efms.logtechub.com/"
     etms_base_url: str = "https://staging-itllog-etms.logtechub.com/en/#/app/default/home"
+    vfc_etms_base_url: str = "https://test-vfc-etms.logtechub.com/en/#/"
     efms_account_username: str | None = Field(default=None, repr=False)
     efms_account_password: str | None = Field(default=None, repr=False)
     etms_account_username: str | None = Field(default=None, repr=False)
     etms_account_password: str | None = Field(default=None, repr=False)
+    vfc_etms_account_username: str | None = Field(default=None, repr=False)
+    vfc_etms_account_password: str | None = Field(default=None, repr=False)
     account_username: str | None = Field(default=None, repr=False)
     account_password: str | None = Field(default=None, repr=False)
 
@@ -56,6 +59,14 @@ class Settings(BaseSettings):
     @property
     def etms_password(self) -> str | None:
         return self.etms_account_password
+
+    @property
+    def vfc_etms_username(self) -> str | None:
+        return self.vfc_etms_account_username
+
+    @property
+    def vfc_etms_password(self) -> str | None:
+        return self.vfc_etms_account_password
 
 
 @lru_cache

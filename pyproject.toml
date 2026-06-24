@@ -37,9 +37,11 @@ rp_verify_ssl = "false"
 markers = [
     "efms: eFMS application tests",
     "etms: eTMS application tests",
+    "vfc_etms: VFC eTMS environment tests",
     "smoke: smoke test suite",
     "login: login test suite",
     "navigation: navigation test suite",
+    "performance: page load / navigation performance tests",
     "regression: regression test suite",
     "critical: Critical priority tests",
     "high: High priority tests",

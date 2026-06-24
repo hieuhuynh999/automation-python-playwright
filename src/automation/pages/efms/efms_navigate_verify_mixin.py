@@ -32,8 +32,8 @@ class EfmsNavigateVerifyMixin:
     ) -> bool:
         self.wait_for_visible(title_selectors, title_name)
         self.list_grid.wait_until_ready(table_selectors, table_name)
-        self.list_grid.verify_column_headers(column_headers)
-        self.list_grid.wait_for_data_rows(min_rows=min_rows)
+        self.list_grid.verify_column_headers(column_headers, table_selectors=table_selectors)
+        self.list_grid.wait_for_data_rows(min_rows=min_rows, table_selectors=table_selectors)
         return hash_fragment in self.current_url
 
     def _verify_shipment_page_displayed(

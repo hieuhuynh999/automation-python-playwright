@@ -53,6 +53,8 @@
 17. [AI Checklist Before Submitting Code](#17-ai-checklist-before-submitting-code)
 18. [Flaky Test Diagnosis & Fix](#18-flaky-test-diagnosis--fix)
 19. [Framework Architect Quick Reference](#19-framework-architect-quick-reference)
+20. [eTMS Performance Tests (Transport Network)](#20-etms-performance-tests-transport-network)
+20. [eTMS Performance Tests (Transport Network)](#20-etms-performance-tests-transport-network)
 
 ---
 
@@ -398,6 +400,7 @@ auotmation-techub/
 │   │   │   ├── base_component.py   # BaseComponent — compose inside Page Objects
 │   │   │   ├── ng_select_component.py
 │   │   │   ├── native_select_component.py
+│   │   │   ├── list_grid_component.py  # HTML table / ngx-datatable — headers + data rows
 │   │   │   └── swal_modal_component.py
 │   │   ├── efms/
 │   │   │   ├── efms_login_page.py          # EfmsLoginPage
@@ -418,7 +421,14 @@ auotmation-techub/
 │   │   │       └── efms_services_documentation_page.py
 │   │   └── etms/
 │   │       ├── etms_login_page.py
-│   │       └── etms_home_page.py
+│   │       ├── etms_home_page.py
+│   │       ├── etms_catalogue_menu_page.py       # Catalogue sidebar (nav-link) — internal base
+│   │       ├── etms_places_page.py               # Transport Network > Places
+│   │       ├── etms_distance_between_places_page.py
+│   │       ├── etms_transport_network_list_page.py  # Generic TN list pages (config registry)
+│   │       └── etms_cost_of_route_page.py
+│   ├── performance/
+│   │   └── step_performance_tracker.py   # StepPerformanceTracker — measure + assert thresholds
 │   ├── utils/                      # Pure helpers — no Playwright, no selectors
 │   │   └── text_utils.py           # normalize_text, text_contains_any
 │   └── reporting/
@@ -441,8 +451,11 @@ auotmation-techub/
 │   │   └── test_efms_booking_receipt.py                 # FMS_BR_001–005
 │   └── etms/                       # eTMS UI tests
 │       ├── conftest.py             # login_etms fixture
+│       ├── etms_performance_registry.py  # PERF page registry + resolve + verify helpers
+│       ├── etms_performance_support.py   # run_etms_transport_network_performance_suite()
 │       ├── test_etms_auth.py       # TestEtmsAuth — SMK_AUTH_001/002
-│       └── test_etms_cost_of_route.py  # COR_LP_001
+│       ├── test_etms_cost_of_route.py  # COR_LP_001, COR_CP_001, TMS_COR_001
+│       └── test_etms_performance.py    # PERF_TN_001 — Transport Network page load
 │
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
@@ -476,7 +489,7 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)` | `dataTest-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
@@ -502,6 +515,10 @@ auotmation-techub/
 |-------|------|----------------|
 | `EtmsLoginPage` | `etms/etms_login_page.py` | Login form, branch/hub picker (`NgSelectComponent`), branch verify |
 | `EtmsHomePage` | `etms/etms_home_page.py` | Home URL + dashboard after branch select |
+| `EtmsCatalogueMenuPage` | `etms/etms_catalogue_menu_page.py` | Catalogue + Transport Network sidebar — **internal base** |
+| `EtmsPlacesPage` | `etms/etms_places_page.py` | Transport Network > Places list |
+| `EtmsDistanceBetweenPlacesPage` | `etms/etms_distance_between_places_page.py` | Transport Network > Distance Between Places |
+| `EtmsTransportNetworkListPage` | `etms/etms_transport_network_list_page.py` | Generic TN list pages via `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
 **Common Components (compose inside Page Objects — not in PageManager):**
@@ -511,6 +528,7 @@ auotmation-techub/
 | `NgSelectComponent` | `common/ng_select_component.py` | Angular `ng-select` |
 | `NativeSelectComponent` | `common/native_select_component.py` | HTML `<select>` |
 | `SwalModalComponent` | `common/swal_modal_component.py` | SweetAlert2 popup |
+| `ListGridComponent` | `common/list_grid_component.py` | HTML table / ngx-datatable — scoped headers + `wait_for_data_rows()` / `count_data_rows()` |
 
 **Default UAT URLs (settings defaults):**
 - eFMS: `https://uat-efms.logtechub.com/`
@@ -592,6 +610,8 @@ Supporting layers (not in UI test path):
 | SMK_AUTH_001 | Login | Critical | `TestEtmsAuth.test_smk_auth_001_login_success_etms` | `tests/etms/test_etms_auth.py` |
 | SMK_AUTH_002 | Login | Critical | `TestEtmsAuth.test_smk_auth_002_select_branch_etms` | `tests/etms/test_etms_auth.py` |
 | COR_LP_001 | Cost Of Route | High | `TestEtmsCostOfRoute.test_cor_lp_001_create_cost_of_route_etms` | `tests/etms/test_etms_cost_of_route.py` |
+| PERF_TN_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_transport_network_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_PLC_001 … PERF_RPI_001 | Performance | High | (sub-checks inside PERF_TN_001) | `dataTest-etms.json` → `pages[]` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
@@ -602,6 +622,7 @@ uv run pytest -m navigation -v --browser chrome --browser-headless true # SMK_NA
 uv run pytest -m login -v --browser chrome --browser-headless true      # all login/logout tests
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
 uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS only → RP launch etms-automation
+uv run pytest tests/etms/test_etms_performance.py -m performance -v --browser chrome --browser-headless true  # PERF_TN_001
 ```
 
 ---
@@ -1948,6 +1969,7 @@ def select_branch(self, branch_code: str) -> "EtmsLoginPage":
 | `NgSelectComponent` | Angular `ng-select` | eTMS branch picker; migrate eFMS form fields when touching those pages |
 | `NativeSelectComponent` | HTML `<select>` | eFMS company dropdown |
 | `SwalModalComponent` | SweetAlert2 popup | eFMS confirm/delete — use in new code; `efms_booking_receipt_page` can migrate incrementally |
+| `ListGridComponent` | ngx-datatable / HTML `<table>` | eFMS navigate verify, eTMS list pages, performance tests — always pass `table_selectors` for scoped row count |
 
 **Do NOT** put `page.locator()` in tests or utils. **Do NOT** register components in `PageManager`.
 
@@ -3011,6 +3033,8 @@ Before finishing any automation task, verify:
 [ ] Headed debug first; headless only after stable (Section 3.10)
 [ ] No debug prints / probe scripts left behind (Section 3.11)
 [ ] Navigate list pages use EfmsNavigateVerifyMixin — grid rows or shipment items, not title-only (Section 5.12)
+[ ] eTMS performance: registry in `etms_performance_registry.py` — do not duplicate `PERFORMANCE_PAGE_TARGETS` entries manually for TN pages (Section 20)
+[ ] List grid verify: `table_selectors` first entry = `//table[.//th[normalize-space()='{first_column}']]//th` (Section 20.4)
 [ ] Flaky fix: classified root cause (Section 18) — verified 5+ headed + 1 headless run
 [ ] BR/grid delete uses stable helper chain — not raw click_delete (Section 18.10)
 ```
@@ -3050,7 +3074,7 @@ CI safety net: `TEST_RERUNS=1` (default) via `pytest-rerunfailures` — fixes mu
 |---|----------|---------|-----------------|
 | 1 | Unstable locator | StrictMode / timeout xen kẽ | Section 3.4 priority; no `#mat-input-N`, no positional XPath |
 | 2 | Hard waits | Pass local, fail CI | `settings.*_timeout` / `*_ms` — no `time.sleep()`, no literal ms |
-| 3 | Grid not ready | Title OK, 0 data rows | `ListGridComponent.wait_until_ready()` + `wait_for_data_rows()` |
+| 3 | Grid not ready | Title OK, 0 data rows | `ListGridComponent.wait_until_ready()` + `wait_for_data_rows(table_selectors=...)` — scoped to target table |
 | 4 | ng-select misfire | Value visible, form unchanged | `NgSelectComponent.select_option_by_text()` |
 | 5 | Block UI overlay | Click intercepted | Wait `.block-ui-active` gone; `_wait_for_grid_ready()` |
 | 6 | SPA route race | Assert before hash changes | `wait_for_url` + `wait_for_page_stable()` |
@@ -3078,7 +3102,7 @@ CI safety net: `TEST_RERUNS=1` (default) via `pytest-rerunfailures` — fixes mu
 |---------|-----------------|
 | Button | `xpath=//button[contains(.,'Label')]` + `.first` if needed |
 | Grid row by text | `xpath=//tr[contains(@class,'datatable')]//span[normalize-space()='{value}']` |
-| Grid data ready | `ListGridComponent.wait_for_data_rows(min_rows=1)` |
+| Grid data ready | `ListGridComponent.wait_for_data_rows(min_rows=1, table_selectors=page.list_table_selectors)` |
 | ng-select | `NgSelectComponent.select_option_by_text()` |
 | Native `<select>` | `NativeSelectComponent.select_by_label()` |
 | SweetAlert | `SwalModalComponent.click_confirm()` |
@@ -3135,6 +3159,112 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 | Raw BR delete clicks | `delete_booking_receipt_from_grid()` |
 | Hardcoded credentials / URLs | `settings` + `.env` |
 | `time.sleep()` | Condition waits (Section 3.6) |
+
+---
+
+## 20. eTMS Performance Tests (Transport Network)
+
+> **TC:** `PERF_TN_001` — login once, measure all configured Transport Network list pages, assert thresholds at end.
+
+### 20.1 Architecture (factory pattern)
+
+```text
+test_etms_performance.py
+  → etms_performance_support.run_etms_transport_network_performance_suite()
+      → etms_performance_registry.resolve_performance_page(pages, page_key)
+      → PageManager.etms_transport_network_list_page(page_key)  # cached dict factory
+      → page.load_page_for_performance(min_rows)                # no @log_method noise
+      → etms_performance_registry.verify_performance_page_loaded()  # URL + scoped row count
+      → StepPerformanceTracker.assert_all_within_threshold()
+```
+
+| File | Role |
+|------|------|
+| `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` |
+| `tests/etms/etms_performance_support.py` | Suite orchestration only |
+| `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
+| `src/automation/pages/etms/etms_transport_network_list_page.py` | `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` + generic `EtmsTransportNetworkListPage` |
+| `src/automation/performance/step_performance_tracker.py` | Timing + summary log |
+
+**Page resolution rules:**
+
+| `page_key` | PageManager accessor |
+|------------|---------------------|
+| `places` | `pages.etms_places_page` |
+| `distance_between_places` | `pages.etms_distance_between_places_page` |
+| Other TN keys in `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` | `pages.etms_transport_network_list_page(page_key)` |
+
+Adding a **new generic TN list page:** add one entry to `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
+
+Dedicated screens (Places, DBP) keep their own POM class until merged into the generic config.
+
+### 20.2 JSON schema (`test_etms_performance_transport_network_pages_etms`)
+
+```json
+{
+  "test_case_id": "PERF_TN_001",
+  "test_case_ids": ["PERF_PLC_001", "PERF_DBP_001", "..."],
+  "branch": "VNHCM",
+  "min_table_rows": 1,
+  "pages": [
+    { "page_key": "places", "check_label": "Places Page", "max_step_seconds": 10 }
+  ]
+}
+```
+
+- `max_step_seconds` **required per page** (not at root).
+- `min_table_rows` optional per page (defaults to root).
+
+### 20.3 Verification layers (not URL-only)
+
+Each page must pass **inside** `load_page_for_performance()`:
+
+1. URL hash (`page.page_hash`)
+2. Page title visible (`h3` or `.page-title`)
+3. Column headers (`list_grid.verify_column_headers(..., table_selectors=...)`)
+4. Data rows (`list_grid.wait_for_data_rows(..., table_selectors=...)`)
+
+After the timed step, `verify_performance_page_loaded()` re-checks URL + `count_data_rows()` and logs `[PERF VERIFY]`.
+
+### 20.4 List grid scoping (mandatory)
+
+Pass `table_selectors` to `verify_column_headers` / `wait_for_data_rows` / `count_data_rows`.
+
+**First selector** in `list_table_selectors` should be table-scoped:
+
+```python
+list_table_selectors = [
+    "xpath=//table[.//th[normalize-space()='Code']]//th",
+    # ... portlet / fallback selectors
+]
+```
+
+`ListGridComponent` resolves scope from the **first visible** selector — avoids counting rows from wrong tables on the page.
+
+### 20.5 `load_page_for_performance` convention
+
+- Used only by performance tests — **no** `@log_method` (reduces log noise).
+- Every list POM must expose `page_hash` and `list_table_selectors`.
+- Menu navigation: `EtmsCatalogueMenuPage.open_catalogue_menu()` + `open_transport_network_menu()` before each page step.
+
+### 20.6 Run command
+
+```bash
+uv run pytest tests/etms/test_etms_performance.py -m performance -v \
+  --browser chrome --browser-headless false --reportportal
+```
+
+### 20.7 Log format
+
+```text
+[PERF CONFIG] branch=VNHCM, min_table_rows=1, pages=9, thresholds=[places=10s, ...]
+[PERF START] Performance Check - Places Page
+[PERF VERIFY] Places Page: url OK, table_data_rows=10 (min=1)
+=== Performance Summary ===
+Performance Check - Places Page Elapsed Time : 3.76s
+Threshold    : 10.00s
+Status       : PASS
+```
 
 ---
 
@@ -3234,4 +3364,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-16 | POM: pages/common + utils | eTMS: TestEtmsAuth + COR_LP_001 | HTML Base URL: metadata_support.py | Retry + secret redaction*
+*Last updated: 2026-06-24 | eTMS PERF_TN_001 Transport Network | ListGrid scoped rows | etms_performance_registry factory*
