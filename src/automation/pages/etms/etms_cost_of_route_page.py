@@ -915,7 +915,7 @@ class EtmsCostOfRoutePage(BasePage):
         return self.find_visible(selectors) is not None
 
     def _has_list_tabs(self, *, timeout_ms: int | None = None) -> bool:
-        timeout_ms = timeout_ms or min(settings.browser_timeout, 15000)
+        timeout_ms = timeout_ms or settings.bounded_probe_timeout
         deadline = time.monotonic() + timeout_ms / 1000
         list_body = self._list_portlet_body()
         portlet = self._list_portlet_root()
@@ -1164,7 +1164,7 @@ class EtmsCostOfRoutePage(BasePage):
         self._wait_for_loading_overlay_hidden()
         tab.click(force=True)
 
-        if not self._wait_for_list_tab_active(tab_name, timeout=10_000):
+        if not self._wait_for_list_tab_active(tab_name, timeout=settings.tab_switch_timeout):
             self._wait_for_loading_overlay_hidden()
             tab.click(force=True)
             if not self._wait_for_list_tab_active(tab_name):

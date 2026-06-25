@@ -10,12 +10,27 @@ from automation.pages.etms.etms_catalogue_list_page import (
     CATALOGUE_LIST_PAGE_CONFIGS,
     PARTNER_LIST_PAGE_CONFIGS,
     TRANSPORT_NETWORK_LIST_PAGE_CONFIGS,
+    VEHICLE_LIST_PAGE_CONFIGS,
+    DRIVER_LIST_PAGE_CONFIGS,
+    COMMODITY_LIST_PAGE_CONFIGS,
+    CATALOGUE_MASTER_LIST_PAGE_CONFIGS,
 )
 from automation.pages.page_manager import PageManager
 
 _DEDICATED_PERF_PAGES: dict[str, str] = {
     "administrative_units": "Administrative Units Page",
     "zone_code": "Zone Code Page",
+    "booking_information": "Booking Information Page",
+    "vehicle_part_type": "Vehicle Part Type Page",
+    "vehicle_type": "Vehicle Type Page",
+    "cost_of_route": "Cost Of Route Page",
+    "price_toll_buying": "Price Toll Buying Page",
+    "fcl_rate_card_list": "FCL Rate Card List Page",
+    "fcl_buying_price": "FCL Buying Price Page",
+    "fcl_renting_container": "Renting Container FCL Page",
+    "fcl_renting_vehicle": "Renting vehicle Page",
+    "lcl_rate_card": "3. LCL Rate Card Page",
+    "lcl_buying": "LCL Buying Page",
 }
 
 
@@ -54,6 +69,28 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
         return pages.etms_administrative_units_page
     if page_key == "zone_code":
         return pages.etms_zone_code_page
+    if page_key == "booking_information":
+        return pages.etms_booking_information_page
+    if page_key == "vehicle_part_type":
+        return pages.etms_vehicle_part_type_page
+    if page_key == "vehicle_type":
+        return pages.etms_vehicle_type_page
+    if page_key == "cost_of_route":
+        return pages.etms_cost_of_route_workflow_page
+    if page_key == "price_toll_buying":
+        return pages.etms_price_toll_buying_page
+    if page_key == "fcl_rate_card_list":
+        return pages.etms_fcl_rate_card_list_page
+    if page_key == "fcl_buying_price":
+        return pages.etms_fcl_buying_price_page
+    if page_key == "fcl_renting_container":
+        return pages.etms_fcl_renting_container_page
+    if page_key == "fcl_renting_vehicle":
+        return pages.etms_fcl_renting_vehicle_page
+    if page_key == "lcl_rate_card":
+        return pages.etms_lcl_rate_card_page
+    if page_key == "lcl_buying":
+        return pages.etms_lcl_buying_page
 
     raise KeyError(f"No PageManager resolver for performance page_key '{page_key}'")
 
@@ -64,30 +101,95 @@ def verify_performance_page_loaded(
     page: Any,
     min_rows: int,
     tab_key: str | None = None,
+    allow_no_data: bool = False,
+    optional_tab: bool = False,
 ) -> int:
-    """Assert URL hash + scoped table data rows after a performance step."""
-    if tab_key and hasattr(page, "list_table_selectors_for_tab"):
-        table_selectors = page.list_table_selectors_for_tab(tab_key)
-    else:
-        table_selectors = page.list_table_selectors
+    """Assert URL hash + scoped table data rows (or 'No Data' empty state) after a performance step."""
+    if optional_tab and tab_key and hasattr(page, "optional_tab_keys"):
+        if tab_key in page.optional_tab_keys and not page._is_tab_available(tab_key):
+            normalized_url = page.current_url.lower().replace("_", "-")
+            assert page.page_hash in normalized_url, (
+                f"{check_label} URL hash '{page.page_hash}' not found"
+            )
+            record_step_log(
+                f"[PERF VERIFY] {check_label}: optional tab not on page — skipped (url OK)"
+            )
+            return 0
 
-    actual_rows = page.list_grid.count_data_rows(table_selectors=table_selectors)
-    assert actual_rows >= min_rows, (
-        f"{check_label}: table must display at least {min_rows} data row(s), "
-        f"got {actual_rows}"
+    settle_performance_page(
+        page,
+        min_rows=min_rows,
+        tab_key=tab_key,
+        allow_no_data=allow_no_data,
     )
+    actual_rows = _count_performance_table_rows(page, tab_key=tab_key)
+    no_data = _has_no_data_display(page, tab_key=tab_key)
+
+    if allow_no_data and actual_rows == 0 and no_data:
+        record_step_log(
+            f"[PERF VERIFY] {check_label}: url OK, empty state 'No Data' displayed"
+        )
+    else:
+        assert actual_rows >= min_rows, (
+            f"{check_label}: table must display at least {min_rows} data row(s), "
+            f"got {actual_rows}"
+        )
+        record_step_log(
+            f"[PERF VERIFY] {check_label}: url OK, "
+            f"table_data_rows={actual_rows} (min={min_rows})"
+        )
 
     page_hash = page.page_hash
+    if tab_key and hasattr(page, "page_hash_for_tab"):
+        page_hash = page.page_hash_for_tab(tab_key)
     normalized_url = page.current_url.lower().replace("_", "-")
     assert page_hash in normalized_url, (
         f"{check_label} URL hash '{page_hash}' not found after navigation"
     )
 
-    record_step_log(
-        f"[PERF VERIFY] {check_label}: url OK, "
-        f"table_data_rows={actual_rows} (min={min_rows})"
-    )
     return actual_rows
+
+
+def _has_no_data_display(page: Any, *, tab_key: str | None) -> bool:
+    if tab_key and hasattr(page, "has_no_data_for_tab"):
+        return page.has_no_data_for_tab(tab_key)
+    if hasattr(page, "list_grid"):
+        table_selectors = None
+        if tab_key and hasattr(page, "list_table_selectors_for_tab"):
+            table_selectors = page.list_table_selectors_for_tab(tab_key)
+        return page.list_grid.is_no_data_displayed(table_selectors=table_selectors)
+    return False
+
+
+def _count_performance_table_rows(page: Any, *, tab_key: str | None) -> int:
+    if tab_key and hasattr(page, "count_data_rows_for_tab"):
+        return page.count_data_rows_for_tab(tab_key)
+    if tab_key and hasattr(page, "list_table_selectors_for_tab"):
+        table_selectors = page.list_table_selectors_for_tab(tab_key)
+        return page.list_grid.count_data_rows(table_selectors=table_selectors)
+    return page.list_grid.count_data_rows(table_selectors=page.list_table_selectors)
+
+
+def settle_performance_page(
+    page: Any,
+    *,
+    min_rows: int,
+    tab_key: str | None = None,
+    allow_no_data: bool = False,
+) -> None:
+    """Wait for overlays to clear and re-verify grid before the next navigation."""
+    if hasattr(page, "confirm_grid_loaded"):
+        if tab_key is not None:
+            page.confirm_grid_loaded(
+                min_rows,
+                tab_key=tab_key,
+                allow_no_data=allow_no_data,
+            )
+        else:
+            page.confirm_grid_loaded(min_rows, allow_no_data=allow_no_data)
+        return
+    if hasattr(page, "wait_before_next_catalogue_navigation"):
+        page.wait_before_next_catalogue_navigation()
 
 
 # Backward-compatible re-exports
@@ -96,8 +198,13 @@ __all__ = [
     "PARTNER_LIST_PAGE_CONFIGS",
     "PERFORMANCE_PAGE_TARGETS",
     "TRANSPORT_NETWORK_LIST_PAGE_CONFIGS",
+    "VEHICLE_LIST_PAGE_CONFIGS",
+    "DRIVER_LIST_PAGE_CONFIGS",
+    "COMMODITY_LIST_PAGE_CONFIGS",
+    "CATALOGUE_MASTER_LIST_PAGE_CONFIGS",
     "EtmsPerformancePageTarget",
     "build_performance_page_targets",
     "resolve_performance_page",
+    "settle_performance_page",
     "verify_performance_page_loaded",
 ]

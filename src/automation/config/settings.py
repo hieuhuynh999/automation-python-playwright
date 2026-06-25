@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     browser_headless: bool = False
     browser_timeout: int = 60000
     page_load_timeout: int = 60000
+    component_interaction_timeout: int = 15000
+    quick_action_timeout: int = 5000
+    tab_switch_timeout: int = 10000
     browser_slow_mo: int = 0
     polling_interval: int = 250
     open_url_settle_ms: int = 5000
@@ -67,6 +70,14 @@ class Settings(BaseSettings):
     @property
     def vfc_etms_password(self) -> str | None:
         return self.vfc_etms_account_password
+
+    @property
+    def network_idle_timeout(self) -> int:
+        return min(self.component_interaction_timeout, self.page_load_timeout)
+
+    @property
+    def bounded_probe_timeout(self) -> int:
+        return min(self.component_interaction_timeout, self.browser_timeout)
 
 
 @lru_cache

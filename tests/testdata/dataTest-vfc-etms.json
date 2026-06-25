@@ -10,5 +10,485 @@
             "expected_url_contains": "app/default/home",
             "expected_page_title": "eTMS"
         }
+    ],
+    "test_vfc_etms_performance_transport_network_pages_etms": [
+        {
+            "test_case_id": "PERF_TN_001",
+            "test_case_ids": [
+                "PERF_PLC_001",
+                "PERF_DBP_001",
+                "PERF_RI_001",
+                "PERF_TR_001",
+                "PERF_HUB_001",
+                "PERF_BR_001",
+                "PERF_AU_COUNTRY_001",
+                "PERF_AU_AREA_001",
+                "PERF_AU_PC_001",
+                "PERF_AU_DIST_001",
+                "PERF_AU_WC_001",
+                "PERF_ZC_001",
+                "PERF_ZC_PICKUP_001",
+                "PERF_ZC_DELIVERY_001",
+                "PERF_RPI_001"
+            ],
+            "description": "VFC performance — Transport Network (Zone Code + Pickup tab + Delivery sidebar page)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "places",
+                    "check_label": "Places Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distance_between_places",
+                    "check_label": "Distance Between Places Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "route_information",
+                    "check_label": "Route Information Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "transit_route",
+                    "check_label": "Transit Route Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "hub",
+                    "check_label": "Hub Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "branch",
+                    "check_label": "Branch Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "country",
+                    "check_label": "Administrative Units - Country Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "area",
+                    "check_label": "Administrative Units - Area Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "province_city",
+                    "check_label": "Administrative Units - Province/City Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "district",
+                    "check_label": "Administrative Units - District Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "ward_commune",
+                    "check_label": "Administrative Units - Ward/Commune Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "tab": "zone_code",
+                    "check_label": "Zone Code - Zone Code Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "tab": "pickup_zone_code",
+                    "check_label": "Zone Code - Pickup Zone Code Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "tab": "delivery_zone_code",
+                    "check_label": "Zone Code - Delivery Zone Code Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "route_project_information",
+                    "check_label": "Route Project Information Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_pricing_common_pages_etms": [
+        {
+            "test_case_id": "PERF_PR_001",
+            "test_case_ids": [
+                "PERF_COR_UPD_001",
+                "PERF_COR_PND_001",
+                "PERF_COR_ACC_001",
+                "PERF_COR_REJ_001",
+                "PERF_COR_REV_001",
+                "PERF_COR_EXP_001",
+                "PERF_PTB_UPD_001",
+                "PERF_PTB_PND_001",
+                "PERF_PTB_ACC_001",
+                "PERF_PTB_REJ_001",
+                "PERF_PTB_REV_001",
+                "PERF_PTB_EXP_001"
+            ],
+            "description": "VFC performance — Pricing > Common > Cost Of Route & Price Toll Buying workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "pricing_common",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "updating",
+                    "check_label": "Cost Of Route - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "pending",
+                    "check_label": "Cost Of Route - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "accepted",
+                    "check_label": "Cost Of Route - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "rejected",
+                    "check_label": "Cost Of Route - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "revoked",
+                    "check_label": "Cost Of Route - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "cost_of_route",
+                    "tab": "expired",
+                    "check_label": "Cost Of Route - Expired Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "updating",
+                    "check_label": "Price Toll Buying - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "pending",
+                    "check_label": "Price Toll Buying - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "accepted",
+                    "check_label": "Price Toll Buying - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "rejected",
+                    "check_label": "Price Toll Buying - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "revoked",
+                    "check_label": "Price Toll Buying - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "price_toll_buying",
+                    "tab": "expired",
+                    "check_label": "Price Toll Buying - Expired Tab",
+                    "max_step_seconds": 10,
+                    "optional_tab": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_pricing_fcl_pages_etms": [
+        {
+            "test_case_id": "PERF_FCL_001",
+            "test_case_ids": [
+                "PERF_FRCL_PND_001",
+                "PERF_FRCL_UPD_001",
+                "PERF_FRCL_ACC_001",
+                "PERF_FRCL_ABK_001",
+                "PERF_FRCL_REJ_001",
+                "PERF_FRCL_REV_001",
+                "PERF_FBP_UPD_001",
+                "PERF_FBP_PND_001",
+                "PERF_FBP_ACC_001",
+                "PERF_FBP_REJ_001",
+                "PERF_FBP_REV_001",
+                "PERF_FRC_UPD_001",
+                "PERF_FRC_PND_001",
+                "PERF_FRC_ACC_001",
+                "PERF_FRC_REJ_001",
+                "PERF_FRC_EXP_001",
+                "PERF_FRC_REV_001",
+                "PERF_FRV_UPD_001",
+                "PERF_FRV_PND_001",
+                "PERF_FRV_ACC_001",
+                "PERF_FRV_REJ_001",
+                "PERF_FRV_EXP_001",
+                "PERF_FRV_REV_001"
+            ],
+            "description": "VFC performance — Pricing > FCL Pricing workflow tabs (FCL Rate Card default Pending)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "pricing_fcl",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "pending",
+                    "check_label": "FCL Rate Card List - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "updating",
+                    "check_label": "FCL Rate Card List - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "accepted",
+                    "check_label": "FCL Rate Card List - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "active_bookable",
+                    "check_label": "FCL Rate Card List - Active - Bookable Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "rejected",
+                    "check_label": "FCL Rate Card List - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_rate_card_list",
+                    "tab": "revoked",
+                    "check_label": "FCL Rate Card List - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_buying_price",
+                    "tab": "updating",
+                    "check_label": "FCL Buying Price - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_buying_price",
+                    "tab": "pending",
+                    "check_label": "FCL Buying Price - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_buying_price",
+                    "tab": "accepted",
+                    "check_label": "FCL Buying Price - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_buying_price",
+                    "tab": "rejected",
+                    "check_label": "FCL Buying Price - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_buying_price",
+                    "tab": "revoked",
+                    "check_label": "FCL Buying Price - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "updating",
+                    "check_label": "Renting Container FCL - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "pending",
+                    "check_label": "Renting Container FCL - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "accepted",
+                    "check_label": "Renting Container FCL - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "rejected",
+                    "check_label": "Renting Container FCL - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "expired",
+                    "check_label": "Renting Container FCL - Expired Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_container",
+                    "tab": "revoked",
+                    "check_label": "Renting Container FCL - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "updating",
+                    "check_label": "Renting vehicle - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "pending",
+                    "check_label": "Renting vehicle - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "accepted",
+                    "check_label": "Renting vehicle - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "rejected",
+                    "check_label": "Renting vehicle - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "expired",
+                    "check_label": "Renting vehicle - Expired Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_renting_vehicle",
+                    "tab": "revoked",
+                    "check_label": "Renting vehicle - Revoked Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_pricing_lcl_pages_etms": [
+        {
+            "test_case_id": "PERF_LCL_001",
+            "test_case_ids": [
+                "PERF_LRC_UPD_001",
+                "PERF_LRC_PND_001",
+                "PERF_LRC_ACC_001",
+                "PERF_LRC_REJ_001",
+                "PERF_LRC_REV_001",
+                "PERF_LB_UPD_001",
+                "PERF_LB_PND_001",
+                "PERF_LB_ACC_001",
+                "PERF_LB_REJ_001",
+                "PERF_LB_REV_001"
+            ],
+            "description": "VFC performance — Pricing > LCL Pricing > 3. LCL Rate Card & LCL Buying workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "pricing_lcl",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "lcl_rate_card",
+                    "tab": "updating",
+                    "check_label": "3. LCL Rate Card - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_rate_card",
+                    "tab": "pending",
+                    "check_label": "3. LCL Rate Card - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_rate_card",
+                    "tab": "accepted",
+                    "check_label": "3. LCL Rate Card - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_rate_card",
+                    "tab": "rejected",
+                    "check_label": "3. LCL Rate Card - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_rate_card",
+                    "tab": "revoked",
+                    "check_label": "3. LCL Rate Card - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_buying",
+                    "tab": "updating",
+                    "check_label": "LCL Buying - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_buying",
+                    "tab": "pending",
+                    "check_label": "LCL Buying - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_buying",
+                    "tab": "accepted",
+                    "check_label": "LCL Buying - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_buying",
+                    "tab": "rejected",
+                    "check_label": "LCL Buying - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_buying",
+                    "tab": "revoked",
+                    "check_label": "LCL Buying - Revoked Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
     ]
 }

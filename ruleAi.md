@@ -426,6 +426,9 @@ auotmation-techub/
 │   │       ├── etms_catalogue_tabbed_list_page.py # Base for tabbed catalogue screens
 │   │       ├── etms_administrative_units_page.py # TN > Administrative Units tabs
 │   │       ├── etms_zone_code_page.py            # TN > Zone Code tabs
+│   │       ├── etms_booking_information_page.py  # Partner > Booking Information tabs
+│   │       ├── etms_vehicle_part_type_page.py    # Vehicle > Vehicle Part Type tabs
+│   │       ├── etms_vehicle_type_page.py         # Vehicle > Vehicle Type tabs
 │   │       └── etms_cost_of_route_page.py
 │   ├── performance/
 │   │   └── step_performance_tracker.py   # StepPerformanceTracker — measure + assert thresholds
@@ -518,8 +521,11 @@ auotmation-techub/
 | `EtmsCatalogueMenuPage` | `etms/etms_catalogue_menu_page.py` | Catalogue sidebar — `open_catalogue_menu()`, `open_transport_network_menu()`, `open_partner_menu()` — **internal base** |
 | `EtmsCatalogueListPage` | `etms/etms_catalogue_list_page.py` | Generic catalogue list pages via `CATALOGUE_LIST_PAGE_CONFIGS` (TN + Partner) |
 | `EtmsCatalogueTabbedListPage` | `etms/etms_catalogue_tabbed_list_page.py` | Base for tabbed catalogue screens — **internal base** |
-| `EtmsAdministrativeUnitsPage` | `etms/etms_administrative_units_page.py` | TN > Administrative Units — tabs: Area, Province/City, District, Ward/Commune |
-| `EtmsZoneCodePage` | `etms/etms_zone_code_page.py` | TN > Zone Code — tabs: Pickup Zone Code, Delivery Zone Code |
+| `EtmsAdministrativeUnitsPage` | `etms/etms_administrative_units_page.py` | TN > Administrative Units — tabs: Country (landing), Area, Province/City, District, Ward/Commune |
+| `EtmsZoneCodePage` | `etms/etms_zone_code_page.py` | TN > Zone Code — tabs: Zone Code (landing), Pickup Zone Code, Delivery Zone Code |
+| `EtmsBookingInformationPage` | `etms/etms_booking_information_page.py` | Partner > Booking Information — tabs: Goods Information (landing), Pickup/Delivery Places, Shipment Note, Project Vehicle |
+| `EtmsVehiclePartTypePage` | `etms/etms_vehicle_part_type_page.py` | Vehicle > Vehicle Part Type — tabs: Vehicle Part Type (landing), Vehicle Part Group, Vehicle Part |
+| `EtmsVehicleTypePage` | `etms/etms_vehicle_type_page.py` | Vehicle > Vehicle Type — tabs: Vehicle Group (landing), Vehicle Type - Fuel Consumption |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
 **Common Components (compose inside Page Objects — not in PageManager):**
@@ -614,7 +620,23 @@ Supporting layers (not in UI test path):
 | PERF_TN_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_transport_network_pages` | `tests/etms/test_etms_performance.py` |
 | PERF_PLC_001 … PERF_RPI_001 | Performance | High | (sub-checks inside PERF_TN_001) | `dataTest-etms.json` → `pages[]` |
 | PERF_PT_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_partner_pages` | `tests/etms/test_etms_performance.py` |
-| PERF_PG_001 … PERF_BI_001 | Performance | High | (sub-checks inside PERF_PT_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_PG_001 … PERF_BI_PV_001 | Performance | High | (sub-checks inside PERF_PT_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_VH_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_vehicle_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_VL_001 … PERF_VTFC_001 | Performance | High | (sub-checks inside PERF_VH_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_DL_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_driver_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_DRV_001 … PERF_DRVV_001 | Performance | High | (sub-checks inside PERF_DL_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_CM_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_commodity_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_CML_001 … PERF_CMG_001 | Performance | High | (sub-checks inside PERF_CM_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_CAT_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_catalogue_master_pages` | `tests/etms/test_etms_performance.py` |
+| PERF_CL_001 … PERF_CUR_001 | Performance | High | (sub-checks inside PERF_CAT_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_PR_001 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_pricing_common_pages` | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_FCL_001 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_pricing_fcl_pages` | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_LCL_001 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_pricing_lcl_pages` | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_COR_* … PERF_PTB_* | Performance | High | (sub-checks inside PERF_PR_001) | `dataTest-vfc-etms.json` → `pages[]` |
+| PERF_FRCL_* … PERF_FRV_* | Performance | High | (sub-checks inside PERF_FCL_001) | `dataTest-vfc-etms.json` → `pages[]` |
+| PERF_LRC_* … PERF_LB_* | Performance | High | (sub-checks inside PERF_LCL_001) | `dataTest-vfc-etms.json` → `pages[]` |
+| PERF_TN_001 (VFC) | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_transport_network_pages` | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_PT_001 … PERF_CAT_001 (VFC) | Performance | High | `TestVfcEtmsPerformance` (same suites, `login_vfc_etms`) | `tests/etms/test_vfc_etms_performance.py` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
@@ -626,6 +648,7 @@ uv run pytest -m login -v --browser chrome --browser-headless true      # all lo
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
 uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS only → RP launch etms-automation
 uv run pytest tests/etms/test_etms_performance.py -m performance -v --browser chrome --browser-headless true  # PERF_TN_001
+uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v -n 3 --browser chrome --browser-headless false  # VFC PERF (9 suites)
 ```
 
 ---
@@ -3037,6 +3060,7 @@ Before finishing any automation task, verify:
 [ ] No debug prints / probe scripts left behind (Section 3.11)
 [ ] Navigate list pages use EfmsNavigateVerifyMixin — grid rows or shipment items, not title-only (Section 5.12)
 [ ] eTMS performance: registry in `etms_performance_registry.py` — do not duplicate `PERFORMANCE_PAGE_TARGETS` entries manually for TN pages (Section 20)
+[ ] eTMS performance: timed step via `prepare_for_performance()` + `run_performance_measurement()` — do not include submenu open / pre-click grid settle in `StepPerformanceTracker.run_step()` (Section 20.5)
 [ ] List grid verify: `table_selectors` first entry = `//table[.//th[normalize-space()='{first_column}']]//th` (Section 20.4)
 [ ] Flaky fix: classified root cause (Section 18) — verified 5+ headed + 1 headless run
 [ ] BR/grid delete uses stable helper chain — not raw click_delete (Section 18.10)
@@ -3167,30 +3191,42 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 
 ## 20. eTMS Performance Tests
 
-> **TCs:** `PERF_TN_001` (Catalogue > Transport Network) · `PERF_PT_001` (Catalogue > Partner) — login once, measure configured list pages, assert thresholds at end.
+> **TCs:** `PERF_TN_001` (Transport Network) · `PERF_PT_001` (Partner) · `PERF_VH_001` (Vehicle) · `PERF_DL_001` (Driver list) · `PERF_CM_001` (Commodity) · `PERF_CAT_001` (Catalogue master lists) · `PERF_PR_001` / `PERF_FCL_001` / `PERF_LCL_001` (VFC Pricing workflow tabs) — login once, measure configured pages/tabs, assert thresholds.
+
+**VFC mirror:** `tests/etms/test_vfc_etms_performance.py` (`@pytest.mark.vfc_etms`) runs the same catalogue suites + Pricing suites via `login_vfc_etms`. TN / PR / FCL / LCL data in `dataTest-vfc-etms.json`; other suites reuse `dataTest-etms.json`.
 
 ### 20.1 Architecture (factory pattern)
 
 ```text
-test_etms_performance.py
+test_etms_performance.py  OR  test_vfc_etms_performance.py
   → etms_performance_support.run_etms_catalogue_performance_suite()   # generic
       OR run_etms_transport_network_performance_suite()               # PERF_TN_001 wrapper
       OR run_etms_partner_performance_suite()                         # PERF_PT_001 wrapper
+      OR run_etms_vehicle_performance_suite()                         # PERF_VH_001 wrapper
+      OR run_etms_driver_performance_suite()                          # PERF_DL_001 wrapper
+      OR run_etms_commodity_performance_suite()                       # PERF_CM_001 wrapper
+      OR run_etms_catalogue_master_performance_suite()                # PERF_CAT_001 wrapper
+      OR run_etms_pricing_common_performance_suite()                  # PERF_PR_001 (VFC)
+      OR run_etms_pricing_fcl_performance_suite()                     # PERF_FCL_001 (VFC)
+      OR run_etms_pricing_lcl_performance_suite()                     # PERF_LCL_001 (VFC)
       → etms_performance_registry.resolve_performance_page(pages, page_key)
-      → PageManager factory (TN / Partner / dedicated Places / DBP)
-      → page.load_page_for_performance(min_rows)                # no @log_method noise
-      → etms_performance_registry.verify_performance_page_loaded()  # URL + scoped row count
+      → open catalogue / pricing submenu (outside timer)
+      → page.prepare_for_performance(tab_key, min_rows, allow_no_data)   # settle before timer
+      → StepPerformanceTracker.run_step → page.run_performance_measurement(...)  # timed segment only
+      → etms_performance_registry.verify_performance_page_loaded()  # URL + scoped row count (after timer)
       → StepPerformanceTracker.assert_all_within_threshold()
 ```
 
 | File | Role |
 |------|------|
-| `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` |
+| `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` (standard eTMS login) |
+| `tests/etms/test_vfc_etms_performance.py` | VFC eTMS performance — `@pytest.mark.vfc_etms` + `login_vfc_etms` |
 | `tests/etms/etms_performance_support.py` | Suite orchestration — `suite` key drives submenu opener |
 | `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
 | `src/automation/pages/etms/etms_catalogue_list_page.py` | `CATALOGUE_LIST_PAGE_CONFIGS` + `EtmsCatalogueListPage` |
 | `src/automation/pages/etms/etms_catalogue_tabbed_list_page.py` | `EtmsCatalogueTabbedListPage` base + `EtmsCatalogueTabConfig` |
-| `src/automation/pages/etms/etms_catalogue_menu_page.py` | `open_catalogue_menu()` + `open_transport_network_menu()` / `open_partner_menu()` via `_open_sidebar_submenu()` |
+| `src/automation/pages/etms/etms_catalogue_menu_page.py` | `open_catalogue_menu()` + suite openers; `open_pricing_common_menu()` / `open_pricing_fcl_menu()` / `open_pricing_lcl_menu()` |
+| `src/automation/pages/etms/etms_pricing_workflow_list_page.py` | Pricing workflow filter-tabs (`EtmsPricingWorkflowListPage` + page subclasses) |
 | `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
 
 **Suite → catalogue submenu (JSON `suite` field):**
@@ -3199,6 +3235,13 @@ test_etms_performance.py
 |---------|-----------|--------|
 | `transport_network` | Catalogue > Transport Network | `open_transport_network_menu()` |
 | `partner` | Catalogue > Partner | `open_partner_menu()` |
+| `vehicle` | Catalogue > Vehicle | `open_vehicle_menu()` |
+| `driver` | Catalogue > Driver list | `open_driver_menu()` |
+| `commodity` | Catalogue > Commodity | `open_commodity_menu()` |
+| `catalogue_master` | Catalogue (direct list pages) | `open_catalogue_menu()` |
+| `pricing_common` | Pricing > Common | `open_pricing_common_menu()` |
+| `pricing_fcl` | Pricing > FCL Pricing | `open_pricing_fcl_menu()` |
+| `pricing_lcl` | Pricing > LCL Pricing | `open_pricing_lcl_menu()` |
 
 **Page resolution rules:**
 
@@ -3208,17 +3251,48 @@ test_etms_performance.py
 | Partner keys | `pages.etms_catalogue_list_page(page_key)` |
 | `administrative_units` | `pages.etms_administrative_units_page` |
 | `zone_code` | `pages.etms_zone_code_page` |
+| `booking_information` | `pages.etms_booking_information_page` |
+| `vehicle_list` | `pages.etms_catalogue_list_page("vehicle_list")` |
+| `vehicle_part_type` | `pages.etms_vehicle_part_type_page` |
+| `vehicle_type` | `pages.etms_vehicle_type_page` |
+| `driver` | `pages.etms_catalogue_list_page("driver")` |
+| `driver_vehicle` | `pages.etms_catalogue_list_page("driver_vehicle")` |
+| `commodity_list` | `pages.etms_catalogue_list_page("commodity_list")` |
+| `commodity_group` | `pages.etms_catalogue_list_page("commodity_group")` |
+| `charge_list`, `unit`, `service_type`, `weight_range`, `container_type`, `container`, `currency` | `pages.etms_catalogue_list_page(page_key)` |
+| `cost_of_route`, `price_toll_buying` | `pages.etms_cost_of_route_workflow_page` / `pages.etms_price_toll_buying_page` |
+| `fcl_rate_card_list`, `fcl_buying_price`, `fcl_renting_container`, `fcl_renting_vehicle` | `pages.etms_fcl_*` workflow pages |
+| `lcl_rate_card`, `lcl_buying` | `pages.etms_lcl_rate_card_page` / `pages.etms_lcl_buying_page` |
 
 Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
 
-Dedicated screens: `EtmsCostOfRoutePage`, `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage` (tabbed). All other catalogue list pages use `EtmsCatalogueListPage` + config.
+Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBookingInformationPage`, `EtmsVehiclePartTypePage`, `EtmsVehicleTypePage` (catalogue tabbed). Pricing workflow: `EtmsPricingWorkflowListPage` subclasses (`EtmsCostOfRouteWorkflowPage`, FCL/LCL pages). All other catalogue list pages use `EtmsCatalogueListPage` + config.
 
-**Tabbed pages:** use optional JSON field `"tab"` (e.g. `"area"`, `"pickup_zone_code"`). `etms_performance_support` passes `tab_key` to `load_page_for_performance()` and `verify_performance_page_loaded()`. One `page_key` may appear multiple times in `pages[]` — one entry per tab.
+**Tabbed pages:** use optional JSON field `"tab"` (e.g. `"area"`, `"pickup_zone_code"`, `"pending"`). `etms_performance_support` passes `tab_key` to `prepare_for_performance()` / `run_performance_measurement()` and `verify_performance_page_loaded()`. One `page_key` may appear multiple times in `pages[]` — one entry per tab.
 
 | `page_key` | Tab keys | Sub-check TC IDs |
 |------------|----------|------------------|
-| `administrative_units` | `area`, `province_city`, `district`, `ward_commune` | `PERF_AU_AREA_001`, `PERF_AU_PC_001`, `PERF_AU_DIST_001`, `PERF_AU_WC_001` |
-| `zone_code` | `pickup_zone_code`, `delivery_zone_code` | `PERF_ZC_PICKUP_001`, `PERF_ZC_DELIVERY_001` |
+| `administrative_units` | `country`, `area`, `province_city`, `district`, `ward_commune` | `PERF_AU_COUNTRY_001`, `PERF_AU_AREA_001`, `PERF_AU_PC_001`, `PERF_AU_DIST_001`, `PERF_AU_WC_001` |
+| `zone_code` | `zone_code`, `pickup_zone_code`, `delivery_zone_code` | `PERF_ZC_001`, `PERF_ZC_PICKUP_001`, `PERF_ZC_DELIVERY_001` |
+| `booking_information` | `goods_information`, `pickup_delivery_places`, `shipment_note`, `project_vehicle` | `PERF_BI_GI_001`, `PERF_BI_PDP_001`, `PERF_BI_SN_001`, `PERF_BI_PV_001` |
+| `vehicle_part_type` | `vehicle_part_type`, `vehicle_part_group`, `vehicle_part` | `PERF_VPT_001`, `PERF_VPTG_001`, `PERF_VPART_001` |
+| `vehicle_type` | `vehicle_group`, `vehicle_type_fuel_consumption` | `PERF_VG_001`, `PERF_VTFC_001` |
+| `cost_of_route`, `price_toll_buying` | `updating`, `pending`, `accepted`, `rejected`, `revoked`, `expired` (optional on VFC) | `PERF_COR_*`, `PERF_PTB_*` |
+| `fcl_rate_card_list` | `pending`, `updating`, `accepted`, `active_bookable`, `rejected`, `revoked` | `PERF_FRCL_*` |
+| `fcl_buying_price`, `fcl_renting_container`, `fcl_renting_vehicle` | workflow tabs per page (see `dataTest-vfc-etms.json`) | `PERF_FBP_*`, `PERF_FRC_*`, `PERF_FRV_*` |
+| `lcl_rate_card`, `lcl_buying` | `updating`, `pending`, `accepted`, `rejected`, `revoked` | `PERF_LRC_*`, `PERF_LB_*` |
+
+Tab `vehicle_part_type` on `vehicle_part_type` is the **landing tab** — POM skips tab click after navigate; other VPT tabs call `_activate_tab()`.
+
+Tab `vehicle_group` on `vehicle_type` is the **landing tab** — same skip-click pattern; Fuel Consumption tab requires `_activate_tab()`.
+
+Tab `goods_information` on `booking_information` is the **landing tab** — POM skips tab click after navigate; other BI tabs call `_activate_tab()`.
+
+Tab `shipment_note` counts card items via `//div[@class='row same-height-wrapper']//span[text()='Edit']` (min 1 item).
+
+Tab `country` on `administrative_units` is the **landing tab** — POM skips tab click after navigate; other AU tabs call `_activate_tab()`.
+
+Tab `zone_code` on page `zone_code` is the **landing tab** — same skip-click pattern; Pickup/Delivery tabs require `_activate_tab()`.
 
 **Backward-compatible PageManager aliases:** `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)`, `etms_partner_list_page(page_key)` → delegate to `etms_catalogue_list_page(page_key)`.
 
@@ -3235,7 +3309,9 @@ Dedicated screens: `EtmsCostOfRoutePage`, `EtmsAdministrativeUnitsPage`, `EtmsZo
   "min_table_rows": 1,
   "pages": [
     { "page_key": "places", "check_label": "Places Page", "max_step_seconds": 10 },
+    { "page_key": "administrative_units", "tab": "country", "check_label": "Administrative Units - Country Tab", "max_step_seconds": 10 },
     { "page_key": "administrative_units", "tab": "area", "check_label": "Administrative Units - Area Tab", "max_step_seconds": 10 },
+    { "page_key": "zone_code", "tab": "zone_code", "check_label": "Zone Code - Zone Code Tab", "max_step_seconds": 10 },
     { "page_key": "zone_code", "tab": "pickup_zone_code", "check_label": "Zone Code - Pickup Zone Code Tab", "max_step_seconds": 10 }
   ]
 }
@@ -3261,19 +3337,37 @@ Dedicated screens: `EtmsCostOfRoutePage`, `EtmsAdministrativeUnitsPage`, `EtmsZo
 
 - `max_step_seconds` **required per page** (not at root).
 - `min_table_rows` optional per page (defaults to root).
-- `tab` optional — tab key for multi-tab POMs (`administrative_units`, `zone_code`).
-- `suite` optional for TN wrapper (defaults `transport_network`); required `partner` for PERF_PT_001.
+- `tab` optional — tab key for multi-tab POMs (`administrative_units`, `zone_code`, `booking_information`).
+- `suite` optional for TN wrapper (defaults `transport_network`); required per suite: `partner` (PERF_PT_001), `vehicle` (PERF_VH_001), `driver` (PERF_DL_001), `commodity` (PERF_CM_001), `catalogue_master` (PERF_CAT_001), `pricing_common` (PERF_PR_001), `pricing_fcl` (PERF_FCL_001), `pricing_lcl` (PERF_LCL_001).
+- `allow_no_data` optional (root or per page) — pass verification when grid shows empty state `"No Data"` (used on VFC pricing suites).
+- `optional_tab` optional per page — skip timed step when tab absent on VFC UI.
+
+**Pricing Common (`test_vfc_etms_performance_pricing_common_pages_etms`):**
+
+```json
+{
+  "test_case_id": "PERF_PR_001",
+  "suite": "pricing_common",
+  "branch": "VNHCM",
+  "min_table_rows": 1,
+  "allow_no_data": true,
+  "pages": [
+    { "page_key": "cost_of_route", "tab": "updating", "check_label": "Cost Of Route - Updating Tab", "max_step_seconds": 10 },
+    { "page_key": "price_toll_buying", "tab": "expired", "check_label": "Price Toll Buying - Expired Tab", "max_step_seconds": 10, "optional_tab": true }
+  ]
+}
+```
 
 ### 20.3 Verification layers (not URL-only)
 
-Each page must pass **inside** `load_page_for_performance()`:
+Timed step (`run_performance_measurement`) ends when grid data or allowed empty state is displayed. After the timer, `verify_performance_page_loaded()` re-checks URL + `count_data_rows()` and logs `[PERF VERIFY]`.
 
-1. URL hash (`page.page_hash`)
+Full verification (inside `_wait_tab_grid` / `_wait_for_list_grid`):
+
+1. URL hash (`page.page_hash` or `page_hash_for_tab(tab_key)`)
 2. Page title visible (`h3` or `.page-title`)
 3. Column headers (`list_grid.verify_column_headers(..., table_selectors=...)`)
 4. Data rows (`list_grid.wait_for_data_rows(..., table_selectors=...)`)
-
-After the timed step, `verify_performance_page_loaded()` re-checks URL + `count_data_rows()` and logs `[PERF VERIFY]`.
 
 ### 20.4 List grid scoping (mandatory)
 
@@ -3290,18 +3384,41 @@ list_table_selectors = [
 
 `ListGridComponent` resolves scope from the **first visible** selector — avoids counting rows from wrong tables on the page.
 
-### 20.5 `load_page_for_performance` convention
+### 20.5 Performance measurement convention
 
-- Used only by performance tests — **no** `@log_method` (reduces log noise).
+**Timed segment** measures only user-visible load after the triggering action — **not** pre-click grid settle or submenu navigation.
+
+| POM base | `prepare_for_performance()` (outside timer) | `run_performance_measurement()` (inside timer) |
+|----------|---------------------------------------------|-----------------------------------------------|
+| `EtmsCatalogueListPage` | Submenu already open in support | Sidebar click → `_wait_for_list_grid()` |
+| `EtmsCatalogueTabbedListPage` | `_navigate_to_page()` + wait current tab grid | Tab click (if needed) → `_wait_tab_grid()` |
+| `EtmsPricingWorkflowListPage` | Navigate + overlay settle + wait grid | Workflow tab click (if needed) → `_wait_for_tab_content_loaded()` |
+
+Returns from `prepare_for_performance()`:
+
+| Mode | Meaning |
+|------|---------|
+| `"click"` | Tab/menu not active — timer includes click then wait for data |
+| `"wait_only"` | Target tab already active (landing tab) — timer waits data only |
+| `"skipped"` | Optional workflow tab absent on UI (`optional_tab: true`) |
+
+- Used only by performance tests — **no** `@log_method` on prepare/measure helpers (reduces log noise).
 - Every list POM must expose `page_hash` and `list_table_selectors`.
-- Tabbed POMs also expose `list_table_selectors_for_tab(tab_key)` and accept `tab_key` in `load_page_for_performance()`.
-- Menu navigation before each timed step: `open_catalogue_menu()` + `open_transport_network_menu()` **or** `open_partner_menu()` (per JSON `suite`).
+- Tabbed / workflow POMs expose `list_table_selectors_for_tab(tab_key)` and accept `tab_key`.
+- `load_page_for_performance()` remains as convenience wrapper calling prepare + measure (non-timed callers).
+- Menu navigation before each step: opener per JSON `suite` (catalogue or pricing).
+- **Zone Code tab switch:** `prepare` waits grid on `_active_tab_key()` only — do not fall back to `default_tab_key` when headers differ per tab.
 - `EtmsCatalogueMenuPage` uses private `_open_sidebar_submenu()` — public methods keep separate `@log_method` step names for HTML/ReportPortal logs.
 
 ### 20.6 Run command
 
 ```bash
+# Standard eTMS
 uv run pytest tests/etms/test_etms_performance.py -m performance -v \
+  --browser chrome --browser-headless false --reportportal
+
+# VFC eTMS (9 suites — parallel workers recommended)
+uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v -n 3 \
   --browser chrome --browser-headless false --reportportal
 ```
 
@@ -3415,4 +3532,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-25 | POM refactor (EtmsCatalogueListPage + TabbedListPage) | AU + Zone Code perf tabs | screenshot filename fix*
+*Last updated: 2026-06-25 | Catalogue master perf PERF_CAT_001 | Commodity/Driver/Vehicle suites*

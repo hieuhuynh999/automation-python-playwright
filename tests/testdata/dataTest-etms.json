@@ -67,10 +67,12 @@
                 "PERF_TR_001",
                 "PERF_HUB_001",
                 "PERF_BR_001",
+                "PERF_AU_COUNTRY_001",
                 "PERF_AU_AREA_001",
                 "PERF_AU_PC_001",
                 "PERF_AU_DIST_001",
                 "PERF_AU_WC_001",
+                "PERF_ZC_001",
                 "PERF_ZC_PICKUP_001",
                 "PERF_ZC_DELIVERY_001",
                 "PERF_RPI_001"
@@ -114,6 +116,12 @@
                 },
                 {
                     "page_key": "administrative_units",
+                    "tab": "country",
+                    "check_label": "Administrative Units - Country Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
                     "tab": "area",
                     "check_label": "Administrative Units - Area Tab",
                     "max_step_seconds": 10
@@ -134,6 +142,12 @@
                     "page_key": "administrative_units",
                     "tab": "ward_commune",
                     "check_label": "Administrative Units - Ward/Commune Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "tab": "zone_code",
+                    "check_label": "Zone Code - Zone Code Tab",
                     "max_step_seconds": 10
                 },
                 {
@@ -163,7 +177,10 @@
                 "PERF_PG_001",
                 "PERF_PL_001",
                 "PERF_BA_001",
-                "PERF_BI_001"
+                "PERF_BI_GI_001",
+                "PERF_BI_PDP_001",
+                "PERF_BI_SN_001",
+                "PERF_BI_PV_001"
             ],
             "description": "Performance — Partner pages load (Catalogue > Partner)",
             "module": "Performance",
@@ -190,7 +207,197 @@
                 },
                 {
                     "page_key": "booking_information",
-                    "check_label": "Booking Information Page",
+                    "tab": "goods_information",
+                    "check_label": "Booking Information - Goods Information Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "pickup_delivery_places",
+                    "check_label": "Booking Information - Pickup/Delivery Places Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "shipment_note",
+                    "check_label": "Booking Information - Shipment Note Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "project_vehicle",
+                    "check_label": "Booking Information - Project Vehicle Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_etms_performance_vehicle_pages_etms": [
+        {
+            "test_case_id": "PERF_VH_001",
+            "test_case_ids": [
+                "PERF_VL_001",
+                "PERF_VPT_001",
+                "PERF_VPTG_001",
+                "PERF_VPART_001",
+                "PERF_VG_001",
+                "PERF_VTFC_001"
+            ],
+            "description": "Performance — Vehicle pages load (Catalogue > Vehicle)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "suite": "vehicle",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "vehicle_list",
+                    "check_label": "Vehicle List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part_type",
+                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part_group",
+                    "check_label": "Vehicle Part Type - Vehicle Part Group Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part",
+                    "check_label": "Vehicle Part Type - Vehicle Part Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_type",
+                    "tab": "vehicle_group",
+                    "check_label": "Vehicle Type - Vehicle Group Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_type",
+                    "tab": "vehicle_type_fuel_consumption",
+                    "check_label": "Vehicle Type - Fuel Consumption Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_etms_performance_driver_pages_etms": [
+        {
+            "test_case_id": "PERF_DL_001",
+            "test_case_ids": [
+                "PERF_DRV_001",
+                "PERF_DRVV_001"
+            ],
+            "description": "Performance — Driver list pages load (Catalogue > Driver list)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "suite": "driver",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "driver",
+                    "check_label": "Driver Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "driver_vehicle",
+                    "check_label": "Driver - Vehicle Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_etms_performance_commodity_pages_etms": [
+        {
+            "test_case_id": "PERF_CM_001",
+            "test_case_ids": [
+                "PERF_CML_001",
+                "PERF_CMG_001"
+            ],
+            "description": "Performance — Commodity pages load (Catalogue > Commodity)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "suite": "commodity",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "commodity_list",
+                    "check_label": "Commodity List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "commodity_group",
+                    "check_label": "Commodity Group Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_etms_performance_catalogue_master_pages_etms": [
+        {
+            "test_case_id": "PERF_CAT_001",
+            "test_case_ids": [
+                "PERF_CL_001",
+                "PERF_UN_001",
+                "PERF_ST_001",
+                "PERF_WR_001",
+                "PERF_CTY_001",
+                "PERF_CNT_001",
+                "PERF_CUR_001"
+            ],
+            "description": "Performance — Catalogue master list pages (Charge List, Unit, Service Type, …)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "Login success + branch selected",
+            "suite": "catalogue_master",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "charge_list",
+                    "check_label": "Charge List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "unit",
+                    "check_label": "Unit Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "service_type",
+                    "check_label": "Service Type Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "weight_range",
+                    "check_label": "Weight Range Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "container_type",
+                    "check_label": "Container Type Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "container",
+                    "check_label": "Container Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "currency",
+                    "check_label": "Currency Page",
                     "max_step_seconds": 10
                 }
             ]

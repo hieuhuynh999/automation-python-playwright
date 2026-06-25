@@ -202,7 +202,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         try:
             self.page.wait_for_load_state(
                 "networkidle",
-                timeout=min(15000, settings.page_load_timeout),
+                timeout=settings.network_idle_timeout,
             )
         except Exception:
             pass
@@ -346,7 +346,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
                 search = self.wait_for_visible(
                     search_selectors,
                     f"{label} combogrid search",
-                    timeout=15000,
+                    timeout=settings.component_interaction_timeout,
                 )
                 break
             except AssertionError:
@@ -675,7 +675,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         try:
             self.page.wait_for_response(
                 self._is_booking_receipt_save_response,
-                timeout=min(15000, settings.page_load_timeout),
+                timeout=settings.network_idle_timeout,
             )
         except Exception:
             pass
@@ -939,7 +939,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
                 checkbox.click(force=True)
             else:
                 try:
-                    self._wait_toolbar_delete_ready(timeout=5000)
+                    self._wait_toolbar_delete_ready(timeout=settings.quick_action_timeout)
                     return self
                 except AssertionError:
                     checkbox.click(force=True)
@@ -975,7 +975,7 @@ class EfmsBookingReceiptPage(EfmsCommercialMenuPage):
         try:
             self.page.wait_for_load_state(
                 "networkidle",
-                timeout=min(15000, timeout),
+                timeout=min(settings.component_interaction_timeout, timeout),
             )
         except Exception:
             pass
