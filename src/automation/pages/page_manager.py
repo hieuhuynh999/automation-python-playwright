@@ -13,14 +13,15 @@ from automation.pages.efms import (
     EfmsWorkOrderPage,
 )
 from automation.pages.etms import (
+    CATALOGUE_LIST_PAGE_CONFIGS,
+    EtmsAdministrativeUnitsPage,
+    EtmsCatalogueListPage,
+    EtmsCatalogueMenuPage,
     EtmsCostOfRoutePage,
-    EtmsDistanceBetweenPlacesPage,
     EtmsHomePage,
     EtmsLoginPage,
-    EtmsPartnerListPage,
-    EtmsPlacesPage,
-    EtmsTransportNetworkListPage,
     EtmsVfcLoginPage,
+    EtmsZoneCodePage,
 )
 
 
@@ -38,10 +39,10 @@ class PageManager:
         self._efms_trucking_inland_page: EfmsTruckingInlandPage | None = None
         self._efms_services_documentation_page: EfmsServicesDocumentationPage | None = None
         self._etms_cost_of_route_page: EtmsCostOfRoutePage | None = None
-        self._etms_places_page: EtmsPlacesPage | None = None
-        self._etms_distance_between_places_page: EtmsDistanceBetweenPlacesPage | None = None
-        self._etms_transport_network_list_pages: dict[str, EtmsTransportNetworkListPage] = {}
-        self._etms_partner_list_pages: dict[str, EtmsPartnerListPage] = {}
+        self._etms_catalogue_menu_page: EtmsCatalogueMenuPage | None = None
+        self._etms_catalogue_list_pages: dict[str, EtmsCatalogueListPage] = {}
+        self._etms_administrative_units_page: EtmsAdministrativeUnitsPage | None = None
+        self._etms_zone_code_page: EtmsZoneCodePage | None = None
         self._etms_home_page: EtmsHomePage | None = None
         self._etms_login_page: EtmsLoginPage | None = None
         self._etms_vfc_login_page: EtmsVfcLoginPage | None = None
@@ -113,32 +114,51 @@ class PageManager:
         return self._etms_cost_of_route_page
 
     @property
-    def etms_places_page(self) -> EtmsPlacesPage:
-        if self._etms_places_page is None:
-            self._etms_places_page = EtmsPlacesPage(self.page)
-        return self._etms_places_page
+    def etms_catalogue_menu_page(self) -> EtmsCatalogueMenuPage:
+        if self._etms_catalogue_menu_page is None:
+            self._etms_catalogue_menu_page = EtmsCatalogueMenuPage(self.page)
+        return self._etms_catalogue_menu_page
+
+    def etms_catalogue_list_page(self, page_key: str) -> EtmsCatalogueListPage:
+        if page_key not in self._etms_catalogue_list_pages:
+            self._etms_catalogue_list_pages[page_key] = EtmsCatalogueListPage(
+                self.page,
+                page_key,
+            )
+        return self._etms_catalogue_list_pages[page_key]
+
+    def etms_transport_network_list_page(self, page_key: str) -> EtmsCatalogueListPage:
+        """Backward-compatible alias for Transport Network catalogue list pages."""
+        if page_key not in CATALOGUE_LIST_PAGE_CONFIGS:
+            known = ", ".join(sorted(CATALOGUE_LIST_PAGE_CONFIGS))
+            raise KeyError(f"Unknown catalogue list page_key '{page_key}'. Known: {known}")
+        return self.etms_catalogue_list_page(page_key)
+
+    def etms_partner_list_page(self, page_key: str) -> EtmsCatalogueListPage:
+        """Backward-compatible alias for Partner catalogue list pages."""
+        return self.etms_transport_network_list_page(page_key)
 
     @property
-    def etms_distance_between_places_page(self) -> EtmsDistanceBetweenPlacesPage:
-        if self._etms_distance_between_places_page is None:
-            self._etms_distance_between_places_page = EtmsDistanceBetweenPlacesPage(self.page)
-        return self._etms_distance_between_places_page
+    def etms_places_page(self) -> EtmsCatalogueListPage:
+        """Backward-compatible alias — Places is a catalogue list page."""
+        return self.etms_catalogue_list_page("places")
 
-    def etms_transport_network_list_page(self, page_key: str) -> EtmsTransportNetworkListPage:
-        if page_key not in self._etms_transport_network_list_pages:
-            self._etms_transport_network_list_pages[page_key] = EtmsTransportNetworkListPage(
-                self.page,
-                page_key,
-            )
-        return self._etms_transport_network_list_pages[page_key]
+    @property
+    def etms_distance_between_places_page(self) -> EtmsCatalogueListPage:
+        """Backward-compatible alias — Distance Between Places is a catalogue list page."""
+        return self.etms_catalogue_list_page("distance_between_places")
 
-    def etms_partner_list_page(self, page_key: str) -> EtmsPartnerListPage:
-        if page_key not in self._etms_partner_list_pages:
-            self._etms_partner_list_pages[page_key] = EtmsPartnerListPage(
-                self.page,
-                page_key,
-            )
-        return self._etms_partner_list_pages[page_key]
+    @property
+    def etms_administrative_units_page(self) -> EtmsAdministrativeUnitsPage:
+        if self._etms_administrative_units_page is None:
+            self._etms_administrative_units_page = EtmsAdministrativeUnitsPage(self.page)
+        return self._etms_administrative_units_page
+
+    @property
+    def etms_zone_code_page(self) -> EtmsZoneCodePage:
+        if self._etms_zone_code_page is None:
+            self._etms_zone_code_page = EtmsZoneCodePage(self.page)
+        return self._etms_zone_code_page
 
     @property
     def etms_login_page(self) -> EtmsLoginPage:

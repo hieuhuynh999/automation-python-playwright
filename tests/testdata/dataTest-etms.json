@@ -67,8 +67,12 @@
                 "PERF_TR_001",
                 "PERF_HUB_001",
                 "PERF_BR_001",
-                "PERF_AU_001",
-                "PERF_ZC_001",
+                "PERF_AU_AREA_001",
+                "PERF_AU_PC_001",
+                "PERF_AU_DIST_001",
+                "PERF_AU_WC_001",
+                "PERF_ZC_PICKUP_001",
+                "PERF_ZC_DELIVERY_001",
                 "PERF_RPI_001"
             ],
             "description": "Performance — Transport Network pages load (Catalogue > Transport Network)",
@@ -110,12 +114,38 @@
                 },
                 {
                     "page_key": "administrative_units",
-                    "check_label": "Administrative Units Page",
+                    "tab": "area",
+                    "check_label": "Administrative Units - Area Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "province_city",
+                    "check_label": "Administrative Units - Province/City Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "district",
+                    "check_label": "Administrative Units - District Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "administrative_units",
+                    "tab": "ward_commune",
+                    "check_label": "Administrative Units - Ward/Commune Tab",
                     "max_step_seconds": 10
                 },
                 {
                     "page_key": "zone_code",
-                    "check_label": "Zone Code Page",
+                    "tab": "pickup_zone_code",
+                    "check_label": "Zone Code - Pickup Zone Code Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "zone_code",
+                    "tab": "delivery_zone_code",
+                    "check_label": "Zone Code - Delivery Zone Code Tab",
                     "max_step_seconds": 10
                 },
                 {

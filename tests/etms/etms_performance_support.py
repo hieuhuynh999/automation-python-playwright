@@ -39,6 +39,13 @@ def _open_catalogue_submenu(nav_page: Any, suite: str) -> None:
     opener(nav_page)
 
 
+def _load_performance_page(page: Any, *, min_rows: int, tab_key: str | None) -> None:
+    if tab_key is not None:
+        page.load_page_for_performance(min_rows=min_rows, tab_key=tab_key)
+    else:
+        page.load_page_for_performance(min_rows=min_rows)
+
+
 def run_etms_catalogue_performance_suite(
     *,
     pages: PageManager,
@@ -56,7 +63,7 @@ def run_etms_catalogue_performance_suite(
 
     login_etms(branch)
 
-    nav_page = pages.etms_places_page
+    nav_page = pages.etms_catalogue_menu_page
     tracker = StepPerformanceTracker()
 
     threshold_summary = ", ".join(
@@ -75,14 +82,18 @@ def run_etms_catalogue_performance_suite(
         check_label = str(page_config.get("check_label", target.check_label))
         threshold_seconds = _resolve_page_threshold(page_config)
         min_rows = int(page_config.get("min_table_rows", default_min_rows))
+        tab_key = page_config.get("tab")
+        tab_key = str(tab_key) if tab_key else None
         page = resolve_performance_page(pages, page_key)
 
         _open_catalogue_submenu(nav_page, suite)
 
         tracker.run_step(
             check_label,
-            lambda current_page=page, rows=min_rows: current_page.load_page_for_performance(
-                min_rows=rows
+            lambda current_page=page, rows=min_rows, tab=tab_key: _load_performance_page(
+                current_page,
+                min_rows=rows,
+                tab_key=tab,
             ),
             threshold_seconds=threshold_seconds,
         )
@@ -91,6 +102,7 @@ def run_etms_catalogue_performance_suite(
             check_label=check_label,
             page=page,
             min_rows=min_rows,
+            tab_key=tab_key,
         )
 
     tracker.assert_all_within_threshold()

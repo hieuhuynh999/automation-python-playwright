@@ -421,11 +421,11 @@ auotmation-techub/
 │   │   └── etms/
 │   │       ├── etms_login_page.py
 │   │       ├── etms_home_page.py
-│   │       ├── etms_catalogue_menu_page.py       # Catalogue sidebar — internal base
-│   │       ├── etms_partner_list_page.py         # Catalogue > Partner generic list pages
-│   │       ├── etms_places_page.py               # Transport Network > Places
-│   │       ├── etms_distance_between_places_page.py
-│   │       ├── etms_transport_network_list_page.py  # Generic TN list pages (config registry)
+│   │       ├── etms_catalogue_menu_page.py       # Base — sidebar Catalogue / TN / Partner
+│   │       ├── etms_catalogue_list_page.py       # Generic TN + Partner list pages (config registry)
+│   │       ├── etms_catalogue_tabbed_list_page.py # Base for tabbed catalogue screens
+│   │       ├── etms_administrative_units_page.py # TN > Administrative Units tabs
+│   │       ├── etms_zone_code_page.py            # TN > Zone Code tabs
 │   │       └── etms_cost_of_route_page.py
 │   ├── performance/
 │   │   └── step_performance_tracker.py   # StepPerformanceTracker — measure + assert thresholds
@@ -489,7 +489,7 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)`, `etms_partner_list_page(page_key)` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_catalogue_menu_page`, `etms_catalogue_list_page(page_key)`, `etms_administrative_units_page`, `etms_zone_code_page` | `dataTest-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
@@ -516,10 +516,10 @@ auotmation-techub/
 | `EtmsLoginPage` | `etms/etms_login_page.py` | Login form, branch/hub picker (`NgSelectComponent`), branch verify |
 | `EtmsHomePage` | `etms/etms_home_page.py` | Home URL + dashboard after branch select |
 | `EtmsCatalogueMenuPage` | `etms/etms_catalogue_menu_page.py` | Catalogue sidebar — `open_catalogue_menu()`, `open_transport_network_menu()`, `open_partner_menu()` — **internal base** |
-| `EtmsPlacesPage` | `etms/etms_places_page.py` | Transport Network > Places list |
-| `EtmsDistanceBetweenPlacesPage` | `etms/etms_distance_between_places_page.py` | Transport Network > Distance Between Places |
-| `EtmsTransportNetworkListPage` | `etms/etms_transport_network_list_page.py` | Generic TN list pages via `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` |
-| `EtmsPartnerListPage` | `etms/etms_partner_list_page.py` | Generic Partner list pages via `PARTNER_LIST_PAGE_CONFIGS` |
+| `EtmsCatalogueListPage` | `etms/etms_catalogue_list_page.py` | Generic catalogue list pages via `CATALOGUE_LIST_PAGE_CONFIGS` (TN + Partner) |
+| `EtmsCatalogueTabbedListPage` | `etms/etms_catalogue_tabbed_list_page.py` | Base for tabbed catalogue screens — **internal base** |
+| `EtmsAdministrativeUnitsPage` | `etms/etms_administrative_units_page.py` | TN > Administrative Units — tabs: Area, Province/City, District, Ward/Commune |
+| `EtmsZoneCodePage` | `etms/etms_zone_code_page.py` | TN > Zone Code — tabs: Pickup Zone Code, Delivery Zone Code |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
 **Common Components (compose inside Page Objects — not in PageManager):**
@@ -2120,7 +2120,7 @@ from tests.data_provider import DataProvider
 | `pytest_configure` | Report metadata: Environment, Browser, Headless, Timeout, **Base URL** (initial guess) |
 | `pytest_collection_modifyitems` | Refine **Base URL** from collected tests (accurate per run) |
 | `pytest_html_report_title` | Report title: "Automation Report" |
-| `pytest_runtest_makereport` | Enriches report: TC_ID, description, method logs, failure screenshot |
+| `pytest_runtest_makereport` | Enriches report: TC_ID, description, method logs, failure screenshot (short filename — see below) |
 | `pytest_html_results_table_*` | Custom "Test Case" column (not raw nodeid) |
 | Multi-scenario tests | Shows `test_case_ids[]` + per-scenario breakdown in extras |
 
@@ -2136,7 +2136,7 @@ Priority: collected test paths → CLI paths → `-m` marker expression.
 
 **Report outputs:**
 - HTML: `reports/report.html` (via `--html=... --self-contained-html`)
-- Screenshots on failure: `test-results/screenshots/`
+- Screenshots on failure: `test-results/screenshots/` — filename from JSON `test_case_id` (e.g. `PERF_TN_001.png`); long names truncated + hash suffix (Windows path limit)
 - Step logs: embedded in HTML report + console `[STEP START/PASS]`
 - File log: `logs/automation.log`
 
@@ -3188,8 +3188,8 @@ test_etms_performance.py
 | `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` |
 | `tests/etms/etms_performance_support.py` | Suite orchestration — `suite` key drives submenu opener |
 | `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
-| `src/automation/pages/etms/etms_transport_network_list_page.py` | `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` + generic `EtmsTransportNetworkListPage` |
-| `src/automation/pages/etms/etms_partner_list_page.py` | `PARTNER_LIST_PAGE_CONFIGS` + generic `EtmsPartnerListPage` |
+| `src/automation/pages/etms/etms_catalogue_list_page.py` | `CATALOGUE_LIST_PAGE_CONFIGS` + `EtmsCatalogueListPage` |
+| `src/automation/pages/etms/etms_catalogue_tabbed_list_page.py` | `EtmsCatalogueTabbedListPage` base + `EtmsCatalogueTabConfig` |
 | `src/automation/pages/etms/etms_catalogue_menu_page.py` | `open_catalogue_menu()` + `open_transport_network_menu()` / `open_partner_menu()` via `_open_sidebar_submenu()` |
 | `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
 
@@ -3204,14 +3204,23 @@ test_etms_performance.py
 
 | `page_key` | PageManager accessor |
 |------------|---------------------|
-| `places` | `pages.etms_places_page` |
-| `distance_between_places` | `pages.etms_distance_between_places_page` |
-| TN keys in `TRANSPORT_NETWORK_LIST_PAGE_CONFIGS` | `pages.etms_transport_network_list_page(page_key)` |
-| Partner keys in `PARTNER_LIST_PAGE_CONFIGS` | `pages.etms_partner_list_page(page_key)` |
+| `places`, `distance_between_places`, TN keys | `pages.etms_catalogue_list_page(page_key)` |
+| Partner keys | `pages.etms_catalogue_list_page(page_key)` |
+| `administrative_units` | `pages.etms_administrative_units_page` |
+| `zone_code` | `pages.etms_zone_code_page` |
 
 Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
 
-Dedicated screens (Places, DBP) keep their own POM class until merged into the generic config.
+Dedicated screens: `EtmsCostOfRoutePage`, `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage` (tabbed). All other catalogue list pages use `EtmsCatalogueListPage` + config.
+
+**Tabbed pages:** use optional JSON field `"tab"` (e.g. `"area"`, `"pickup_zone_code"`). `etms_performance_support` passes `tab_key` to `load_page_for_performance()` and `verify_performance_page_loaded()`. One `page_key` may appear multiple times in `pages[]` — one entry per tab.
+
+| `page_key` | Tab keys | Sub-check TC IDs |
+|------------|----------|------------------|
+| `administrative_units` | `area`, `province_city`, `district`, `ward_commune` | `PERF_AU_AREA_001`, `PERF_AU_PC_001`, `PERF_AU_DIST_001`, `PERF_AU_WC_001` |
+| `zone_code` | `pickup_zone_code`, `delivery_zone_code` | `PERF_ZC_PICKUP_001`, `PERF_ZC_DELIVERY_001` |
+
+**Backward-compatible PageManager aliases:** `etms_places_page`, `etms_distance_between_places_page`, `etms_transport_network_list_page(page_key)`, `etms_partner_list_page(page_key)` → delegate to `etms_catalogue_list_page(page_key)`.
 
 ### 20.2 JSON schema
 
@@ -3225,7 +3234,9 @@ Dedicated screens (Places, DBP) keep their own POM class until merged into the g
   "branch": "VNHCM",
   "min_table_rows": 1,
   "pages": [
-    { "page_key": "places", "check_label": "Places Page", "max_step_seconds": 10 }
+    { "page_key": "places", "check_label": "Places Page", "max_step_seconds": 10 },
+    { "page_key": "administrative_units", "tab": "area", "check_label": "Administrative Units - Area Tab", "max_step_seconds": 10 },
+    { "page_key": "zone_code", "tab": "pickup_zone_code", "check_label": "Zone Code - Pickup Zone Code Tab", "max_step_seconds": 10 }
   ]
 }
 ```
@@ -3250,6 +3261,7 @@ Dedicated screens (Places, DBP) keep their own POM class until merged into the g
 
 - `max_step_seconds` **required per page** (not at root).
 - `min_table_rows` optional per page (defaults to root).
+- `tab` optional — tab key for multi-tab POMs (`administrative_units`, `zone_code`).
 - `suite` optional for TN wrapper (defaults `transport_network`); required `partner` for PERF_PT_001.
 
 ### 20.3 Verification layers (not URL-only)
@@ -3282,6 +3294,7 @@ list_table_selectors = [
 
 - Used only by performance tests — **no** `@log_method` (reduces log noise).
 - Every list POM must expose `page_hash` and `list_table_selectors`.
+- Tabbed POMs also expose `list_table_selectors_for_tab(tab_key)` and accept `tab_key` in `load_page_for_performance()`.
 - Menu navigation before each timed step: `open_catalogue_menu()` + `open_transport_network_menu()` **or** `open_partner_menu()` (per JSON `suite`).
 - `EtmsCatalogueMenuPage` uses private `_open_sidebar_submenu()` — public methods keep separate `@log_method` step names for HTML/ReportPortal logs.
 
@@ -3402,4 +3415,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-24 | PERF_PT_001 Partner | PERF_TN_001 Transport Network | catalogue _open_sidebar_submenu | RP_LAUNCH .env fix*
+*Last updated: 2026-06-25 | POM refactor (EtmsCatalogueListPage + TabbedListPage) | AU + Zone Code perf tabs | screenshot filename fix*

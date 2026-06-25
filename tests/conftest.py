@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any, cast
@@ -227,6 +229,32 @@ def vfc_etms_account_password() -> str:
     return password
 
 
+def _sanitize_screenshot_stem(value: str) -> str:
+    return re.sub(r"[^\w\-.]+", "_", value).strip("_")
+
+
+def _failure_screenshot_stem(item: pytest.Item, report: pytest.TestReport) -> str:
+    """Build a short, Windows-safe screenshot filename stem."""
+    max_stem_len = 100
+    funcargs = getattr(item, "funcargs", {})
+    test_data = funcargs.get("data") if isinstance(funcargs, dict) else None
+
+    if isinstance(test_data, dict):
+        primary_id = test_data.get("test_case_id")
+        if primary_id:
+            stem = _sanitize_screenshot_stem(str(primary_id))
+            if stem:
+                return stem
+
+    raw = getattr(report, "tc_id", "") or getattr(report, "test_name", "") or item.nodeid
+    stem = _sanitize_screenshot_stem(str(raw))
+    if len(stem) <= max_stem_len:
+        return stem or "failure"
+
+    digest = hashlib.sha1(item.nodeid.encode()).hexdigest()[:8]
+    return f"{stem[: max_stem_len - len(digest) - 1]}_{digest}"
+
+
 def _get_test_case_id(test_data: Any) -> str:
     if not isinstance(test_data, dict):
         return ""
@@ -419,16 +447,7 @@ def pytest_runtest_makereport(
 
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 
-    screenshot_name = (
-        report.test_name.replace(" ", "_")
-        .replace("/", "_")
-        .replace("|", "_")
-        .replace(">", "_")
-        .replace("—", "_")
-        .replace("(", "_")
-        .replace(")", "_")
-    )
-
+    screenshot_name = _failure_screenshot_stem(item, report)
     screenshot_path = screenshot_dir / f"{screenshot_name}.png"
 
     page.screenshot(path=screenshot_path, full_page=True)
