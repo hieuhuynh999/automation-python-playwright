@@ -7,6 +7,10 @@ from automation.logging.step_logger import record_step_log
 from automation.pages.page_manager import PageManager
 from automation.performance import StepPerformanceTracker
 
+from automation.pages.etms.etms_catalogue_menu_page import (
+    _sidebar_child_link,
+    _sidebar_link_by_href,
+)
 from tests.etms.etms_performance_registry import (
     PERFORMANCE_PAGE_TARGETS,
     resolve_performance_page,
@@ -34,6 +38,9 @@ _DIRECT_SUITE_MENU_OPENERS: dict[str, Callable[[Any], None]] = {
     "customer_service_fcl": lambda nav_page: nav_page.open_customer_service_fcl_menu(),
     "customer_service_lcl_ftl": lambda nav_page: nav_page.open_customer_service_lcl_ftl_menu(),
     "customer_service_soa_outsource": lambda nav_page: nav_page.open_customer_service_soa_outsource_menu(),
+    "operation_common": lambda nav_page: nav_page.open_operation_common_menu(),
+    "operation_fcl": lambda nav_page: nav_page.open_operation_fcl_menu(),
+    "operation_lcl_ftl": lambda nav_page: nav_page.open_operation_lcl_ftl_menu(),
 }
 
 
@@ -92,6 +99,19 @@ def _load_performance_page(
             page.load_page_for_performance(min_rows=min_rows, tab_key=tab_key)
     else:
         page.load_page_for_performance(min_rows=min_rows)
+
+
+def _is_sidebar_page_available(page: Any) -> bool:
+    config = getattr(page, "_config", None)
+    if config is not None and getattr(config, "menu_parent_label", ""):
+        scoped = [
+            _sidebar_child_link(config.menu_parent_label, config.title),
+            _sidebar_link_by_href(config.page_hash),
+        ]
+        return page.find_visible(scoped) is not None
+    if hasattr(page, "_menu_selectors"):
+        return page.find_visible(page._menu_selectors()) is not None
+    return True
 
 
 def run_etms_catalogue_performance_suite(
@@ -160,6 +180,13 @@ def run_etms_catalogue_performance_suite(
 
         _open_performance_suite_menu(nav_page, suite)
 
+        optional_page = bool(page_config.get("optional_page"))
+        if optional_page and not _is_sidebar_page_available(page):
+            record_step_log(
+                f"[PERF SKIP] {check_label}: optional page not in sidebar menu"
+            )
+            continue
+
         perf_mode: str | None = None
         first_page_step = (
             index == 0
@@ -226,204 +253,5 @@ def run_etms_performance_suite(
     run_etms_catalogue_performance_suite(
         pages=pages,
         data=payload,
-        login_etms=login_etms,
-    )
-
-
-def run_etms_transport_network_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Backward-compatible wrapper for PERF_TN_001."""
-    run_etms_performance_suite(
-        suite="transport_network",
-        pages=pages,
-        data=data,
-        login_etms=login_etms,
-        use_setdefault=True,
-    )
-
-
-def run_etms_partner_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Catalogue > Partner performance suite (PERF_PT_001)."""
-    run_etms_performance_suite(
-        suite="partner", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_vehicle_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Catalogue > Vehicle performance suite (PERF_VH_001)."""
-    run_etms_performance_suite(
-        suite="vehicle", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_driver_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Catalogue > Driver list performance suite (PERF_DL_001)."""
-    run_etms_performance_suite(
-        suite="driver", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_commodity_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Catalogue > Commodity performance suite (PERF_CM_001)."""
-    run_etms_performance_suite(
-        suite="commodity", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_catalogue_master_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Catalogue master list pages performance suite (PERF_CAT_001)."""
-    run_etms_performance_suite(
-        suite="catalogue_master", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_pricing_common_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Pricing > Common — Cost Of Route & Price Toll Buying workflow tabs (PERF_PR_001)."""
-    run_etms_performance_suite(
-        suite="pricing_common", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_pricing_fcl_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Pricing > FCL Pricing — workflow tabs on 4 FCL list pages (PERF_FCL_001)."""
-    run_etms_performance_suite(
-        suite="pricing_fcl", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_pricing_lcl_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Pricing > LCL Pricing — 3. LCL Rate Card & LCL Buying workflow tabs (PERF_LCL_001)."""
-    run_etms_performance_suite(
-        suite="pricing_lcl", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_pricing_distribution_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Pricing > Distribution Pricing — 2. Distribution Rate Card & Distribution Buying (PERF_DIST_001)."""
-    run_etms_performance_suite(
-        suite="pricing_distribution", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_pricing_report_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Pricing > Pricing Report & Commission Rate Card (PERF_PRPT_001)."""
-    run_etms_performance_suite(
-        suite="pricing_report", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_quotation_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Quotation > Create forms & FCL Quotation List workflow tabs (PERF_QUOT_001)."""
-    run_etms_performance_suite(
-        suite="quotation", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_customer_service_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Customer Service > Common > Verifying Booking list (PERF_CS_001)."""
-    run_etms_performance_suite(
-        suite="customer_service_common", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_customer_service_fcl_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Customer Service > FCL workflow & list pages (PERF_CS_FCL_001)."""
-    run_etms_performance_suite(
-        suite="customer_service_fcl", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_customer_service_lcl_ftl_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Customer Service > LCL/FTL pages & workflow tabs (PERF_CS_LCL_001)."""
-    run_etms_performance_suite(
-        suite="customer_service_lcl_ftl", pages=pages, data=data, login_etms=login_etms
-    )
-
-
-def run_etms_customer_service_soa_outsource_performance_suite(
-    *,
-    pages: PageManager,
-    data: dict[str, Any],
-    login_etms: Callable[[str], None],
-) -> None:
-    """Customer Service > SOA For Outsource workflow tabs (PERF_CS_SOA_001)."""
-    run_etms_performance_suite(
-        suite="customer_service_soa_outsource",
-        pages=pages,
-        data=data,
         login_etms=login_etms,
     )

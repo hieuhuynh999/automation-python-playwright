@@ -461,6 +461,110 @@ class EtmsCatalogueMenuPage(BasePage):
         "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Verifying Booking']]",
     ]
 
+    operation_menu_selectors = [
+        _sidebar_link_by_label("Operation"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Operation']]",
+    ]
+
+    operation_expanded_selectors = [
+        _sidebar_child_link("Operation", "Common"),
+        _sidebar_child_link("Operation", "FCL"),
+        _sidebar_child_link("Operation", "LCL/FTL"),
+        _sidebar_child_link("Operation", "Update transport info"),
+        _sidebar_link_by_href("operation/common/dispatching"),
+        _sidebar_link_by_href("operation/fcl-transport-request"),
+        _sidebar_link_by_href("operation/lcl/lcl-ftl-transport"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Common']]",
+    ]
+
+    operation_common_toggle_selectors = [
+        _sidebar_child_link("Operation", "Common"),
+        _sidebar_link_by_href("operation/common/dispatching"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Common']]",
+    ]
+
+    operation_common_expanded_selectors = [
+        _sidebar_child_link("Operation", "Update transport info"),
+        _sidebar_child_link("Operation", "Dispatching"),
+        _sidebar_child_link("Operation", "Trip Settlement"),
+        _sidebar_child_link("Operation", "Fuel Closing"),
+        _sidebar_child_link("Operation", "Unlock Transport Request"),
+        _sidebar_child_link("Operation", "Confirm ePOD"),
+        _sidebar_link_by_href("customer/transport-data-entry"),
+        _sidebar_link_by_href("operation/common/dispatching"),
+        _sidebar_link_by_href("operation/common/settlement"),
+        _sidebar_link_by_href("operation/common/fuel-checking"),
+        _sidebar_link_by_href("operation/common/unlock-transport"),
+        _sidebar_link_by_href("operation/common/confirm-pod"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Update transport info']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Dispatching']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Trip Settlement']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Fuel Closing']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Unlock Transport Request']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Confirm ePOD']]",
+    ]
+
+    operation_fcl_toggle_selectors = [
+        _sidebar_child_link("Operation", "FCL"),
+        _sidebar_link_by_href("operation/fcl-transport-request"),
+        "xpath=//a[contains(@class,'nav-link')]"
+        "[.//span[normalize-space()='Operation']]"
+        "/ancestor::li[1]"
+        "//ul[contains(@class,'submenu') or contains(@class,'menu-content')]"
+        "//a[contains(@class,'nav-link')][.//span[normalize-space()='FCL']]",
+    ]
+
+    operation_fcl_expanded_selectors = [
+        _sidebar_child_link("Operation", "FCL Transport Request List"),
+        _sidebar_link_by_href("operation/fcl-transport-request"),
+        "xpath=//a[contains(@class,'nav-link')]"
+        "[.//span[normalize-space()='FCL Transport Request List']]",
+    ]
+
+    operation_lcl_ftl_toggle_selectors = [
+        _sidebar_child_link("Operation", "LCL/FTL"),
+        _sidebar_link_by_href("operation/lcl/lcl-ftl-transport"),
+        "xpath=//a[contains(@class,'nav-link')]"
+        "[.//span[normalize-space()='Operation']]"
+        "/ancestor::li[1]"
+        "//ul[contains(@class,'submenu') or contains(@class,'menu-content')]"
+        "//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL']]",
+    ]
+
+    operation_lcl_ftl_expanded_selectors = [
+        _sidebar_child_link("Operation", "LCL/FTL Transport Request List"),
+        _sidebar_child_link("Operation", "2.Pickup Run Sheet"),
+        _sidebar_child_link("Operation", "4.Revenue Protection"),
+        _sidebar_child_link("Operation", "5.Routing"),
+        _sidebar_child_link("Operation", "6.Consolidation"),
+        _sidebar_child_link("Operation", "7.Check Out"),
+        _sidebar_child_link("Operation", "8.Transit"),
+        _sidebar_child_link("Operation", "9.Check In"),
+        _sidebar_child_link("Operation", "11.Unbag"),
+        _sidebar_child_link("Operation", "13.Delivery Run Sheet"),
+        _sidebar_link_by_href("operation/lcl/lcl-ftl-transport"),
+        _sidebar_link_by_href("operation/lcl/pickup-run-sheet"),
+        _sidebar_link_by_href("operation/lcl/revenue-protection"),
+        _sidebar_link_by_href("customer/lcl-routing"),
+        _sidebar_link_by_href("operation/lcl/consolidation"),
+        _sidebar_link_by_href("operation/lcl/check-out"),
+        _sidebar_link_by_href("operation/lcl/transit"),
+        _sidebar_link_by_href("operation/lcl/check-in"),
+        _sidebar_link_by_href("operation/lcl/unbagging"),
+        _sidebar_link_by_href("operation/lcl/delivery-run-sheet"),
+        "xpath=//a[contains(@class,'nav-link')]"
+        "[.//span[normalize-space()='LCL/FTL Transport Request List']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='2.Pickup Run Sheet']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='4.Revenue Protection']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='5.Routing']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='6.Consolidation']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='7.Check Out']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='8.Transit']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='9.Check In']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='11.Unbag']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='13.Delivery Run Sheet']]",
+    ]
+
     @log_method("Wait for eTMS sidebar navigation ready")
     def wait_for_sidebar_ready(self) -> "EtmsCatalogueMenuPage":
         self.wait_for_page_stable()
@@ -731,3 +835,43 @@ class EtmsCatalogueMenuPage(BasePage):
             "SOA For Outsource menu under Customer Service",
         )
         return self
+
+    @log_method("Open Operation menu")
+    def open_operation_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.operation_menu_selectors,
+            submenu_selectors=self.operation_expanded_selectors,
+            toggle_label="Operation menu",
+            ready_label="Common menu under Operation",
+        )
+
+    @log_method("Open Operation > Common menu")
+    def open_operation_common_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_operation_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.operation_common_toggle_selectors,
+            submenu_selectors=self.operation_common_expanded_selectors,
+            toggle_label="Common menu under Operation",
+            ready_label="Dispatching menu under Common",
+        )
+
+    @log_method("Open Operation > FCL menu")
+    def open_operation_fcl_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_operation_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.operation_fcl_toggle_selectors,
+            submenu_selectors=self.operation_fcl_expanded_selectors,
+            toggle_label="FCL menu under Operation",
+            ready_label="FCL Transport Request List menu under FCL",
+        )
+
+    @log_method("Open Operation > LCL/FTL menu")
+    def open_operation_lcl_ftl_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_operation_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.operation_lcl_ftl_toggle_selectors,
+            submenu_selectors=self.operation_lcl_ftl_expanded_selectors,
+            toggle_label="LCL/FTL menu under Operation",
+            ready_label="LCL/FTL Transport Request List menu under LCL/FTL",
+        )

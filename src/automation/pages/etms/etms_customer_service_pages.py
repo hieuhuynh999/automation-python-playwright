@@ -11,11 +11,6 @@ class EtmsCustomerServiceWorkflowPage(EtmsPricingWorkflowListPage):
     list_column_headers: tuple[str, ...] = ()
     performance_menu_suite: str = "customer_service_fcl"
 
-    # Backward-compatible alias
-    @property
-    def pricing_menu_suite(self) -> str:
-        return self.performance_menu_suite
-
     def list_table_selectors_for_tab(self, tab_key: str) -> list[str]:
         del tab_key
         list_body = self._list_portlet_body()
@@ -75,10 +70,6 @@ class EtmsCustomerServiceWorkflowPage(EtmsPricingWorkflowListPage):
         self.wait_for_page_stable()
         self._scroll_filter_tab_bar()
         return "click"
-
-
-# Backward-compatible alias
-EtmsCustomerServiceFclWorkflowPage = EtmsCustomerServiceWorkflowPage
 
 
 class EtmsFclBookingPage(EtmsCustomerServiceWorkflowPage):

@@ -49,6 +49,15 @@ _DEDICATED_PERF_PAGES: dict[str, str] = {
     "lcl_shipment_management": "LCL Shipment Management Page",
     "lcl_ftl_surcharge_behalf_fleet": "LCL/FTL Surcharge/ Behalf (Fleet) Page",
     "soa_for_outsource": "SOA For Outsource Page",
+    "update_transport_info": "Update transport info Page",
+    "dispatching": "Dispatching Page",
+    "trip_settlement": "Trip Settlement Page",
+    "fuel_closing": "Fuel Closing Page",
+    "unlock_transport_request": "Unlock Transport Request Page",
+    "confirm_epod": "Confirm ePOD Page",
+    "lcl_ftl_check_out": "7.Check Out Page",
+    "lcl_ftl_check_in": "9.Check In Page",
+    "lcl_ftl_unbag": "11.Unbag Page",
 }
 
 
@@ -135,6 +144,16 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
         return pages.etms_lcl_shipment_management_page
     if page_key == "soa_for_outsource":
         return pages.etms_soa_for_outsource_page
+    if page_key == "unlock_transport_request":
+        return pages.etms_unlock_transport_request_page
+    if page_key == "confirm_epod":
+        return pages.etms_confirm_epod_page
+    if page_key == "lcl_ftl_check_out":
+        return pages.etms_lcl_ftl_check_out_page
+    if page_key == "lcl_ftl_check_in":
+        return pages.etms_lcl_ftl_check_in_page
+    if page_key == "lcl_ftl_unbag":
+        return pages.etms_lcl_ftl_unbag_page
 
     raise KeyError(f"No PageManager resolver for performance page_key '{page_key}'")
 

@@ -1,14 +1,7 @@
 import pytest
 
 from tests.data_provider import DataProvider
-from tests.etms.etms_performance_support import (
-    run_etms_catalogue_master_performance_suite,
-    run_etms_commodity_performance_suite,
-    run_etms_driver_performance_suite,
-    run_etms_partner_performance_suite,
-    run_etms_transport_network_performance_suite,
-    run_etms_vehicle_performance_suite,
-)
+from tests.etms.etms_performance_support import run_etms_performance_suite
 
 pytestmark = [
     pytest.mark.etms,
@@ -30,10 +23,12 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Transport Network list pages → assert all thresholds."""
-        run_etms_transport_network_performance_suite(
+        run_etms_performance_suite(
+            suite="transport_network",
             pages=pages,
             data=data,
             login_etms=login_etms,
+            use_setdefault=True,
         )
 
     @pytest.mark.parametrize(
@@ -48,7 +43,8 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Catalogue > Partner list pages → assert all thresholds."""
-        run_etms_partner_performance_suite(
+        run_etms_performance_suite(
+            suite="partner",
             pages=pages,
             data=data,
             login_etms=login_etms,
@@ -66,7 +62,8 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Catalogue > Vehicle list pages → assert all thresholds."""
-        run_etms_vehicle_performance_suite(
+        run_etms_performance_suite(
+            suite="vehicle",
             pages=pages,
             data=data,
             login_etms=login_etms,
@@ -84,7 +81,8 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Catalogue > Driver list pages → assert all thresholds."""
-        run_etms_driver_performance_suite(
+        run_etms_performance_suite(
+            suite="driver",
             pages=pages,
             data=data,
             login_etms=login_etms,
@@ -102,7 +100,8 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Catalogue > Commodity list pages → assert all thresholds."""
-        run_etms_commodity_performance_suite(
+        run_etms_performance_suite(
+            suite="commodity",
             pages=pages,
             data=data,
             login_etms=login_etms,
@@ -120,7 +119,8 @@ class TestEtmsPerformance:
         login_etms,
     ):
         """Login once → measure Catalogue master list pages → assert all thresholds."""
-        run_etms_catalogue_master_performance_suite(
+        run_etms_performance_suite(
+            suite="catalogue_master",
             pages=pages,
             data=data,
             login_etms=login_etms,

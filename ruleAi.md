@@ -451,7 +451,8 @@ auotmation-techub/
 │   ├── test_reporting_support.py   # Unit tests — retry + secret redaction
 │   ├── testdata/
 │   │   ├── dataTest-efms.json
-│   │   └── dataTest-etms.json
+│   │   ├── dataTest-etms.json
+│   │   └── dataTest-vfc-etms.json
 │   ├── efms/                       # eFMS UI tests (app-first layout)
 │   │   ├── test_efms_auth.py       # TestEfmsAuth — SMK_AUTH_001/002
 │   │   ├── test_efms_navigate.py   # TestEfmsNavigate — SMK_NAV_001–006
@@ -459,11 +460,12 @@ auotmation-techub/
 │   └── etms/                       # eTMS UI tests
 │       ├── conftest.py             # login_etms fixture
 │       ├── etms_performance_registry.py  # PERF page registry + resolve + verify helpers
-│       ├── etms_performance_support.py   # run_etms_performance_suite() + suite wrappers
+│       ├── etms_performance_support.py   # run_etms_performance_suite() orchestration
 │       ├── test_etms_auth.py       # TestEtmsAuth — SMK_AUTH_001/002
 │       ├── test_etms_cost_of_route.py  # COR_LP_001, COR_CP_001, TMS_COR_001
-│       ├── test_etms_performance.py    # PERF_TN_001 — Transport Network page load
-│       └── test_vfc_etms_performance.py # VFC PERF — 16 suites via _VFC_PERFORMANCE_SUITES registry
+│       ├── test_etms_performance.py    # Standard eTMS PERF — 6 catalogue suites
+│       ├── test_vfc_etms_auth.py       # VFC login smoke
+│       └── test_vfc_etms_performance.py # VFC PERF — 19 explicit methods (PERF_VFC_001–019)
 │
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
@@ -654,8 +656,12 @@ Supporting layers (not in UI test path):
 | PERF_LCL_BK_* … PERF_LCL_SRF_001 | Performance | High | (sub-checks inside PERF_CS_LCL_001) | `dataTest-vfc-etms.json` → `pages[]` |
 | PERF_CS_SOA_001 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_customer_service_soa_outsource_pages` | `tests/etms/test_vfc_etms_performance.py` |
 | PERF_SOA_* | Performance | High | (sub-checks inside PERF_CS_SOA_001) | `dataTest-vfc-etms.json` → `pages[]` |
-| PERF_TN_001 (VFC) | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_transport_network_pages` | `tests/etms/test_vfc_etms_performance.py` |
-| PERF_PT_001 … PERF_CAT_001 (VFC) | Performance | High | `TestVfcEtmsPerformance` (same suites, `login_vfc_etms`) | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_VFC_001 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_transport_network_pages` | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_VFC_002 … PERF_VFC_006 | Performance | High | VFC catalogue suites (Partner → Catalogue master) | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_VFC_007 … PERF_VFC_016 | Performance | High | VFC Pricing / Quotation / Customer Service | `tests/etms/test_vfc_etms_performance.py` |
+| PERF_VFC_017 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_common_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_018 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_fcl_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_019 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_lcl_ftl_pages` | `dataTest-vfc-etms.json` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
@@ -667,7 +673,7 @@ uv run pytest -m login -v --browser chrome --browser-headless true      # all lo
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
 uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS only → RP launch etms-automation
 uv run pytest tests/etms/test_etms_performance.py -m performance -v --browser chrome --browser-headless true  # PERF_TN_001
-uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v --browser chrome --browser-headless false  # VFC PERF (16 suites)
+uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v --browser chrome --browser-headless false  # VFC PERF (19 suites, PERF_VFC_001–019)
 ```
 
 ---
@@ -3210,9 +3216,9 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 
 ## 20. eTMS Performance Tests
 
-> **TCs:** `PERF_TN_001` (Transport Network) · `PERF_PT_001` (Partner) · `PERF_VH_001` (Vehicle) · `PERF_DL_001` (Driver list) · `PERF_CM_001` (Commodity) · `PERF_CAT_001` (Catalogue master lists) · `PERF_PR_001` / `PERF_FCL_001` / `PERF_LCL_001` / `PERF_DIST_001` / `PERF_PRPT_001` (VFC Pricing) · `PERF_QUOT_001` (Quotation) · `PERF_CS_001` / `PERF_CS_FCL_001` / `PERF_CS_LCL_001` / `PERF_CS_SOA_001` (Customer Service) — login once, measure configured pages/tabs, assert thresholds.
+> **TCs:** `PERF_TN_001` … `PERF_CAT_001` (standard eTMS catalogue) · VFC: `PERF_VFC_001`–`PERF_VFC_019` (`test_vfc_etms_performance.py`) — login once, measure configured pages/tabs, assert thresholds. Parent TC IDs are `PERF_VFC_*`; legacy sub-check IDs (`PERF_COR_*`, `PERF_UTI_001`, `PERF_FCL_TR_001`, …) remain in JSON `test_case_ids`.
 
-**VFC mirror:** `tests/etms/test_vfc_etms_performance.py` (`@pytest.mark.vfc_etms`) defines **16 suites** in `_VFC_PERFORMANCE_SUITES` and generates test methods dynamically via `_make_vfc_performance_test()`. All call `run_etms_performance_suite(suite=...)`. TN + Pricing + Quotation + CS data in `dataTest-vfc-etms.json`; catalogue suites (Partner–Catalogue master) reuse `dataTest-etms.json`.
+**VFC mirror:** `tests/etms/test_vfc_etms_performance.py` (`@pytest.mark.vfc_etms`) defines **19 explicit test methods** (`PERF_VFC_001` … `PERF_VFC_019`). Each calls `run_etms_performance_suite(suite=..., login_etms=login_vfc_etms)` and loads data from `dataTest-vfc-etms.json` via `DataProvider.vfc_etms_cases()`. Standard eTMS performance (`test_etms_performance.py`) uses the same helper with `login_etms` and `dataTest-etms.json` (6 catalogue suites only).
 
 ### 20.1 Architecture (factory pattern)
 
@@ -3228,12 +3234,10 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
       → StepPerformanceTracker.assert_all_within_threshold()
 ```
 
-Named wrappers (`run_etms_transport_network_performance_suite`, `run_etms_pricing_fcl_performance_suite`, …) delegate to `run_etms_performance_suite` for backward compatibility.
-
 | File | Role |
 |------|------|
-| `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` (standard eTMS login) |
-| `tests/etms/test_vfc_etms_performance.py` | VFC eTMS performance — `_VFC_PERFORMANCE_SUITES` registry + dynamic test methods |
+| `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` — 6 catalogue suites, `login_etms` |
+| `tests/etms/test_vfc_etms_performance.py` | VFC eTMS performance — 19 explicit methods (`PERF_VFC_001`–`019`), `login_vfc_etms` |
 | `tests/etms/etms_performance_support.py` | `run_etms_performance_suite()` — dict-driven menu openers per `suite` key |
 | `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
 | `src/automation/pages/etms/etms_catalogue_list_page.py` | `CATALOGUE_LIST_PAGE_CONFIGS` + `EtmsCatalogueListPage` |
@@ -3243,6 +3247,8 @@ Named wrappers (`run_etms_transport_network_performance_suite`, `run_etms_pricin
 | `src/automation/pages/etms/etms_pricing_report_page.py` | Pricing Report — form ready via primary action button |
 | `src/automation/pages/etms/etms_quotation_form_page.py` | Quotation create forms — `verify_performance_step()` on Search / ready control |
 | `src/automation/pages/etms/etms_customer_service_pages.py` | `EtmsCustomerServiceWorkflowPage` base + FCL/LCL/SOA workflow pages |
+| `src/automation/pages/etms/etms_operation_pages.py` | Operation > Common workflow pages (Unlock TR, Confirm ePOD) |
+| `src/automation/pages/etms/etms_operation_lcl_ftl_action_page.py` | Operation > LCL/FTL action pages (Check Out, Check In, Unbag) |
 | `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
 
 **Suite → catalogue submenu (JSON `suite` field):**
@@ -3265,6 +3271,9 @@ Named wrappers (`run_etms_transport_network_performance_suite`, `run_etms_pricin
 | `customer_service_fcl` | Customer Service > FCL | `open_customer_service_fcl_menu()` |
 | `customer_service_lcl_ftl` | Customer Service > LCL/FTL | `open_customer_service_lcl_ftl_menu()` |
 | `customer_service_soa_outsource` | Customer Service > SOA For Outsource | `open_customer_service_soa_outsource_menu()` |
+| `operation_common` | Operation > Common | `open_operation_common_menu()` |
+| `operation_fcl` | Operation > FCL | `open_operation_fcl_menu()` |
+| `operation_lcl_ftl` | Operation > LCL/FTL | `open_operation_lcl_ftl_menu()` |
 
 **Page resolution rules:**
 
@@ -3294,8 +3303,15 @@ Named wrappers (`run_etms_transport_network_performance_suite`, `run_etms_pricin
 | `verifying_booking` | `pages.etms_catalogue_list_page("verifying_booking")` — `_GENERIC_GRID_PAGE_KEYS`, `table_selectors=None` |
 | `fcl_booking`, `container_deposit_management`, `lcl_ftl_booking`, `soa_for_outsource` | `pages.etms_*` CS workflow pages |
 | `lcl_shipment_management` | `pages.etms_lcl_shipment_management_page` (`EtmsQuotationFormPage` — View Report ready control) |
+| `update_transport_info`, `dispatching`, `trip_settlement`, `fuel_closing` | `pages.etms_catalogue_list_page(page_key)` — `catalogue_suite=operation_common` |
+| `fcl_transport_request_list` | `pages.etms_catalogue_list_page("fcl_transport_request_list")` — `operation_fcl` |
+| `lcl_ftl_transport_request_list`, `lcl_ftl_pickup_run_sheet`, … | `pages.etms_catalogue_list_page(page_key)` — `operation_lcl_ftl`, `menu_parent_label="Operation"` |
+| `unlock_transport_request`, `confirm_epod` | `pages.etms_unlock_transport_request_page` / `pages.etms_confirm_epod_page` |
+| `lcl_ftl_check_out`, `lcl_ftl_check_in`, `lcl_ftl_unbag` | `pages.etms_lcl_ftl_check_out_page` etc. (`EtmsOperationLclFtlActionPage` — ready control verify) |
 
-Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page.
+Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page. Operation submenu pages under a top-level section should set `menu_parent_label` (e.g. `"Operation"`) so sidebar clicks stay scoped.
+
+**Note:** `5.Routing` under Operation > LCL/FTL uses hash `customer/lcl-routing` on VFC (not `operation/lcl/routing`).
 
 Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBookingInformationPage`, `EtmsVehiclePartTypePage`, `EtmsVehicleTypePage` (catalogue tabbed). Pricing workflow: `EtmsPricingWorkflowListPage` subclasses (`EtmsCostOfRouteWorkflowPage`, FCL/LCL pages). All other catalogue list pages use `EtmsCatalogueListPage` + config.
 
@@ -3378,9 +3394,17 @@ Tab `zone_code` on page `zone_code` is the **landing tab** — same skip-click p
 - `max_step_seconds` **required per page** (not at root).
 - `min_table_rows` optional per page (defaults to root).
 - `tab` optional — tab key for multi-tab POMs (`administrative_units`, `zone_code`, `booking_information`).
-- `suite` optional for TN wrapper (defaults `transport_network`); required per suite: `partner`, `vehicle`, `driver`, `commodity`, `catalogue_master`, `pricing_common`, `pricing_fcl`, `pricing_lcl`, `pricing_distribution`, `pricing_report`, `quotation`, `customer_service_common`, `customer_service_fcl`, `customer_service_lcl_ftl`, `customer_service_soa_outsource`. VFC tests inject `suite` via `run_etms_performance_suite()` — JSON may omit it.
+- `suite` optional for TN wrapper (defaults `transport_network`); required per suite: `partner`, `vehicle`, `driver`, `commodity`, `catalogue_master`, `pricing_common`, `pricing_fcl`, `pricing_lcl`, `pricing_distribution`, `pricing_report`, `quotation`, `customer_service_common`, `customer_service_fcl`, `customer_service_lcl_ftl`, `customer_service_soa_outsource`, `operation_common`, `operation_fcl`, `operation_lcl_ftl`. VFC tests inject `suite` via `run_etms_performance_suite()` — JSON may omit it.
 - `allow_no_data` optional (root or per page) — pass verification when grid shows empty state `"No Data"` (used on VFC pricing suites).
 - `optional_tab` optional per page — skip timed step when tab absent on VFC UI.
+- `optional_page` optional per page — skip step when sidebar link not visible (scoped via `menu_parent_label` when set).
+- `min_table_rows` defaults to `1` (at least one data row). Grid pages on VFC Operation suites use `min_table_rows: 1` unless overridden per page.
+
+**Operation > LCL/FTL (`test_vfc_etms_performance_operation_lcl_ftl_pages_etms`, `PERF_VFC_019`):**
+
+Grid pages (`min_table_rows: 1`): Transport Request List, Pickup Run Sheet, Revenue Protection, Routing, Consolidation, Transit, Delivery Run Sheet.
+
+Action pages (no row count — `verify_performance_step` on ready control): `7.Check Out` → **Check Out**; `9.Check In` → **Clear Input**; `11.Unbag` → **Check item**.
 
 **Pricing Common (`test_vfc_etms_performance_pricing_common_pages_etms`):**
 

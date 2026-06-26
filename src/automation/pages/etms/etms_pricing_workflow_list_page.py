@@ -95,6 +95,9 @@ _PERFORMANCE_MENU_SUITE_OPENERS: dict[str, Callable[[EtmsCatalogueMenuPage], Non
     "customer_service_soa_outsource": _performance_menu_opener(
         "open_customer_service_soa_outsource_menu"
     ),
+    "operation_common": _performance_menu_opener("open_operation_common_menu"),
+    "operation_fcl": _performance_menu_opener("open_operation_fcl_menu"),
+    "operation_lcl_ftl": _performance_menu_opener("open_operation_lcl_ftl_menu"),
 }
 
 

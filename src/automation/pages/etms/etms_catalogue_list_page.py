@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
 from automation.config import settings
 from automation.logging import log_method
@@ -9,21 +8,10 @@ from automation.pages.common.list_grid_component import ListGridComponent
 from automation.pages.etms.etms_catalogue_menu_page import (
     EtmsCatalogueMenuPage,
     _catalogue_submenu_link_by_label,
+    _sidebar_child_link,
     _sidebar_link_by_href,
     etms_page_title_selectors,
 )
-
-EtmsCatalogueSuite = Literal[
-    "transport_network",
-    "partner",
-    "vehicle",
-    "driver",
-    "commodity",
-    "catalogue_master",
-    "customer_service_common",
-    "customer_service_fcl",
-    "customer_service_lcl_ftl",
-]
 
 
 @dataclass(frozen=True)
@@ -33,7 +21,8 @@ class EtmsCatalogueListPageConfig:
     page_hash: str
     menu_li_id: str
     list_column_headers: tuple[str, ...]
-    catalogue_suite: EtmsCatalogueSuite = "transport_network"
+    catalogue_suite: str = "transport_network"
+    menu_parent_label: str = ""
 
 
 TRANSPORT_NETWORK_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
@@ -274,6 +263,112 @@ CUSTOMER_SERVICE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     ),
 }
 
+OPERATION_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "update_transport_info": EtmsCatalogueListPageConfig(
+        page_key="update_transport_info",
+        title="Update transport info",
+        page_hash="customer/transport-data-entry",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_common",
+    ),
+    "dispatching": EtmsCatalogueListPageConfig(
+        page_key="dispatching",
+        title="Dispatching",
+        page_hash="operation/common/dispatching",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_common",
+    ),
+    "trip_settlement": EtmsCatalogueListPageConfig(
+        page_key="trip_settlement",
+        title="Trip Settlement",
+        page_hash="operation/common/settlement",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_common",
+    ),
+    "fuel_closing": EtmsCatalogueListPageConfig(
+        page_key="fuel_closing",
+        title="Fuel Closing",
+        page_hash="operation/common/fuel-checking",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_common",
+    ),
+    "fcl_transport_request_list": EtmsCatalogueListPageConfig(
+        page_key="fcl_transport_request_list",
+        title="FCL Transport Request List",
+        page_hash="operation/fcl-transport-request",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_fcl",
+    ),
+    "lcl_ftl_transport_request_list": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_transport_request_list",
+        title="LCL/FTL Transport Request List",
+        page_hash="operation/lcl/lcl-ftl-transport",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_pickup_run_sheet": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_pickup_run_sheet",
+        title="2.Pickup Run Sheet",
+        page_hash="operation/lcl/pickup-run-sheet",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_revenue_protection": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_revenue_protection",
+        title="4.Revenue Protection",
+        page_hash="operation/lcl/revenue-protection",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_routing": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_routing",
+        title="5.Routing",
+        page_hash="customer/lcl-routing",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_consolidation": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_consolidation",
+        title="6.Consolidation",
+        page_hash="operation/lcl/consolidation",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_transit": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_transit",
+        title="8.Transit",
+        page_hash="operation/lcl/transit",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+    "lcl_ftl_delivery_run_sheet": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_delivery_run_sheet",
+        title="13.Delivery Run Sheet",
+        page_hash="operation/lcl/delivery-run-sheet",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="operation_lcl_ftl",
+        menu_parent_label="Operation",
+    ),
+}
+
 CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **TRANSPORT_NETWORK_LIST_PAGE_CONFIGS,
     **PARTNER_LIST_PAGE_CONFIGS,
@@ -282,6 +377,7 @@ CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **COMMODITY_LIST_PAGE_CONFIGS,
     **CATALOGUE_MASTER_LIST_PAGE_CONFIGS,
     **CUSTOMER_SERVICE_LIST_PAGE_CONFIGS,
+    **OPERATION_LIST_PAGE_CONFIGS,
 }
 
 
@@ -329,6 +425,12 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
             self.open_customer_service_fcl_menu()
         elif self._config.catalogue_suite == "customer_service_lcl_ftl":
             self.open_customer_service_lcl_ftl_menu()
+        elif self._config.catalogue_suite == "operation_common":
+            self.open_operation_common_menu()
+        elif self._config.catalogue_suite == "operation_fcl":
+            self.open_operation_fcl_menu()
+        elif self._config.catalogue_suite == "operation_lcl_ftl":
+            self.open_operation_lcl_ftl_menu()
         else:
             self.open_transport_network_menu()
 
@@ -347,6 +449,10 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
                         "/ancestor::a[contains(@class,'nav-link')][1]"
                     ),
                 ]
+            )
+        if self._config.menu_parent_label:
+            selectors.append(
+                _sidebar_child_link(self._config.menu_parent_label, title)
             )
         selectors.extend(
             [
@@ -371,6 +477,18 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
             "lcl_ftl_transport_surcharge",
             "lcl_ftl_surcharge_behalf",
             "lcl_ftl_surcharge_behalf_fleet",
+            "update_transport_info",
+            "dispatching",
+            "trip_settlement",
+            "fuel_closing",
+            "fcl_transport_request_list",
+            "lcl_ftl_transport_request_list",
+            "lcl_ftl_pickup_run_sheet",
+            "lcl_ftl_revenue_protection",
+            "lcl_ftl_routing",
+            "lcl_ftl_consolidation",
+            "lcl_ftl_transit",
+            "lcl_ftl_delivery_run_sheet",
         }
     )
 

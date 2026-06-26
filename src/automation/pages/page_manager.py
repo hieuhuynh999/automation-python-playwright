@@ -44,6 +44,15 @@ from automation.pages.etms.etms_customer_service_pages import (
     EtmsLclShipmentManagementPage,
     EtmsSoaForOutsourcePage,
 )
+from automation.pages.etms.etms_operation_lcl_ftl_action_page import (
+    EtmsLclFtlCheckInPage,
+    EtmsLclFtlCheckOutPage,
+    EtmsLclFtlUnbagPage,
+)
+from automation.pages.etms.etms_operation_pages import (
+    EtmsConfirmEpodPage,
+    EtmsUnlockTransportRequestPage,
+)
 from automation.pages.etms.etms_pricing_report_page import EtmsPricingReportPage
 from automation.pages.etms.etms_pricing_workflow_list_page import EtmsFclQuotationListPage
 from automation.pages.etms.etms_quotation_form_page import (
@@ -88,6 +97,11 @@ class PageManager:
         self._etms_lcl_ftl_booking_page: EtmsLclFtlBookingPage | None = None
         self._etms_lcl_shipment_management_page: EtmsLclShipmentManagementPage | None = None
         self._etms_soa_for_outsource_page: EtmsSoaForOutsourcePage | None = None
+        self._etms_unlock_transport_request_page: EtmsUnlockTransportRequestPage | None = None
+        self._etms_confirm_epod_page: EtmsConfirmEpodPage | None = None
+        self._etms_lcl_ftl_check_out_page: EtmsLclFtlCheckOutPage | None = None
+        self._etms_lcl_ftl_check_in_page: EtmsLclFtlCheckInPage | None = None
+        self._etms_lcl_ftl_unbag_page: EtmsLclFtlUnbagPage | None = None
         self._etms_catalogue_menu_page: EtmsCatalogueMenuPage | None = None
         self._etms_catalogue_list_pages: dict[str, EtmsCatalogueListPage] = {}
         self._etms_administrative_units_page: EtmsAdministrativeUnitsPage | None = None
@@ -294,6 +308,38 @@ class PageManager:
         if self._etms_soa_for_outsource_page is None:
             self._etms_soa_for_outsource_page = EtmsSoaForOutsourcePage(self.page)
         return self._etms_soa_for_outsource_page
+
+    @property
+    def etms_unlock_transport_request_page(self) -> EtmsUnlockTransportRequestPage:
+        if self._etms_unlock_transport_request_page is None:
+            self._etms_unlock_transport_request_page = EtmsUnlockTransportRequestPage(
+                self.page
+            )
+        return self._etms_unlock_transport_request_page
+
+    @property
+    def etms_confirm_epod_page(self) -> EtmsConfirmEpodPage:
+        if self._etms_confirm_epod_page is None:
+            self._etms_confirm_epod_page = EtmsConfirmEpodPage(self.page)
+        return self._etms_confirm_epod_page
+
+    @property
+    def etms_lcl_ftl_check_out_page(self) -> EtmsLclFtlCheckOutPage:
+        if self._etms_lcl_ftl_check_out_page is None:
+            self._etms_lcl_ftl_check_out_page = EtmsLclFtlCheckOutPage(self.page)
+        return self._etms_lcl_ftl_check_out_page
+
+    @property
+    def etms_lcl_ftl_check_in_page(self) -> EtmsLclFtlCheckInPage:
+        if self._etms_lcl_ftl_check_in_page is None:
+            self._etms_lcl_ftl_check_in_page = EtmsLclFtlCheckInPage(self.page)
+        return self._etms_lcl_ftl_check_in_page
+
+    @property
+    def etms_lcl_ftl_unbag_page(self) -> EtmsLclFtlUnbagPage:
+        if self._etms_lcl_ftl_unbag_page is None:
+            self._etms_lcl_ftl_unbag_page = EtmsLclFtlUnbagPage(self.page)
+        return self._etms_lcl_ftl_unbag_page
 
     @property
     def etms_catalogue_menu_page(self) -> EtmsCatalogueMenuPage:

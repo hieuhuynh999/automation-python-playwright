@@ -13,7 +13,7 @@
     ],
     "test_vfc_etms_performance_transport_network_pages_etms": [
         {
-            "test_case_id": "PERF_TN_001",
+            "test_case_id": "PERF_VFC_001",
             "test_case_ids": [
                 "PERF_PLC_001",
                 "PERF_DBP_001",
@@ -124,9 +124,242 @@
             ]
         }
     ],
+    "test_vfc_etms_performance_partner_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_002",
+            "test_case_ids": [
+                "PERF_PG_001",
+                "PERF_PL_001",
+                "PERF_BA_001",
+                "PERF_BI_GI_001",
+                "PERF_BI_PDP_001",
+                "PERF_BI_SN_001",
+                "PERF_BI_PV_001"
+            ],
+            "description": "VFC performance — Partner pages load (Catalogue > Partner)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "suite": "partner",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "partner_group",
+                    "check_label": "Partner Group Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "partner_list",
+                    "check_label": "Partner list Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "bank_account",
+                    "check_label": "Bank Account Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "goods_information",
+                    "check_label": "Booking Information - Goods Information Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "pickup_delivery_places",
+                    "check_label": "Booking Information - Pickup/Delivery Places Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "shipment_note",
+                    "check_label": "Booking Information - Shipment Note Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "booking_information",
+                    "tab": "project_vehicle",
+                    "check_label": "Booking Information - Project Vehicle Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_vehicle_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_003",
+            "test_case_ids": [
+                "PERF_VL_001",
+                "PERF_VPT_001",
+                "PERF_VPTG_001",
+                "PERF_VPART_001",
+                "PERF_VG_001",
+                "PERF_VTFC_001"
+            ],
+            "description": "VFC performance — Vehicle pages load (Catalogue > Vehicle)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "suite": "vehicle",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "vehicle_list",
+                    "check_label": "Vehicle List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part_type",
+                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part_group",
+                    "check_label": "Vehicle Part Type - Vehicle Part Group Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part",
+                    "check_label": "Vehicle Part Type - Vehicle Part Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_type",
+                    "tab": "vehicle_group",
+                    "check_label": "Vehicle Type - Vehicle Group Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "vehicle_type",
+                    "tab": "vehicle_type_fuel_consumption",
+                    "check_label": "Vehicle Type - Fuel Consumption Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_driver_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_004",
+            "test_case_ids": [
+                "PERF_DRV_001",
+                "PERF_DRVV_001"
+            ],
+            "description": "VFC performance — Driver list pages load (Catalogue > Driver list)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "suite": "driver",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "driver",
+                    "check_label": "Driver Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "driver_vehicle",
+                    "check_label": "Driver - Vehicle Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_commodity_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_005",
+            "test_case_ids": [
+                "PERF_CML_001",
+                "PERF_CMG_001"
+            ],
+            "description": "VFC performance — Commodity pages load (Catalogue > Commodity)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "suite": "commodity",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "commodity_list",
+                    "check_label": "Commodity List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "commodity_group",
+                    "check_label": "Commodity Group Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_catalogue_master_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_006",
+            "test_case_ids": [
+                "PERF_CL_001",
+                "PERF_UN_001",
+                "PERF_ST_001",
+                "PERF_WR_001",
+                "PERF_CTY_001",
+                "PERF_CNT_001",
+                "PERF_CUR_001"
+            ],
+            "description": "VFC performance — Catalogue master list pages (Charge List, Unit, Service Type, …)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "suite": "catalogue_master",
+            "branch": "VNHCM",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "charge_list",
+                    "check_label": "Charge List Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "unit",
+                    "check_label": "Unit Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "service_type",
+                    "check_label": "Service Type Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "weight_range",
+                    "check_label": "Weight Range Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "container_type",
+                    "check_label": "Container Type Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "container",
+                    "check_label": "Container Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "currency",
+                    "check_label": "Currency Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
     "test_vfc_etms_performance_pricing_common_pages_etms": [
         {
-            "test_case_id": "PERF_PR_001",
+            "test_case_id": "PERF_VFC_007",
             "test_case_ids": [
                 "PERF_COR_UPD_001",
                 "PERF_COR_PND_001",
@@ -228,7 +461,7 @@
     ],
     "test_vfc_etms_performance_pricing_fcl_pages_etms": [
         {
-            "test_case_id": "PERF_FCL_001",
+            "test_case_id": "PERF_VFC_008",
             "test_case_ids": [
                 "PERF_FRCL_PND_001",
                 "PERF_FRCL_UPD_001",
@@ -406,7 +639,7 @@
     ],
     "test_vfc_etms_performance_pricing_lcl_pages_etms": [
         {
-            "test_case_id": "PERF_LCL_001",
+            "test_case_id": "PERF_VFC_009",
             "test_case_ids": [
                 "PERF_LRC_UPD_001",
                 "PERF_LRC_PND_001",
@@ -493,7 +726,7 @@
     ],
     "test_vfc_etms_performance_pricing_distribution_pages_etms": [
         {
-            "test_case_id": "PERF_DIST_001",
+            "test_case_id": "PERF_VFC_010",
             "test_case_ids": [
                 "PERF_DRC_UPD_001",
                 "PERF_DRC_PND_001",
@@ -587,7 +820,7 @@
     ],
     "test_vfc_etms_performance_pricing_report_pages_etms": [
         {
-            "test_case_id": "PERF_PRPT_001",
+            "test_case_id": "PERF_VFC_011",
             "test_case_ids": [
                 "PERF_PRR_001",
                 "PERF_CRC_UPD_001",
@@ -639,7 +872,7 @@
     ],
     "test_vfc_etms_performance_quotation_pages_etms": [
         {
-            "test_case_id": "PERF_QUOT_001",
+            "test_case_id": "PERF_VFC_012",
             "test_case_ids": [
                 "PERF_CFCL_001",
                 "PERF_FQL_PND_001",
@@ -705,7 +938,7 @@
     ],
     "test_vfc_etms_performance_customer_service_pages_etms": [
         {
-            "test_case_id": "PERF_CS_001",
+            "test_case_id": "PERF_VFC_013",
             "test_case_ids": [
                 "PERF_VBK_001"
             ],
@@ -727,7 +960,7 @@
     ],
     "test_vfc_etms_performance_customer_service_fcl_pages_etms": [
         {
-            "test_case_id": "PERF_CS_FCL_001",
+            "test_case_id": "PERF_VFC_014",
             "test_case_ids": [
                 "PERF_FCL_BK_ALL_001",
                 "PERF_FCL_BK_NEW_001",
@@ -862,7 +1095,7 @@
     ],
     "test_vfc_etms_performance_customer_service_lcl_ftl_pages_etms": [
         {
-            "test_case_id": "PERF_CS_LCL_001",
+            "test_case_id": "PERF_VFC_015",
             "test_case_ids": [
                 "PERF_LCL_BK_ALL_001",
                 "PERF_LCL_BK_NEW_001",
@@ -987,7 +1220,7 @@
     ],
     "test_vfc_etms_performance_customer_service_soa_outsource_pages_etms": [
         {
-            "test_case_id": "PERF_CS_SOA_001",
+            "test_case_id": "PERF_VFC_016",
             "test_case_ids": [
                 "PERF_SOA_ALL_001",
                 "PERF_SOA_NEW_001",
@@ -1030,6 +1263,231 @@
                     "check_label": "SOA For Outsource - Reject Tab",
                     "max_step_seconds": 10,
                     "allow_no_data": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_operation_common_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_017",
+            "test_case_ids": [
+                "PERF_UTI_001",
+                "PERF_DSP_001",
+                "PERF_TS_001",
+                "PERF_FC_001",
+                "PERF_UTR_UPD_001",
+                "PERF_UTR_PND_001",
+                "PERF_UTR_ACC_001",
+                "PERF_UTR_REJ_001",
+                "PERF_EPOD_NEW_001",
+                "PERF_EPOD_ACC_001",
+                "PERF_EPOD_REJ_001",
+                "PERF_EPOD_REV_001"
+            ],
+            "description": "VFC performance — Operation > Common pages & workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "operation_common",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "update_transport_info",
+                    "check_label": "Update transport info Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "dispatching",
+                    "check_label": "Dispatching Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "trip_settlement",
+                    "check_label": "Trip Settlement Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "fuel_closing",
+                    "check_label": "Fuel Closing Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "unlock_transport_request",
+                    "tab": "updating",
+                    "check_label": "Unlock Transport Request - Updating Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "unlock_transport_request",
+                    "tab": "pending",
+                    "check_label": "Unlock Transport Request - Pending Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "unlock_transport_request",
+                    "tab": "accepted",
+                    "check_label": "Unlock Transport Request - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "unlock_transport_request",
+                    "tab": "rejected",
+                    "check_label": "Unlock Transport Request - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "confirm_epod",
+                    "tab": "new",
+                    "check_label": "Confirm ePOD - New Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "confirm_epod",
+                    "tab": "accepted",
+                    "check_label": "Confirm ePOD - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "confirm_epod",
+                    "tab": "rejected",
+                    "check_label": "Confirm ePOD - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "confirm_epod",
+                    "tab": "revoked",
+                    "check_label": "Confirm ePOD - Revoked Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_operation_fcl_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_018",
+            "test_case_ids": [
+                "PERF_FCL_TR_001"
+            ],
+            "description": "VFC performance — Operation > FCL > FCL Transport Request List",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "operation_fcl",
+            "min_table_rows": 1,
+            "allow_no_data": false,
+            "pages": [
+                {
+                    "page_key": "fcl_transport_request_list",
+                    "check_label": "FCL Transport Request List Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_operation_lcl_ftl_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_019",
+            "test_case_ids": [
+                "PERF_LCL_TR_001",
+                "PERF_PRS_001",
+                "PERF_RP_001",
+                "PERF_RT_001",
+                "PERF_CON_001",
+                "PERF_CO_001",
+                "PERF_TRN_001",
+                "PERF_CI_001",
+                "PERF_UB_001",
+                "PERF_DRS_001"
+            ],
+            "description": "VFC performance — Operation > LCL/FTL pages (grid ≥ 1 row or action control ready)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "operation_lcl_ftl",
+            "min_table_rows": 1,
+            "allow_no_data": false,
+            "pages": [
+                {
+                    "page_key": "lcl_ftl_transport_request_list",
+                    "check_label": "LCL/FTL Transport Request List Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_pickup_run_sheet",
+                    "check_label": "2.Pickup Run Sheet Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_revenue_protection",
+                    "check_label": "4.Revenue Protection Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_routing",
+                    "check_label": "5.Routing Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_consolidation",
+                    "check_label": "6.Consolidation Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_check_out",
+                    "check_label": "7.Check Out Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_ftl_transit",
+                    "check_label": "8.Transit Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "lcl_ftl_check_in",
+                    "check_label": "9.Check In Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_ftl_unbag",
+                    "check_label": "11.Unbag Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "lcl_ftl_delivery_run_sheet",
+                    "check_label": "13.Delivery Run Sheet Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
                 }
             ]
         }
