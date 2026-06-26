@@ -206,25 +206,33 @@ class EtmsCatalogueTabbedListPage(EtmsCatalogueMenuPage):
                 return key
         return None
 
+    def _is_on_list_page(self) -> bool:
+        hash_fragment = self.page_hash.lower().replace("_", "-")
+        return hash_fragment in self.current_url.lower().replace("_", "-")
+
     def prepare_for_performance(
         self,
         *,
         tab_key: str | None = None,
         min_rows: int = 1,
         allow_no_data: bool = False,
+        first_page_step: bool = False,
     ) -> str:
-        """Settle page before perf timer. Returns 'click' or 'wait_only'."""
+        """Settle before perf timer. Returns 'page_load', 'click', or 'skipped'.
+
+        Default tab on the first step of each page: timer measures sidebar page
+        click → data. Other tabs: timer measures tab click → data only.
+        """
         del min_rows, allow_no_data
         active_tab = tab_key or self.default_tab_key
-        self._navigate_to_page(active_tab)
-        self.wait_before_next_catalogue_navigation()
 
-        if self._is_tab_active(active_tab):
-            self.list_grid.wait_until_ready(
-                self.list_table_selectors_for_tab(active_tab),
-                f"{self.title} table",
-            )
-            return "wait_only"
+        if first_page_step and active_tab == self.default_tab_key:
+            return "page_load"
+
+        if not self._is_on_list_page():
+            self._navigate_to_page(active_tab)
+
+        self.wait_before_next_catalogue_navigation()
 
         current_tab = self._active_tab_key()
         if current_tab is not None:
@@ -255,12 +263,14 @@ class EtmsCatalogueTabbedListPage(EtmsCatalogueMenuPage):
         allow_no_data: bool = False,
         mode: str = "click",
     ) -> None:
-        """Timed segment: tab click (if needed) → grid data displayed."""
+        """Timed segment: sidebar page click or tab click → grid data displayed."""
         del allow_no_data
         if mode == "skipped":
             return
         active_tab = tab_key or self.default_tab_key
-        if mode == "click":
+        if mode == "page_load":
+            self._navigate_to_page(active_tab)
+        elif mode == "click":
             self._perform_tab_click(active_tab)
         self._wait_tab_grid(active_tab, min_rows)
 
@@ -270,11 +280,13 @@ class EtmsCatalogueTabbedListPage(EtmsCatalogueMenuPage):
         *,
         tab_key: str | None = None,
         allow_no_data: bool = False,
+        first_page_step: bool = False,
     ) -> EtmsCatalogueTabbedListPage:
         mode = self.prepare_for_performance(
             tab_key=tab_key,
             min_rows=min_rows,
             allow_no_data=allow_no_data,
+            first_page_step=first_page_step,
         )
         self.run_performance_measurement(
             tab_key=tab_key,

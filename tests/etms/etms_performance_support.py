@@ -23,6 +23,19 @@ _CATALOGUE_SUITE_NAVIGATORS: dict[str, Callable[[Any], None]] = {
     "catalogue_master": lambda nav_page: nav_page.open_catalogue_menu(),
 }
 
+_DIRECT_SUITE_MENU_OPENERS: dict[str, Callable[[Any], None]] = {
+    "pricing_common": lambda nav_page: nav_page.open_pricing_common_menu(),
+    "pricing_fcl": lambda nav_page: nav_page.open_pricing_fcl_menu(),
+    "pricing_lcl": lambda nav_page: nav_page.open_pricing_lcl_menu(),
+    "pricing_distribution": lambda nav_page: nav_page.open_pricing_distribution_menu(),
+    "pricing_report": lambda nav_page: nav_page.open_pricing_report_menu(),
+    "quotation": lambda nav_page: nav_page.open_quotation_menu(),
+    "customer_service_common": lambda nav_page: nav_page.open_customer_service_common_menu(),
+    "customer_service_fcl": lambda nav_page: nav_page.open_customer_service_fcl_menu(),
+    "customer_service_lcl_ftl": lambda nav_page: nav_page.open_customer_service_lcl_ftl_menu(),
+    "customer_service_soa_outsource": lambda nav_page: nav_page.open_customer_service_soa_outsource_menu(),
+}
+
 
 def _resolve_page_threshold(page_config: dict[str, Any]) -> float:
     if "max_step_seconds" not in page_config:
@@ -42,6 +55,14 @@ def _open_catalogue_submenu(nav_page: Any, suite: str) -> None:
             f"Unknown performance suite '{suite}'. Known catalogue suites: {known}"
         )
     opener(nav_page)
+
+
+def _open_performance_suite_menu(nav_page: Any, suite: str) -> None:
+    opener = _DIRECT_SUITE_MENU_OPENERS.get(suite)
+    if opener is not None:
+        opener(nav_page)
+        return
+    _open_catalogue_submenu(nav_page, suite)
 
 
 def _load_performance_page(
@@ -79,7 +100,7 @@ def run_etms_catalogue_performance_suite(
     data: dict[str, Any],
     login_etms: Callable[[str], None],
 ) -> None:
-    """Login once, open catalogue submenu, measure each configured page, assert thresholds."""
+    """Login once, open suite submenu, measure each configured page, assert thresholds."""
     branch = str(data["branch"])
     suite = str(data.get("suite", "transport_network"))
     default_min_rows = int(data.get("min_table_rows", 1))
@@ -103,7 +124,11 @@ def run_etms_catalogue_performance_suite(
         f"pages={len(page_configs)}, thresholds=[{threshold_summary}]"
     )
 
+    prev_page: Any | None = None
+    prev_tab_key: str | None = None
+    prev_min_rows = default_min_rows
     prev_allow_no_data = False
+
     for index, page_config in enumerate(page_configs):
         page_key = str(page_config["page_key"])
         target = PERFORMANCE_PAGE_TARGETS[page_key]
@@ -117,7 +142,7 @@ def run_etms_catalogue_performance_suite(
         tab_key = str(tab_key) if tab_key else None
         page = resolve_performance_page(pages, page_key)
 
-        if index > 0:
+        if index > 0 and prev_page is not None:
             same_page = page_key == str(page_configs[index - 1].get("page_key"))
             if same_page and hasattr(prev_page, "wait_before_next_pricing_navigation"):
                 prev_page.wait_before_next_pricing_navigation()
@@ -133,22 +158,27 @@ def run_etms_catalogue_performance_suite(
                 else:
                     nav_page.wait_before_next_catalogue_navigation()
 
-        if suite == "pricing_common":
-            nav_page.open_pricing_common_menu()
-        elif suite == "pricing_fcl":
-            nav_page.open_pricing_fcl_menu()
-        elif suite == "pricing_lcl":
-            nav_page.open_pricing_lcl_menu()
-        else:
-            _open_catalogue_submenu(nav_page, suite)
+        _open_performance_suite_menu(nav_page, suite)
 
         perf_mode: str | None = None
+        first_page_step = (
+            index == 0
+            or page_key != str(page_configs[index - 1].get("page_key"))
+        )
         if hasattr(page, "prepare_for_performance"):
-            perf_mode = page.prepare_for_performance(
-                tab_key=tab_key,
-                min_rows=min_rows,
-                allow_no_data=allow_no_data,
-            )
+            try:
+                perf_mode = page.prepare_for_performance(
+                    tab_key=tab_key,
+                    min_rows=min_rows,
+                    allow_no_data=allow_no_data,
+                    first_page_step=first_page_step,
+                )
+            except TypeError:
+                perf_mode = page.prepare_for_performance(
+                    tab_key=tab_key,
+                    min_rows=min_rows,
+                    allow_no_data=allow_no_data,
+                )
 
         tracker.run_step(
             check_label,
@@ -179,6 +209,27 @@ def run_etms_catalogue_performance_suite(
     tracker.assert_all_within_threshold()
 
 
+def run_etms_performance_suite(
+    *,
+    suite: str,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+    use_setdefault: bool = False,
+) -> None:
+    """Run a named performance suite — injects ``suite`` into payload then delegates."""
+    payload = dict(data)
+    if use_setdefault:
+        payload.setdefault("suite", suite)
+    else:
+        payload["suite"] = suite
+    run_etms_catalogue_performance_suite(
+        pages=pages,
+        data=payload,
+        login_etms=login_etms,
+    )
+
+
 def run_etms_transport_network_performance_suite(
     *,
     pages: PageManager,
@@ -186,12 +237,12 @@ def run_etms_transport_network_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Backward-compatible wrapper for PERF_TN_001."""
-    payload = dict(data)
-    payload.setdefault("suite", "transport_network")
-    run_etms_catalogue_performance_suite(
+    run_etms_performance_suite(
+        suite="transport_network",
         pages=pages,
-        data=payload,
+        data=data,
         login_etms=login_etms,
+        use_setdefault=True,
     )
 
 
@@ -202,12 +253,8 @@ def run_etms_partner_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Catalogue > Partner performance suite (PERF_PT_001)."""
-    payload = dict(data)
-    payload["suite"] = "partner"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="partner", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -218,12 +265,8 @@ def run_etms_vehicle_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Catalogue > Vehicle performance suite (PERF_VH_001)."""
-    payload = dict(data)
-    payload["suite"] = "vehicle"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="vehicle", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -234,12 +277,8 @@ def run_etms_driver_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Catalogue > Driver list performance suite (PERF_DL_001)."""
-    payload = dict(data)
-    payload["suite"] = "driver"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="driver", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -250,12 +289,8 @@ def run_etms_commodity_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Catalogue > Commodity performance suite (PERF_CM_001)."""
-    payload = dict(data)
-    payload["suite"] = "commodity"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="commodity", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -266,12 +301,8 @@ def run_etms_catalogue_master_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Catalogue master list pages performance suite (PERF_CAT_001)."""
-    payload = dict(data)
-    payload["suite"] = "catalogue_master"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="catalogue_master", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -282,12 +313,8 @@ def run_etms_pricing_common_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Pricing > Common — Cost Of Route & Price Toll Buying workflow tabs (PERF_PR_001)."""
-    payload = dict(data)
-    payload["suite"] = "pricing_common"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="pricing_common", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -298,12 +325,8 @@ def run_etms_pricing_fcl_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Pricing > FCL Pricing — workflow tabs on 4 FCL list pages (PERF_FCL_001)."""
-    payload = dict(data)
-    payload["suite"] = "pricing_fcl"
-    run_etms_catalogue_performance_suite(
-        pages=pages,
-        data=payload,
-        login_etms=login_etms,
+    run_etms_performance_suite(
+        suite="pricing_fcl", pages=pages, data=data, login_etms=login_etms
     )
 
 
@@ -314,10 +337,93 @@ def run_etms_pricing_lcl_performance_suite(
     login_etms: Callable[[str], None],
 ) -> None:
     """Pricing > LCL Pricing — 3. LCL Rate Card & LCL Buying workflow tabs (PERF_LCL_001)."""
-    payload = dict(data)
-    payload["suite"] = "pricing_lcl"
-    run_etms_catalogue_performance_suite(
+    run_etms_performance_suite(
+        suite="pricing_lcl", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_pricing_distribution_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Pricing > Distribution Pricing — 2. Distribution Rate Card & Distribution Buying (PERF_DIST_001)."""
+    run_etms_performance_suite(
+        suite="pricing_distribution", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_pricing_report_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Pricing > Pricing Report & Commission Rate Card (PERF_PRPT_001)."""
+    run_etms_performance_suite(
+        suite="pricing_report", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_quotation_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Quotation > Create forms & FCL Quotation List workflow tabs (PERF_QUOT_001)."""
+    run_etms_performance_suite(
+        suite="quotation", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_customer_service_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Customer Service > Common > Verifying Booking list (PERF_CS_001)."""
+    run_etms_performance_suite(
+        suite="customer_service_common", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_customer_service_fcl_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Customer Service > FCL workflow & list pages (PERF_CS_FCL_001)."""
+    run_etms_performance_suite(
+        suite="customer_service_fcl", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_customer_service_lcl_ftl_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Customer Service > LCL/FTL pages & workflow tabs (PERF_CS_LCL_001)."""
+    run_etms_performance_suite(
+        suite="customer_service_lcl_ftl", pages=pages, data=data, login_etms=login_etms
+    )
+
+
+def run_etms_customer_service_soa_outsource_performance_suite(
+    *,
+    pages: PageManager,
+    data: dict[str, Any],
+    login_etms: Callable[[str], None],
+) -> None:
+    """Customer Service > SOA For Outsource workflow tabs (PERF_CS_SOA_001)."""
+    run_etms_performance_suite(
+        suite="customer_service_soa_outsource",
         pages=pages,
-        data=payload,
+        data=data,
         login_etms=login_etms,
     )

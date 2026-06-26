@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from automation.config import settings
@@ -29,9 +30,72 @@ PRICING_WORKFLOW_TAB_CONFIGS: dict[str, PricingWorkflowTabConfig] = {
     "rejected": PricingWorkflowTabConfig("rejected", "Rejected"),
     "revoked": PricingWorkflowTabConfig("revoked", "Revoked"),
     "expired": PricingWorkflowTabConfig("expired", "Expired"),
+    "all": PricingWorkflowTabConfig("all", "All"),
+    "new": PricingWorkflowTabConfig("new", "New"),
+    "checking_info": PricingWorkflowTabConfig("checking_info", "Checking Info"),
+    "in_process": PricingWorkflowTabConfig("in_process", "In Process"),
+    "bu_cancel": PricingWorkflowTabConfig("bu_cancel", "BU Cancel"),
+    "customer_cancel": PricingWorkflowTabConfig("customer_cancel", "Customer Cancel"),
+    "finished": PricingWorkflowTabConfig("finished", "Finished"),
+    "accounting_deposit_paid": PricingWorkflowTabConfig(
+        "accounting_deposit_paid",
+        "Accounting - Deposit Paid",
+    ),
+    "handed_over_cs": PricingWorkflowTabConfig(
+        "handed_over_cs",
+        "Handed Over to CS/Messenger",
+    ),
+    "handed_over_ops": PricingWorkflowTabConfig(
+        "handed_over_ops",
+        "Handed Over to OPS/Customer",
+    ),
+    "handed_over_accounting": PricingWorkflowTabConfig(
+        "handed_over_accounting",
+        "Handed Over to Accounting",
+    ),
+    "assigned_to_driver": PricingWorkflowTabConfig(
+        "assigned_to_driver",
+        "Assigned To Driver",
+    ),
+    "arrived_pickup_place": PricingWorkflowTabConfig(
+        "arrived_pickup_place",
+        "Arrived Pickup Place",
+    ),
+    "on_delivery": PricingWorkflowTabConfig("on_delivery", "On Delivery"),
+    "arrived_delivery_place": PricingWorkflowTabConfig(
+        "arrived_delivery_place",
+        "Arrived Delivery Place",
+    ),
+    "delivered": PricingWorkflowTabConfig("delivered", "Delivered"),
+    "finish": PricingWorkflowTabConfig("finish", "Finish"),
+    "cancel": PricingWorkflowTabConfig("cancel", "Cancel"),
+    "accept": PricingWorkflowTabConfig("accept", "Accept"),
+    "reject": PricingWorkflowTabConfig("reject", "Reject"),
 }
 
 DEFAULT_PRICING_WORKFLOW_TAB = "updating"
+
+
+def _performance_menu_opener(method_name: str) -> Callable[[EtmsCatalogueMenuPage], None]:
+    def opener(nav_page: EtmsCatalogueMenuPage) -> None:
+        getattr(nav_page, method_name)()
+
+    return opener
+
+
+_PERFORMANCE_MENU_SUITE_OPENERS: dict[str, Callable[[EtmsCatalogueMenuPage], None]] = {
+    "common": _performance_menu_opener("open_pricing_common_menu"),
+    "fcl": _performance_menu_opener("open_pricing_fcl_menu"),
+    "lcl": _performance_menu_opener("open_pricing_lcl_menu"),
+    "distribution": _performance_menu_opener("open_pricing_distribution_menu"),
+    "pricing_report": _performance_menu_opener("open_pricing_report_menu"),
+    "quotation": _performance_menu_opener("open_quotation_menu"),
+    "customer_service_fcl": _performance_menu_opener("open_customer_service_fcl_menu"),
+    "customer_service_lcl_ftl": _performance_menu_opener("open_customer_service_lcl_ftl_menu"),
+    "customer_service_soa_outsource": _performance_menu_opener(
+        "open_customer_service_soa_outsource_menu"
+    ),
+}
 
 
 class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
@@ -47,6 +111,14 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
     page_workflow_tab_keys: tuple[str, ...] = ()
     pricing_menu_suite: str = "common"
     default_workflow_tab: str = "updating"
+
+    @property
+    def performance_menu_suite(self) -> str:
+        """Suite key for sidebar submenu navigation during performance tests."""
+        override = self.__class__.__dict__.get("performance_menu_suite")
+        if isinstance(override, str):
+            return override
+        return self.pricing_menu_suite
 
     loading_overlay_selectors = [
         ".m-blockui",
@@ -85,12 +157,11 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
         return list(dict.fromkeys(selectors))
 
     def _open_pricing_suite_menu(self) -> None:
-        if self.pricing_menu_suite == "fcl":
-            self.open_pricing_fcl_menu()
-        elif self.pricing_menu_suite == "lcl":
-            self.open_pricing_lcl_menu()
-        else:
+        opener = _PERFORMANCE_MENU_SUITE_OPENERS.get(self.performance_menu_suite)
+        if opener is None:
             self.open_pricing_common_menu()
+            return
+        opener(self)
 
     def _navigate_to_list_page(self) -> None:
         self._click_sidebar_link(
@@ -373,8 +444,13 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
         tab_key: str | None = None,
         min_rows: int = 1,
         allow_no_data: bool = False,
+        first_page_step: bool = False,
     ) -> str:
-        """Settle page before perf timer. Returns 'click', 'wait_only', or 'skipped'."""
+        """Settle before perf timer. Returns 'page_load', 'click', or 'skipped'.
+
+        Default workflow tab on the first step of each page: timer measures sidebar
+        page click → data. Other tabs: timer measures tab click → data only.
+        """
         del min_rows, allow_no_data
         active_tab = tab_key or self.default_workflow_tab
 
@@ -387,6 +463,9 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
                 )
                 return "skipped"
 
+        if first_page_step and active_tab == self.default_workflow_tab:
+            return "page_load"
+
         if not self._is_on_list_page():
             self._navigate_to_list_page()
 
@@ -396,10 +475,6 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
             f"{self.title} table",
         )
         self._scroll_filter_tab_bar()
-
-        tab_label = self._tab_config(active_tab).tab_label
-        if self._is_filter_tab_active(tab_label):
-            return "wait_only"
         return "click"
 
     def run_workflow_tab_performance_measurement(
@@ -410,12 +485,14 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
         allow_no_data: bool = False,
         mode: str = "click",
     ) -> None:
-        """Timed segment: tab click (if needed) → grid data or 'No Data' displayed."""
+        """Timed segment: page sidebar click or tab click → grid data or 'No Data'."""
         if mode == "skipped":
             return
 
         active_tab = tab_key or self.default_workflow_tab
-        if mode == "click":
+        if mode == "page_load":
+            self._navigate_to_list_page()
+        elif mode == "click":
             self._perform_tab_click(active_tab)
 
         self._wait_for_tab_content_loaded(
@@ -460,11 +537,13 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
         tab_key: str | None = None,
         min_rows: int = 1,
         allow_no_data: bool = False,
+        first_page_step: bool = False,
     ) -> str:
         return self.prepare_workflow_tab_performance(
             tab_key=tab_key,
             min_rows=min_rows,
             allow_no_data=allow_no_data,
+            first_page_step=first_page_step,
         )
 
     def run_performance_measurement(
@@ -662,6 +741,88 @@ class EtmsLclBuyingPage(EtmsPricingWorkflowListPage):
     pricing_menu_suite = "lcl"
     page_workflow_tab_keys = (
         "updating",
+        "pending",
+        "accepted",
+        "rejected",
+        "revoked",
+    )
+
+
+class EtmsDistributionRateCardPage(EtmsPricingWorkflowListPage):
+    """2. Distribution Rate Card — Pricing > Distribution Pricing."""
+
+    page_key = "distribution_rate_card"
+    page_hash = "pricing/dtb/dtb-rate-card-list"
+    title = "2. Distribution Rate Card"
+    sidebar_menu_labels = ("2. Distribution Rate Card", "Distribution Rate Card")
+    list_column_headers = ("Code",)
+    pricing_menu_suite = "distribution"
+    page_workflow_tab_keys = (
+        "updating",
+        "pending",
+        "accepted",
+        "active_bookable",
+        "rejected",
+        "revoked",
+    )
+
+    @property
+    def page_title_selectors(self) -> list[str]:
+        from automation.pages.etms.etms_catalogue_menu_page import etms_page_title_selectors
+
+        titles = ("2. Distribution Rate Card", "Distribution Rate Card")
+        selectors: list[str] = []
+        for label in titles:
+            selectors.extend(etms_page_title_selectors(label))
+        return list(dict.fromkeys(selectors))
+
+
+class EtmsDistributionBuyingPage(EtmsPricingWorkflowListPage):
+    """Distribution Buying — Pricing > Distribution Pricing."""
+
+    page_key = "distribution_buying"
+    page_hash = "pricing/buying-per-trip-v2"
+    title = "Distribution Buying"
+    sidebar_menu_labels = ("Distribution Buying",)
+    list_column_headers = ("Code",)
+    pricing_menu_suite = "distribution"
+    page_workflow_tab_keys = (
+        "updating",
+        "pending",
+        "accepted",
+        "rejected",
+        "revoked",
+    )
+
+
+class EtmsCommissionRateCardPage(EtmsPricingWorkflowListPage):
+    """Commission Rate Card — Pricing > workflow tabs (Updating default)."""
+
+    page_key = "commission_rate_card"
+    page_hash = "pricing/commission-rate-card"
+    title = "Commission Rate Card"
+    sidebar_menu_labels = ("Commission Rate Card",)
+    list_column_headers = ("Code",)
+    pricing_menu_suite = "pricing_report"
+    page_workflow_tab_keys = (
+        "updating",
+        "pending",
+        "accepted",
+        "rejected",
+    )
+
+
+class EtmsFclQuotationListPage(EtmsPricingWorkflowListPage):
+    """FCL Quotation List — Quotation > workflow tabs (Pending default)."""
+
+    page_key = "fcl_quotation_list"
+    page_hash = "pricing/fcl/fcl-quotation-list"
+    title = "FCL Quotation List"
+    sidebar_menu_labels = ("FCL Quotation List",)
+    list_column_headers = ("Code",)
+    pricing_menu_suite = "quotation"
+    default_workflow_tab = "pending"
+    page_workflow_tab_keys = (
         "pending",
         "accepted",
         "rejected",

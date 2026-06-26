@@ -284,6 +284,9 @@ class EtmsCatalogueMenuPage(BasePage):
         _sidebar_child_link("Pricing", "Common"),
         _sidebar_child_link("Pricing", "FCL Pricing"),
         _sidebar_child_link("Pricing", "LCL Pricing"),
+        _sidebar_child_link("Pricing", "Distribution Pricing"),
+        _sidebar_child_link("Pricing", "Pricing Report"),
+        _sidebar_child_link("Pricing", "Commission Rate Card"),
         _sidebar_link_by_href("pricing/common"),
         _sidebar_link_by_href("pricing/fcl"),
         _sidebar_link_by_href("pricing/rate-card-list"),
@@ -324,6 +327,138 @@ class EtmsCatalogueMenuPage(BasePage):
         _sidebar_link_by_href("pricing/buying"),
         "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='3. LCL Rate Card']]",
         "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL Buying']]",
+    ]
+
+    pricing_distribution_toggle_selectors = [
+        _sidebar_child_link("Pricing", "Distribution Pricing"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Distribution Pricing']]",
+    ]
+
+    pricing_distribution_expanded_selectors = [
+        _sidebar_link_by_href("pricing/dtb/dtb-rate-card-list"),
+        _sidebar_link_by_href("pricing/buying-per-trip-v2"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='2. Distribution Rate Card']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Distribution Buying']]",
+    ]
+
+    pricing_report_expanded_selectors = [
+        _sidebar_link_by_href("accounting/report"),
+        _sidebar_link_by_href("pricing/commission-rate-card"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Pricing Report']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Commission Rate Card']]",
+    ]
+
+    quotation_menu_selectors = [
+        _sidebar_link_by_label("Quotation"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Quotation']]",
+    ]
+
+    quotation_expanded_selectors = [
+        _sidebar_child_link("Quotation", "Create FCL Quotation"),
+        _sidebar_child_link("Quotation", "FCL Quotation List"),
+        _sidebar_child_link("Quotation", "Create LCL Quotation"),
+        _sidebar_child_link("Quotation", "Create Distribution Quotation"),
+        _sidebar_link_by_href("quotation/fcl-quotation"),
+        _sidebar_link_by_href("quotation/lcl-quotation"),
+        _sidebar_link_by_href("quotation/dtb-create-rate-card"),
+        _sidebar_link_by_href("pricing/fcl/fcl-quotation-list"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Create FCL Quotation']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='FCL Quotation List']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Create LCL Quotation']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Create Distribution Quotation']]",
+    ]
+
+    customer_service_menu_selectors = [
+        _sidebar_link_by_label("Customer Service"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Customer Service']]",
+    ]
+
+    customer_service_expanded_selectors = [
+        _sidebar_child_link("Customer Service", "Common"),
+        _sidebar_child_link("Customer Service", "FCL"),
+        _sidebar_child_link("Customer Service", "LCL/FTL"),
+        _sidebar_child_link("Customer Service", "SOA For Outsource"),
+        _sidebar_child_link("Customer Service", "Verifying Booking"),
+        _sidebar_link_by_href("customer-service/common"),
+        _sidebar_link_by_href("customer/waybill-pending"),
+        _sidebar_link_by_href("customer/fcl"),
+        _sidebar_link_by_href("customer/lcl-ftl"),
+        _sidebar_link_by_href("customer/soa-for-outsource"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Common']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='FCL']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL']]",
+    ]
+
+    customer_service_fcl_toggle_selectors = [
+        _sidebar_child_link("Customer Service", "FCL"),
+        _sidebar_link_by_href("customer/fcl"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='FCL']]",
+    ]
+
+    customer_service_fcl_expanded_selectors = [
+        _sidebar_child_link("Customer Service", "FCL Booking"),
+        _sidebar_child_link("Customer Service", "FCL Surcharge/ Behalf"),
+        _sidebar_child_link("Customer Service", "Container Deposit Management"),
+        _sidebar_child_link("Customer Service", "FCL Surcharge/ Behalf (Fleet)"),
+        _sidebar_link_by_href("customer/fcl-booking"),
+        _sidebar_link_by_href("customer/fcl-surcharge-behalf"),
+        _sidebar_link_by_href("customer/management-container-deposit"),
+        _sidebar_link_by_href("customer/fcl-surcharge-behalf-fleet"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='FCL Booking']]",
+        (
+            "xpath=//a[contains(@class,'nav-link')]"
+            "[.//span[normalize-space()='FCL Surcharge/ Behalf']]"
+        ),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Container Deposit Management']]",
+        (
+            "xpath=//a[contains(@class,'nav-link')]"
+            "[.//span[normalize-space()='FCL Surcharge/ Behalf (Fleet)']]"
+        ),
+    ]
+
+    customer_service_lcl_ftl_toggle_selectors = [
+        _sidebar_child_link("Customer Service", "LCL/FTL"),
+        _sidebar_link_by_href("customer/lcl-ftl"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL']]",
+    ]
+
+    customer_service_lcl_ftl_expanded_selectors = [
+        _sidebar_child_link("Customer Service", "LCL/FTL Booking"),
+        _sidebar_child_link("Customer Service", "LCL/FTL Transport Surcharge"),
+        _sidebar_child_link("Customer Service", "LCL/FTL Surcharge/Behalf"),
+        _sidebar_child_link("Customer Service", "LCL Shipment Management"),
+        _sidebar_child_link("Customer Service", "LCL/FTL Surcharge/ Behalf (Fleet)"),
+        _sidebar_link_by_href("customer/booking"),
+        _sidebar_link_by_href("customer/lcl-ftl-transport-surcharge"),
+        _sidebar_link_by_href("customer/lcl-ftl-surcharge-behalf"),
+        _sidebar_link_by_href("customer/lcl-shipment-management"),
+        _sidebar_link_by_href("customer/lcl-ftl-surcharge-behalf-fleet"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL Booking']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL Transport Surcharge']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL/FTL Surcharge/Behalf']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='LCL Shipment Management']]",
+        (
+            "xpath=//a[contains(@class,'nav-link')]"
+            "[.//span[normalize-space()='LCL/FTL Surcharge/ Behalf (Fleet)']]"
+        ),
+    ]
+
+    customer_service_soa_outsource_selectors = [
+        _sidebar_child_link("Customer Service", "SOA For Outsource"),
+        _sidebar_link_by_href("customer/soa-for-outsource"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='SOA For Outsource']]",
+    ]
+
+    customer_service_common_toggle_selectors = [
+        _sidebar_child_link("Customer Service", "Common"),
+        _sidebar_link_by_href("customer-service/common"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Common']]",
+    ]
+
+    customer_service_common_expanded_selectors = [
+        _sidebar_child_link("Customer Service", "Verifying Booking"),
+        _sidebar_link_by_href("customer/waybill-pending"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Verifying Booking']]",
     ]
 
     @log_method("Wait for eTMS sidebar navigation ready")
@@ -518,3 +653,81 @@ class EtmsCatalogueMenuPage(BasePage):
             toggle_label="LCL Pricing menu under Pricing",
             ready_label="3. LCL Rate Card menu under LCL Pricing",
         )
+
+    @log_method("Open Pricing > Distribution Pricing menu")
+    def open_pricing_distribution_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_pricing_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.pricing_distribution_toggle_selectors,
+            submenu_selectors=self.pricing_distribution_expanded_selectors,
+            toggle_label="Distribution Pricing menu under Pricing",
+            ready_label="2. Distribution Rate Card menu under Distribution Pricing",
+        )
+
+    @log_method("Open Pricing > Pricing Report menu")
+    def open_pricing_report_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_pricing_menu()
+        self.wait_for_visible(
+            self.pricing_report_expanded_selectors,
+            "Pricing Report menu under Pricing",
+        )
+        return self
+
+    @log_method("Open Quotation menu")
+    def open_quotation_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.quotation_menu_selectors,
+            submenu_selectors=self.quotation_expanded_selectors,
+            toggle_label="Quotation menu",
+            ready_label="Create FCL Quotation menu under Quotation",
+        )
+
+    @log_method("Open Customer Service menu")
+    def open_customer_service_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.customer_service_menu_selectors,
+            submenu_selectors=self.customer_service_expanded_selectors,
+            toggle_label="Customer Service menu",
+            ready_label="Common menu under Customer Service",
+        )
+
+    @log_method("Open Customer Service > Common menu")
+    def open_customer_service_common_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_customer_service_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.customer_service_common_toggle_selectors,
+            submenu_selectors=self.customer_service_common_expanded_selectors,
+            toggle_label="Common menu under Customer Service",
+            ready_label="Verifying Booking menu under Common",
+        )
+
+    @log_method("Open Customer Service > FCL menu")
+    def open_customer_service_fcl_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_customer_service_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.customer_service_fcl_toggle_selectors,
+            submenu_selectors=self.customer_service_fcl_expanded_selectors,
+            toggle_label="FCL menu under Customer Service",
+            ready_label="FCL Booking menu under FCL",
+        )
+
+    @log_method("Open Customer Service > LCL/FTL menu")
+    def open_customer_service_lcl_ftl_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_customer_service_menu()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.customer_service_lcl_ftl_toggle_selectors,
+            submenu_selectors=self.customer_service_lcl_ftl_expanded_selectors,
+            toggle_label="LCL/FTL menu under Customer Service",
+            ready_label="LCL/FTL Booking menu under LCL/FTL",
+        )
+
+    @log_method("Open Customer Service > SOA For Outsource menu")
+    def open_customer_service_soa_outsource_menu(self) -> "EtmsCatalogueMenuPage":
+        self.open_customer_service_menu()
+        self.wait_for_visible(
+            self.customer_service_soa_outsource_selectors,
+            "SOA For Outsource menu under Customer Service",
+        )
+        return self

@@ -30,9 +30,19 @@ from automation.pages.etms.etms_pricing_workflow_list_page import (
     EtmsFclRateCardListPage,
     EtmsFclRentingContainerPage,
     EtmsFclRentingVehiclePage,
+    EtmsCommissionRateCardPage,
+    EtmsFclQuotationListPage,
+    EtmsDistributionBuyingPage,
+    EtmsDistributionRateCardPage,
     EtmsLclBuyingPage,
     EtmsLclRateCardPage,
     EtmsPriceTollBuyingPage,
+)
+from automation.pages.etms.etms_pricing_report_page import EtmsPricingReportPage
+from automation.pages.etms.etms_quotation_form_page import (
+    EtmsCreateDistributionQuotationPage,
+    EtmsCreateFclQuotationPage,
+    EtmsCreateLclQuotationPage,
 )
 from automation.pages.etms.etms_vfc_login_page import EtmsVfcLoginPage
 from automation.pages.etms.etms_vehicle_part_type_page import EtmsVehiclePartTypePage
@@ -54,6 +64,13 @@ __all__ = [
     "EtmsFclRateCardListPage",
     "EtmsFclRentingContainerPage",
     "EtmsFclRentingVehiclePage",
+    "EtmsFclQuotationListPage",
+    "EtmsDistributionBuyingPage",
+    "EtmsDistributionRateCardPage",
+    "EtmsCommissionRateCardPage",
+    "EtmsCreateDistributionQuotationPage",
+    "EtmsCreateFclQuotationPage",
+    "EtmsCreateLclQuotationPage",
     "EtmsLclBuyingPage",
     "EtmsLclRateCardPage",
     "EtmsHomePage",
@@ -62,6 +79,7 @@ __all__ = [
     "EtmsPartnerListPage",
     "EtmsPriceTollBuyingPage",
     "EtmsTransportNetworkListPage",
+    "EtmsPricingReportPage",
     "EtmsVfcLoginPage",
     "EtmsVehiclePartTypePage",
     "EtmsVehicleTypePage",

@@ -31,6 +31,24 @@ _DEDICATED_PERF_PAGES: dict[str, str] = {
     "fcl_renting_vehicle": "Renting vehicle Page",
     "lcl_rate_card": "3. LCL Rate Card Page",
     "lcl_buying": "LCL Buying Page",
+    "distribution_rate_card": "2. Distribution Rate Card Page",
+    "distribution_buying": "Distribution Buying Page",
+    "pricing_report": "Pricing Report Page",
+    "commission_rate_card": "Commission Rate Card Page",
+    "create_fcl_quotation": "Create FCL Quotation Page",
+    "fcl_quotation_list": "FCL Quotation List Page",
+    "create_lcl_quotation": "Create LCL Quotation Page",
+    "create_distribution_quotation": "Create Distribution Quotation Page",
+    "fcl_booking": "FCL Booking Page",
+    "fcl_surcharge_behalf": "FCL Surcharge/ Behalf Page",
+    "container_deposit_management": "Container Deposit Management Page",
+    "fcl_surcharge_behalf_fleet": "FCL Surcharge/ Behalf (Fleet) Page",
+    "lcl_ftl_booking": "LCL/FTL Booking Page",
+    "lcl_ftl_transport_surcharge": "LCL/FTL Transport Surcharge Page",
+    "lcl_ftl_surcharge_behalf": "LCL/FTL Surcharge/Behalf Page",
+    "lcl_shipment_management": "LCL Shipment Management Page",
+    "lcl_ftl_surcharge_behalf_fleet": "LCL/FTL Surcharge/ Behalf (Fleet) Page",
+    "soa_for_outsource": "SOA For Outsource Page",
 }
 
 
@@ -91,6 +109,32 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
         return pages.etms_lcl_rate_card_page
     if page_key == "lcl_buying":
         return pages.etms_lcl_buying_page
+    if page_key == "distribution_rate_card":
+        return pages.etms_distribution_rate_card_page
+    if page_key == "distribution_buying":
+        return pages.etms_distribution_buying_page
+    if page_key == "pricing_report":
+        return pages.etms_pricing_report_page
+    if page_key == "commission_rate_card":
+        return pages.etms_commission_rate_card_page
+    if page_key == "create_fcl_quotation":
+        return pages.etms_create_fcl_quotation_page
+    if page_key == "fcl_quotation_list":
+        return pages.etms_fcl_quotation_list_page
+    if page_key == "create_lcl_quotation":
+        return pages.etms_create_lcl_quotation_page
+    if page_key == "create_distribution_quotation":
+        return pages.etms_create_distribution_quotation_page
+    if page_key == "fcl_booking":
+        return pages.etms_fcl_booking_page
+    if page_key == "container_deposit_management":
+        return pages.etms_container_deposit_management_page
+    if page_key == "lcl_ftl_booking":
+        return pages.etms_lcl_ftl_booking_page
+    if page_key == "lcl_shipment_management":
+        return pages.etms_lcl_shipment_management_page
+    if page_key == "soa_for_outsource":
+        return pages.etms_soa_for_outsource_page
 
     raise KeyError(f"No PageManager resolver for performance page_key '{page_key}'")
 
@@ -115,6 +159,15 @@ def verify_performance_page_loaded(
                 f"[PERF VERIFY] {check_label}: optional tab not on page — skipped (url OK)"
             )
             return 0
+
+    if hasattr(page, "verify_performance_step"):
+        page.verify_performance_step(
+            check_label=check_label,
+            tab_key=tab_key,
+            min_rows=min_rows,
+            allow_no_data=allow_no_data,
+        )
+        return 0
 
     settle_performance_page(
         page,

@@ -20,6 +20,9 @@ EtmsCatalogueSuite = Literal[
     "driver",
     "commodity",
     "catalogue_master",
+    "customer_service_common",
+    "customer_service_fcl",
+    "customer_service_lcl_ftl",
 ]
 
 
@@ -220,6 +223,57 @@ CATALOGUE_MASTER_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     ),
 }
 
+CUSTOMER_SERVICE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "verifying_booking": EtmsCatalogueListPageConfig(
+        page_key="verifying_booking",
+        title="Verifying Booking",
+        page_hash="customer/waybill-pending",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_common",
+    ),
+    "fcl_surcharge_behalf": EtmsCatalogueListPageConfig(
+        page_key="fcl_surcharge_behalf",
+        title="FCL Surcharge/ Behalf",
+        page_hash="customer/fcl-surcharge-behalf",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_fcl",
+    ),
+    "fcl_surcharge_behalf_fleet": EtmsCatalogueListPageConfig(
+        page_key="fcl_surcharge_behalf_fleet",
+        title="FCL Surcharge/ Behalf (Fleet)",
+        page_hash="customer/fcl-surcharge-behalf-fleet",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_fcl",
+    ),
+    "lcl_ftl_transport_surcharge": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_transport_surcharge",
+        title="LCL/FTL Transport Surcharge",
+        page_hash="customer/lcl-ftl-transport-surcharge",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_lcl_ftl",
+    ),
+    "lcl_ftl_surcharge_behalf": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_surcharge_behalf",
+        title="LCL/FTL Surcharge/Behalf",
+        page_hash="customer/lcl-ftl-surcharge-behalf",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_lcl_ftl",
+    ),
+    "lcl_ftl_surcharge_behalf_fleet": EtmsCatalogueListPageConfig(
+        page_key="lcl_ftl_surcharge_behalf_fleet",
+        title="LCL/FTL Surcharge/ Behalf (Fleet)",
+        page_hash="customer/lcl-ftl-surcharge-behalf-fleet",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="customer_service_lcl_ftl",
+    ),
+}
+
 CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **TRANSPORT_NETWORK_LIST_PAGE_CONFIGS,
     **PARTNER_LIST_PAGE_CONFIGS,
@@ -227,6 +281,7 @@ CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **DRIVER_LIST_PAGE_CONFIGS,
     **COMMODITY_LIST_PAGE_CONFIGS,
     **CATALOGUE_MASTER_LIST_PAGE_CONFIGS,
+    **CUSTOMER_SERVICE_LIST_PAGE_CONFIGS,
 }
 
 
@@ -268,6 +323,12 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
             self.open_commodity_menu()
         elif self._config.catalogue_suite == "catalogue_master":
             self.open_catalogue_menu()
+        elif self._config.catalogue_suite == "customer_service_common":
+            self.open_customer_service_common_menu()
+        elif self._config.catalogue_suite == "customer_service_fcl":
+            self.open_customer_service_fcl_menu()
+        elif self._config.catalogue_suite == "customer_service_lcl_ftl":
+            self.open_customer_service_lcl_ftl_menu()
         else:
             self.open_transport_network_menu()
 
@@ -275,26 +336,58 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
         title = self._config.title
         menu_li_id = self._config.menu_li_id
         page_hash = self._config.page_hash
-        return [
-            f"#{menu_li_id} > a.nav-link",
-            _catalogue_submenu_link_by_label(title),
-            (
-                f"xpath=//li[@id='{menu_li_id}']"
-                f"//span[normalize-space()='{title}']"
-                "/ancestor::a[contains(@class,'nav-link')][1]"
-            ),
-            (
-                "xpath=//a[contains(@class,'nav-link')]"
-                f"[.//span[normalize-space()='{title}']]"
-            ),
-            _sidebar_link_by_href(page_hash),
-        ]
+        selectors: list[str] = []
+        if menu_li_id:
+            selectors.extend(
+                [
+                    f"#{menu_li_id} > a.nav-link",
+                    (
+                        f"xpath=//li[@id='{menu_li_id}']"
+                        f"//span[normalize-space()='{title}']"
+                        "/ancestor::a[contains(@class,'nav-link')][1]"
+                    ),
+                ]
+            )
+        selectors.extend(
+            [
+                _catalogue_submenu_link_by_label(title),
+                (
+                    "xpath=//a[contains(@class,'nav-link')]"
+                    f"[.//span[normalize-space()='{title}']]"
+                ),
+                _sidebar_link_by_href(page_hash),
+            ]
+        )
+        return list(dict.fromkeys(selectors))
 
     def _list_title_selectors(self) -> list[str]:
         return etms_page_title_selectors(self._config.title)
 
+    _GENERIC_GRID_PAGE_KEYS = frozenset(
+        {
+            "verifying_booking",
+            "fcl_surcharge_behalf",
+            "fcl_surcharge_behalf_fleet",
+            "lcl_ftl_transport_surcharge",
+            "lcl_ftl_surcharge_behalf",
+            "lcl_ftl_surcharge_behalf_fleet",
+        }
+    )
+
     def _list_table_selectors(self) -> list[str]:
         title = self._config.title
+        if self.page_key in self._GENERIC_GRID_PAGE_KEYS:
+            portlet = (
+                f"//*[contains(@class,'page-title') and contains(normalize-space(),'{title}')]"
+                "/ancestor::div[contains(@class,'m-portlet') or contains(@class,'portlet')][1]"
+            )
+            return [
+                f"xpath={portlet}//ngx-datatable//datatable-header-cell",
+                f"xpath={portlet}//table//th",
+                "xpath=//div[contains(@class,'m-portlet__body')]//ngx-datatable//datatable-header-cell",
+                "xpath=//div[contains(@class,'m-portlet__body')]//table//th",
+                "xpath=//ngx-datatable//datatable-header-cell",
+            ]
         first_header = self._config.list_column_headers[0]
         return [
             f"xpath=//table[.//th[normalize-space()='{first_header}']]//th",
@@ -323,14 +416,27 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
     ) -> EtmsCatalogueListPage:
         """Re-verify list grid is ready — call before navigating to the next catalogue page."""
         self.wait_before_next_catalogue_navigation()
-        self._wait_for_list_grid(min_rows)
+        self._wait_for_list_grid(min_rows, allow_no_data=allow_no_data)
         return self
 
-    def _wait_for_list_grid(self, min_rows: int) -> None:
+    def _wait_for_list_grid(self, min_rows: int, *, allow_no_data: bool = False) -> None:
         self.wait_for_visible(
             self._list_title_selectors(),
             f"{self._config.title} page title",
         )
+        if self.page_key in self._GENERIC_GRID_PAGE_KEYS:
+            self.wait_for_page_stable()
+            if allow_no_data:
+                self.list_grid.wait_for_data_rows_or_no_data(
+                    min_rows=min_rows,
+                    table_selectors=None,
+                )
+            else:
+                self.list_grid.wait_for_data_rows(
+                    min_rows=min_rows,
+                    table_selectors=None,
+                )
+            return
         self.list_grid.wait_until_ready(
             self.list_table_selectors,
             f"{self._config.title} table",
@@ -357,10 +463,11 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
         tab_key: str | None = None,
         min_rows: int = 1,
         allow_no_data: bool = False,
+        first_page_step: bool = False,
     ) -> str:
         """Submenu is opened by the performance suite — timed step is sidebar click → data."""
-        del tab_key, min_rows, allow_no_data
-        return "click"
+        del tab_key, min_rows, allow_no_data, first_page_step
+        return "page_load"
 
     def run_performance_measurement(
         self,
@@ -368,10 +475,10 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
         tab_key: str | None = None,
         min_rows: int = 1,
         allow_no_data: bool = False,
-        mode: str = "click",
+        mode: str = "page_load",
     ) -> None:
         """Timed segment: sidebar menu click → list grid data displayed."""
-        del tab_key, allow_no_data
+        del tab_key
         if mode == "skipped":
             return
         self._click_sidebar_link(
@@ -380,7 +487,7 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
         )
         self._wait_for_url_hash(self.page_hash)
         self.wait_for_page_stable()
-        self._wait_for_list_grid(min_rows)
+        self._wait_for_list_grid(min_rows, allow_no_data=allow_no_data)
 
     def load_page_for_performance(self, min_rows: int = 1) -> EtmsCatalogueListPage:
         """Click menu and wait for table — used by performance tests (no POM step logs)."""

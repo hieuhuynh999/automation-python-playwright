@@ -18,8 +18,11 @@ from automation.pages.etms import (
     EtmsBookingInformationPage,
     EtmsCatalogueListPage,
     EtmsCatalogueMenuPage,
+    EtmsCommissionRateCardPage,
     EtmsCostOfRoutePage,
     EtmsCostOfRouteWorkflowPage,
+    EtmsDistributionBuyingPage,
+    EtmsDistributionRateCardPage,
     EtmsFclBuyingPricePage,
     EtmsFclRateCardListPage,
     EtmsFclRentingContainerPage,
@@ -33,6 +36,20 @@ from automation.pages.etms import (
     EtmsVehiclePartTypePage,
     EtmsVehicleTypePage,
     EtmsZoneCodePage,
+)
+from automation.pages.etms.etms_customer_service_pages import (
+    EtmsContainerDepositManagementPage,
+    EtmsFclBookingPage,
+    EtmsLclFtlBookingPage,
+    EtmsLclShipmentManagementPage,
+    EtmsSoaForOutsourcePage,
+)
+from automation.pages.etms.etms_pricing_report_page import EtmsPricingReportPage
+from automation.pages.etms.etms_pricing_workflow_list_page import EtmsFclQuotationListPage
+from automation.pages.etms.etms_quotation_form_page import (
+    EtmsCreateDistributionQuotationPage,
+    EtmsCreateFclQuotationPage,
+    EtmsCreateLclQuotationPage,
 )
 
 
@@ -58,6 +75,19 @@ class PageManager:
         self._etms_fcl_renting_vehicle_page: EtmsFclRentingVehiclePage | None = None
         self._etms_lcl_rate_card_page: EtmsLclRateCardPage | None = None
         self._etms_lcl_buying_page: EtmsLclBuyingPage | None = None
+        self._etms_distribution_rate_card_page: EtmsDistributionRateCardPage | None = None
+        self._etms_distribution_buying_page: EtmsDistributionBuyingPage | None = None
+        self._etms_pricing_report_page: EtmsPricingReportPage | None = None
+        self._etms_commission_rate_card_page: EtmsCommissionRateCardPage | None = None
+        self._etms_create_fcl_quotation_page: EtmsCreateFclQuotationPage | None = None
+        self._etms_fcl_quotation_list_page: EtmsFclQuotationListPage | None = None
+        self._etms_create_lcl_quotation_page: EtmsCreateLclQuotationPage | None = None
+        self._etms_create_distribution_quotation_page: EtmsCreateDistributionQuotationPage | None = None
+        self._etms_fcl_booking_page: EtmsFclBookingPage | None = None
+        self._etms_container_deposit_management_page: EtmsContainerDepositManagementPage | None = None
+        self._etms_lcl_ftl_booking_page: EtmsLclFtlBookingPage | None = None
+        self._etms_lcl_shipment_management_page: EtmsLclShipmentManagementPage | None = None
+        self._etms_soa_for_outsource_page: EtmsSoaForOutsourcePage | None = None
         self._etms_catalogue_menu_page: EtmsCatalogueMenuPage | None = None
         self._etms_catalogue_list_pages: dict[str, EtmsCatalogueListPage] = {}
         self._etms_administrative_units_page: EtmsAdministrativeUnitsPage | None = None
@@ -182,6 +212,88 @@ class PageManager:
         if self._etms_lcl_buying_page is None:
             self._etms_lcl_buying_page = EtmsLclBuyingPage(self.page)
         return self._etms_lcl_buying_page
+
+    @property
+    def etms_distribution_rate_card_page(self) -> EtmsDistributionRateCardPage:
+        if self._etms_distribution_rate_card_page is None:
+            self._etms_distribution_rate_card_page = EtmsDistributionRateCardPage(self.page)
+        return self._etms_distribution_rate_card_page
+
+    @property
+    def etms_distribution_buying_page(self) -> EtmsDistributionBuyingPage:
+        if self._etms_distribution_buying_page is None:
+            self._etms_distribution_buying_page = EtmsDistributionBuyingPage(self.page)
+        return self._etms_distribution_buying_page
+
+    @property
+    def etms_pricing_report_page(self) -> EtmsPricingReportPage:
+        if self._etms_pricing_report_page is None:
+            self._etms_pricing_report_page = EtmsPricingReportPage(self.page)
+        return self._etms_pricing_report_page
+
+    @property
+    def etms_commission_rate_card_page(self) -> EtmsCommissionRateCardPage:
+        if self._etms_commission_rate_card_page is None:
+            self._etms_commission_rate_card_page = EtmsCommissionRateCardPage(self.page)
+        return self._etms_commission_rate_card_page
+
+    @property
+    def etms_create_fcl_quotation_page(self) -> EtmsCreateFclQuotationPage:
+        if self._etms_create_fcl_quotation_page is None:
+            self._etms_create_fcl_quotation_page = EtmsCreateFclQuotationPage(self.page)
+        return self._etms_create_fcl_quotation_page
+
+    @property
+    def etms_fcl_quotation_list_page(self) -> EtmsFclQuotationListPage:
+        if self._etms_fcl_quotation_list_page is None:
+            self._etms_fcl_quotation_list_page = EtmsFclQuotationListPage(self.page)
+        return self._etms_fcl_quotation_list_page
+
+    @property
+    def etms_create_lcl_quotation_page(self) -> EtmsCreateLclQuotationPage:
+        if self._etms_create_lcl_quotation_page is None:
+            self._etms_create_lcl_quotation_page = EtmsCreateLclQuotationPage(self.page)
+        return self._etms_create_lcl_quotation_page
+
+    @property
+    def etms_create_distribution_quotation_page(self) -> EtmsCreateDistributionQuotationPage:
+        if self._etms_create_distribution_quotation_page is None:
+            self._etms_create_distribution_quotation_page = EtmsCreateDistributionQuotationPage(
+                self.page
+            )
+        return self._etms_create_distribution_quotation_page
+
+    @property
+    def etms_fcl_booking_page(self) -> EtmsFclBookingPage:
+        if self._etms_fcl_booking_page is None:
+            self._etms_fcl_booking_page = EtmsFclBookingPage(self.page)
+        return self._etms_fcl_booking_page
+
+    @property
+    def etms_container_deposit_management_page(self) -> EtmsContainerDepositManagementPage:
+        if self._etms_container_deposit_management_page is None:
+            self._etms_container_deposit_management_page = EtmsContainerDepositManagementPage(
+                self.page
+            )
+        return self._etms_container_deposit_management_page
+
+    @property
+    def etms_lcl_ftl_booking_page(self) -> EtmsLclFtlBookingPage:
+        if self._etms_lcl_ftl_booking_page is None:
+            self._etms_lcl_ftl_booking_page = EtmsLclFtlBookingPage(self.page)
+        return self._etms_lcl_ftl_booking_page
+
+    @property
+    def etms_lcl_shipment_management_page(self) -> EtmsLclShipmentManagementPage:
+        if self._etms_lcl_shipment_management_page is None:
+            self._etms_lcl_shipment_management_page = EtmsLclShipmentManagementPage(self.page)
+        return self._etms_lcl_shipment_management_page
+
+    @property
+    def etms_soa_for_outsource_page(self) -> EtmsSoaForOutsourcePage:
+        if self._etms_soa_for_outsource_page is None:
+            self._etms_soa_for_outsource_page = EtmsSoaForOutsourcePage(self.page)
+        return self._etms_soa_for_outsource_page
 
     @property
     def etms_catalogue_menu_page(self) -> EtmsCatalogueMenuPage:

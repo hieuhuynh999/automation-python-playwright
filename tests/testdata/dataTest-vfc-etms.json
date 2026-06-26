@@ -490,5 +490,548 @@
                 }
             ]
         }
+    ],
+    "test_vfc_etms_performance_pricing_distribution_pages_etms": [
+        {
+            "test_case_id": "PERF_DIST_001",
+            "test_case_ids": [
+                "PERF_DRC_UPD_001",
+                "PERF_DRC_PND_001",
+                "PERF_DRC_ACC_001",
+                "PERF_DRC_ABK_001",
+                "PERF_DRC_REJ_001",
+                "PERF_DRC_REV_001",
+                "PERF_DB_UPD_001",
+                "PERF_DB_PND_001",
+                "PERF_DB_ACC_001",
+                "PERF_DB_REJ_001",
+                "PERF_DB_REV_001"
+            ],
+            "description": "VFC performance — Pricing > Distribution Pricing > 2. Distribution Rate Card & Distribution Buying workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "pricing_distribution",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "updating",
+                    "check_label": "2. Distribution Rate Card - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "pending",
+                    "check_label": "2. Distribution Rate Card - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "accepted",
+                    "check_label": "2. Distribution Rate Card - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "active_bookable",
+                    "check_label": "2. Distribution Rate Card - Active - Bookable Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "rejected",
+                    "check_label": "2. Distribution Rate Card - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_rate_card",
+                    "tab": "revoked",
+                    "check_label": "2. Distribution Rate Card - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_buying",
+                    "tab": "updating",
+                    "check_label": "Distribution Buying - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_buying",
+                    "tab": "pending",
+                    "check_label": "Distribution Buying - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_buying",
+                    "tab": "accepted",
+                    "check_label": "Distribution Buying - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_buying",
+                    "tab": "rejected",
+                    "check_label": "Distribution Buying - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "distribution_buying",
+                    "tab": "revoked",
+                    "check_label": "Distribution Buying - Revoked Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_pricing_report_pages_etms": [
+        {
+            "test_case_id": "PERF_PRPT_001",
+            "test_case_ids": [
+                "PERF_PRR_001",
+                "PERF_CRC_UPD_001",
+                "PERF_CRC_PND_001",
+                "PERF_CRC_ACC_001",
+                "PERF_CRC_REJ_001"
+            ],
+            "description": "VFC performance — Pricing > Pricing Report (Download enabled) & Commission Rate Card workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "pricing_report",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "pricing_report",
+                    "check_label": "Pricing Report Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "commission_rate_card",
+                    "tab": "updating",
+                    "check_label": "Commission Rate Card - Updating Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "commission_rate_card",
+                    "tab": "pending",
+                    "check_label": "Commission Rate Card - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "commission_rate_card",
+                    "tab": "accepted",
+                    "check_label": "Commission Rate Card - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "commission_rate_card",
+                    "tab": "rejected",
+                    "check_label": "Commission Rate Card - Rejected Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_quotation_pages_etms": [
+        {
+            "test_case_id": "PERF_QUOT_001",
+            "test_case_ids": [
+                "PERF_CFCL_001",
+                "PERF_FQL_PND_001",
+                "PERF_FQL_ACC_001",
+                "PERF_FQL_REJ_001",
+                "PERF_FQL_REV_001",
+                "PERF_CLCL_001",
+                "PERF_CDST_001"
+            ],
+            "description": "VFC performance — Quotation > Create FCL/LCL/Distribution (Search enabled) & FCL Quotation List workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "quotation",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "create_fcl_quotation",
+                    "check_label": "Create FCL Quotation Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "fcl_quotation_list",
+                    "tab": "pending",
+                    "check_label": "FCL Quotation List - Pending Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_quotation_list",
+                    "tab": "accepted",
+                    "check_label": "FCL Quotation List - Accepted Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_quotation_list",
+                    "tab": "rejected",
+                    "check_label": "FCL Quotation List - Rejected Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "fcl_quotation_list",
+                    "tab": "revoked",
+                    "check_label": "FCL Quotation List - Revoked Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "create_lcl_quotation",
+                    "check_label": "Create LCL Quotation Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "create_distribution_quotation",
+                    "check_label": "Create Distribution Quotation Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_customer_service_pages_etms": [
+        {
+            "test_case_id": "PERF_CS_001",
+            "test_case_ids": [
+                "PERF_VBK_001"
+            ],
+            "description": "VFC performance — Customer Service > Common > Verifying Booking list (≥1 data row)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "customer_service_common",
+            "min_table_rows": 1,
+            "pages": [
+                {
+                    "page_key": "verifying_booking",
+                    "check_label": "Verifying Booking Page",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_customer_service_fcl_pages_etms": [
+        {
+            "test_case_id": "PERF_CS_FCL_001",
+            "test_case_ids": [
+                "PERF_FCL_BK_ALL_001",
+                "PERF_FCL_BK_NEW_001",
+                "PERF_FCL_BK_CHK_001",
+                "PERF_FCL_BK_INP_001",
+                "PERF_FCL_BK_BUC_001",
+                "PERF_FCL_BK_CUC_001",
+                "PERF_FCL_BK_FIN_001",
+                "PERF_FCL_SUR_001",
+                "PERF_CDM_NEW_001",
+                "PERF_CDM_ADP_001",
+                "PERF_CDM_HCS_001",
+                "PERF_CDM_HOP_001",
+                "PERF_CDM_HAC_001",
+                "PERF_CDM_FIN_001",
+                "PERF_FCL_SUR_FLT_001"
+            ],
+            "description": "VFC performance — Customer Service > FCL: FCL Booking tabs, Surcharge/Behalf, Container Deposit, Surcharge Fleet",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "customer_service_fcl",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "all",
+                    "check_label": "FCL Booking - All Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "new",
+                    "check_label": "FCL Booking - New Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "checking_info",
+                    "check_label": "FCL Booking - Checking Info Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "in_process",
+                    "check_label": "FCL Booking - In Process Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "bu_cancel",
+                    "check_label": "FCL Booking - BU Cancel Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "customer_cancel",
+                    "check_label": "FCL Booking - Customer Cancel Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_booking",
+                    "tab": "finished",
+                    "check_label": "FCL Booking - Finished Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_surcharge_behalf",
+                    "check_label": "FCL Surcharge/ Behalf Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "new",
+                    "check_label": "Container Deposit Management - New Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "accounting_deposit_paid",
+                    "check_label": "Container Deposit Management - Accounting Deposit Paid Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "handed_over_cs",
+                    "check_label": "Container Deposit Management - Handed Over to CS/Messenger Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "handed_over_ops",
+                    "check_label": "Container Deposit Management - Handed Over to OPS/Customer Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "handed_over_accounting",
+                    "check_label": "Container Deposit Management - Handed Over to Accounting Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "container_deposit_management",
+                    "tab": "finished",
+                    "check_label": "Container Deposit Management - Finished Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "fcl_surcharge_behalf_fleet",
+                    "check_label": "FCL Surcharge/ Behalf (Fleet) Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_customer_service_lcl_ftl_pages_etms": [
+        {
+            "test_case_id": "PERF_CS_LCL_001",
+            "test_case_ids": [
+                "PERF_LCL_BK_ALL_001",
+                "PERF_LCL_BK_NEW_001",
+                "PERF_LCL_BK_CHK_001",
+                "PERF_LCL_BK_ATD_001",
+                "PERF_LCL_BK_APU_001",
+                "PERF_LCL_BK_OND_001",
+                "PERF_LCL_BK_ADD_001",
+                "PERF_LCL_BK_DEL_001",
+                "PERF_LCL_BK_FIN_001",
+                "PERF_LCL_BK_CAN_001",
+                "PERF_LCL_TSR_001",
+                "PERF_LCL_SRB_001",
+                "PERF_LCL_SM_001",
+                "PERF_LCL_SRF_001"
+            ],
+            "description": "VFC performance — Customer Service > LCL/FTL: Booking tabs, Surcharges, Shipment Management (View Report)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "customer_service_lcl_ftl",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "all",
+                    "check_label": "LCL/FTL Booking - All Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "new",
+                    "check_label": "LCL/FTL Booking - New Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "checking_info",
+                    "check_label": "LCL/FTL Booking - Checking Info Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "assigned_to_driver",
+                    "check_label": "LCL/FTL Booking - Assigned To Driver Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "arrived_pickup_place",
+                    "check_label": "LCL/FTL Booking - Arrived Pickup Place Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "on_delivery",
+                    "check_label": "LCL/FTL Booking - On Delivery Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "arrived_delivery_place",
+                    "check_label": "LCL/FTL Booking - Arrived Delivery Place Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "delivered",
+                    "check_label": "LCL/FTL Booking - Delivered Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "finish",
+                    "check_label": "LCL/FTL Booking - Finish Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_booking",
+                    "tab": "cancel",
+                    "check_label": "LCL/FTL Booking - Cancel Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "lcl_ftl_transport_surcharge",
+                    "check_label": "LCL/FTL Transport Surcharge Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "lcl_ftl_surcharge_behalf",
+                    "check_label": "LCL/FTL Surcharge/Behalf Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "lcl_shipment_management",
+                    "check_label": "LCL Shipment Management Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "lcl_ftl_surcharge_behalf_fleet",
+                    "check_label": "LCL/FTL Surcharge/ Behalf (Fleet) Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_customer_service_soa_outsource_pages_etms": [
+        {
+            "test_case_id": "PERF_CS_SOA_001",
+            "test_case_ids": [
+                "PERF_SOA_ALL_001",
+                "PERF_SOA_NEW_001",
+                "PERF_SOA_ACC_001",
+                "PERF_SOA_REJ_001"
+            ],
+            "description": "VFC performance — Customer Service > SOA For Outsource workflow tabs (data or No Data)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "customer_service_soa_outsource",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "soa_for_outsource",
+                    "tab": "all",
+                    "check_label": "SOA For Outsource - All Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "soa_for_outsource",
+                    "tab": "new",
+                    "check_label": "SOA For Outsource - New Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "soa_for_outsource",
+                    "tab": "accept",
+                    "check_label": "SOA For Outsource - Accept Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "soa_for_outsource",
+                    "tab": "reject",
+                    "check_label": "SOA For Outsource - Reject Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                }
+            ]
+        }
     ]
 }
