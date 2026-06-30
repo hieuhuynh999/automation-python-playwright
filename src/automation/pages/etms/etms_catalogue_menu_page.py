@@ -123,6 +123,65 @@ def etms_in_page_tab_selectors(tab_label: str) -> list[str]:
     ]
 
 
+def etms_sidebar_menu_selectors(
+    parent_label: str,
+    labels: tuple[str, ...],
+    page_hash: str,
+) -> list[str]:
+    """Sidebar menu locators for a page under an optional parent section."""
+    selectors: list[str] = []
+    for label in labels:
+        if parent_label:
+            selectors.append(_sidebar_child_link(parent_label, label))
+        selectors.extend(
+            [
+                _catalogue_submenu_link_by_label(label),
+                (
+                    "xpath=//a[contains(@class,'nav-link')]"
+                    f"[.//span[normalize-space()='{label}']]"
+                ),
+            ]
+        )
+    selectors.append(_sidebar_link_by_href(page_hash))
+    return list(dict.fromkeys(selectors))
+
+
+def etms_in_page_tab_active_selectors(tab_label: str) -> list[str]:
+    """Locators for an active in-page tab matching ``tab_label``."""
+    lit = tab_label.strip()
+    return [
+        (
+            "xpath=//div[contains(@class,'nav-tabs')]"
+            f"//a[contains(@class,'active') and normalize-space()='{lit}']"
+        ),
+        (
+            "xpath=//div[contains(@class,'main-content')]"
+            f"//a[contains(@class,'nav-link') and contains(@class,'active') "
+            f"and normalize-space()='{lit}']"
+        ),
+        (
+            f"xpath=//a[contains(@class,'nav-link') and contains(@class,'active') "
+            f"and normalize-space()='{lit}']"
+        ),
+        *etms_in_page_tab_selectors(lit),
+    ]
+
+
+def is_etms_in_page_tab_active(page: BasePage, tab_label: str) -> bool:
+    """Return True when an in-page tab with ``tab_label`` has the active class."""
+    for selector in etms_in_page_tab_active_selectors(tab_label):
+        locator = page.page.locator(selector).first
+        try:
+            if locator.count() == 0:
+                continue
+            classes = locator.get_attribute("class") or ""
+            if "active" in classes:
+                return True
+        except Exception:
+            continue
+    return False
+
+
 class EtmsCatalogueMenuPage(BasePage):
     """Sidebar navigation — Catalogue menu group (eTMS nav-link sidebar)."""
 
@@ -577,14 +636,21 @@ class EtmsCatalogueMenuPage(BasePage):
     def _is_menu_item_visible(self, selectors: list[str]) -> bool:
         return self.find_visible(selectors) is not None
 
-    def wait_for_catalogue_idle(self, timeout: int | None = None) -> "EtmsCatalogueMenuPage":
-        """Wait until block-ui / loading overlays are gone before sidebar navigation."""
+    def _poll_until_overlay_hidden(self, timeout: int | None = None) -> bool:
+        """Poll until loading overlays are gone. Returns False on timeout."""
         timeout = timeout or settings.browser_timeout
         deadline = time.monotonic() + timeout / 1000
         while time.monotonic() < deadline:
             if self.find_visible(self.loading_overlay_selectors) is None:
-                return self
+                return True
             self.page.wait_for_timeout(settings.polling_interval)
+        return False
+
+    def wait_for_catalogue_idle(self, timeout: int | None = None) -> "EtmsCatalogueMenuPage":
+        """Wait until block-ui / loading overlays are gone before sidebar navigation."""
+        timeout = timeout or settings.browser_timeout
+        if self._poll_until_overlay_hidden(timeout):
+            return self
         raise AssertionError(
             f"Catalogue page still loading — overlay active after {timeout}ms"
         )
@@ -874,4 +940,157 @@ class EtmsCatalogueMenuPage(BasePage):
             submenu_selectors=self.operation_lcl_ftl_expanded_selectors,
             toggle_label="LCL/FTL menu under Operation",
             ready_label="LCL/FTL Transport Request List menu under LCL/FTL",
+        )
+
+    maintenance_and_repair_menu_selectors = [
+        _sidebar_link_by_label("Maintenance and Repair"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Maintenance and Repair']]",
+    ]
+
+    maintenance_and_repair_expanded_selectors = [
+        _sidebar_child_link("Maintenance and Repair", "Vehicle need maintaining"),
+        _sidebar_child_link("Maintenance and Repair", "M&R Request"),
+        _sidebar_child_link("Maintenance and Repair", "Maintenance Settlement"),
+        _sidebar_child_link("Maintenance and Repair", "M&R Payment Request"),
+        _sidebar_child_link("Maintenance and Repair", "Vehicle M&R Plan"),
+        _sidebar_child_link("Maintenance and Repair", "Maintenance quota"),
+        _sidebar_child_link("Maintenance and Repair", "Maintenance place"),
+        _sidebar_child_link("Maintenance and Repair", "Vehicle Repair Level"),
+        _sidebar_child_link("Maintenance and Repair", "M&R Type"),
+        _sidebar_link_by_href("maintenance/main-vehicle-need-repair"),
+        _sidebar_link_by_href("maintenance/maintenance-request"),
+        _sidebar_link_by_href("maintenance/maintenance-vehicle"),
+        _sidebar_link_by_href("maintenance/main-payment-request"),
+        _sidebar_link_by_href("maintenance/maintenance-vehicle-mr-plan"),
+        _sidebar_link_by_href("maintenance/main-maintenance-quota"),
+        _sidebar_link_by_href("maintenance/main-vehicle-maintenance-place"),
+        _sidebar_link_by_href("maintenance/main-vehicle-repair-level"),
+        _sidebar_link_by_href("maintenance/maintenance-and-repair-type"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Vehicle need maintaining']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='M&R Request']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Maintenance Settlement']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='M&R Payment Request']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Vehicle M&R Plan']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Maintenance quota']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Maintenance place']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Vehicle Repair Level']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='M&R Type']]",
+    ]
+
+    @log_method("Open Maintenance and Repair menu")
+    def open_maintenance_and_repair_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.maintenance_and_repair_menu_selectors,
+            submenu_selectors=self.maintenance_and_repair_expanded_selectors,
+            toggle_label="Maintenance and Repair menu",
+            ready_label="Vehicle need maintaining menu under Maintenance and Repair",
+        )
+
+    material_management_menu_selectors = [
+        _sidebar_link_by_label("Material Management"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Material Management']]",
+    ]
+
+    material_management_expanded_selectors = [
+        _sidebar_child_link("Material Management", "Import Material"),
+        _sidebar_child_link("Material Management", "Export Material"),
+        _sidebar_child_link("Material Management", "Closing material"),
+        _sidebar_link_by_href("material/import-material-management"),
+        _sidebar_link_by_href("material/export-material-management"),
+        _sidebar_link_by_href("material/closing-material-management"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Import Material']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Export Material']]",
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Closing material']]",
+    ]
+
+    @log_method("Open Material Management menu")
+    def open_material_management_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.material_management_menu_selectors,
+            submenu_selectors=self.material_management_expanded_selectors,
+            toggle_label="Material Management menu",
+            ready_label="Import Material menu under Material Management",
+        )
+
+    @log_method("Open Reporting menu")
+    def open_reporting_menu(self) -> "EtmsCatalogueMenuPage":
+        """Reporting is a top-level sidebar page on VFC (not under Accounting)."""
+        self.wait_for_sidebar_ready()
+        return self
+
+    accounting_menu_selectors = [
+        _sidebar_link_by_label("Accounting"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Accounting']]",
+    ]
+
+    accounting_expanded_selectors = [
+        _sidebar_child_link("Accounting", "Accrual Of Costs"),
+        _sidebar_child_link("Accounting", "Payment Request"),
+        _sidebar_child_link("Accounting", "Fuel Transaction"),
+        _sidebar_child_link("Accounting", "SOA list"),
+        _sidebar_child_link("Accounting", "Revenue Accural"),
+        _sidebar_child_link("Accounting", "Driver's Allowance"),
+        _sidebar_link_by_href("accounting/cost-accrual"),
+        _sidebar_link_by_href("accounting/payment-request"),
+        _sidebar_link_by_href("accounting/fuel-transaction"),
+        _sidebar_link_by_href("accounting/soa"),
+        _sidebar_link_by_href("accounting/revenue"),
+        _sidebar_link_by_href("accounting/salary-driver"),
+        _sidebar_child_link("Accounting", "Unlock Trip Record"),
+        _sidebar_link_by_href("customer/unlock-trip-record"),
+        _sidebar_link_by_href("accounting/sys-parameter"),
+    ]
+
+    @log_method("Open Accounting menu")
+    def open_accounting_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.accounting_menu_selectors,
+            submenu_selectors=self.accounting_expanded_selectors,
+            toggle_label="Accounting menu",
+            ready_label="Accrual Of Costs menu under Accounting",
+        )
+
+    management_menu_selectors = [
+        _sidebar_link_by_label("Management"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Management']]",
+    ]
+
+    management_expanded_selectors = [
+        _sidebar_child_link("Management", "Authorization"),
+        _sidebar_link_by_href("management/authorization"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='Authorization']]",
+    ]
+
+    @log_method("Open Management menu")
+    def open_management_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.management_menu_selectors,
+            submenu_selectors=self.management_expanded_selectors,
+            toggle_label="Management menu",
+            ready_label="Authorization menu under Management",
+        )
+
+    system_menu_selectors = [
+        _sidebar_link_by_label("System"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='System']]",
+    ]
+
+    system_expanded_selectors = [
+        _sidebar_child_link("System", "User Info"),
+        _sidebar_link_by_href("system/user-infor"),
+        "xpath=//a[contains(@class,'nav-link')][.//span[normalize-space()='User Info']]",
+    ]
+
+    @log_method("Open System menu")
+    def open_system_menu(self) -> "EtmsCatalogueMenuPage":
+        self.wait_for_sidebar_ready()
+        return self._open_sidebar_submenu(
+            toggle_selectors=self.system_menu_selectors,
+            submenu_selectors=self.system_expanded_selectors,
+            toggle_label="System menu",
+            ready_label="User Info menu under System",
         )

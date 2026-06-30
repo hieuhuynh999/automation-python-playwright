@@ -312,3 +312,111 @@ class TestVfcEtmsPerformance:
             data=data,
             login_etms=login_vfc_etms,
         )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_maintenance_and_repair_pages_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_020")
+    def test_vfc_etms_performance_maintenance_and_repair_pages(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → measure Maintenance and Repair pages & workflow tabs."""
+        run_etms_performance_suite(
+            suite="maintenance_and_repair",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_material_management_pages_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_021")
+    def test_vfc_etms_performance_material_management_pages(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → measure Material Management pages & workflow tabs."""
+        run_etms_performance_suite(
+            suite="material_management",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_accounting_pages_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_022")
+    def test_vfc_etms_performance_accounting_pages(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → measure Accounting pages & workflow tabs."""
+        run_etms_performance_suite(
+            suite="accounting",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_reporting_page_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_023")
+    def test_vfc_etms_performance_reporting_page(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → Reporting page → Download span visible & enabled."""
+        run_etms_performance_suite(
+            suite="reporting",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_management_authorization_pages_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_024")
+    def test_vfc_etms_performance_management_authorization_pages(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → Management > Authorization workflow tabs (data or No Data)."""
+        run_etms_performance_suite(
+            suite="management",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )
+
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.vfc_etms_cases(
+            "test_vfc_etms_performance_system_pages_etms"
+        ),
+    )
+    @pytest.mark.tc_id("PERF_VFC_025")
+    def test_vfc_etms_performance_system_pages(
+        self, pages, data, login_vfc_etms
+    ):
+        """VFC login once → System pages, Role/User Log/Approval tabs, Guide Style controls."""
+        run_etms_performance_suite(
+            suite="system",
+            pages=pages,
+            data=data,
+            login_etms=login_vfc_etms,
+        )

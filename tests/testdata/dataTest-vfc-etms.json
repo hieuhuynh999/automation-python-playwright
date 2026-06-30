@@ -1491,5 +1491,671 @@
                 }
             ]
         }
+    ],
+    "test_vfc_etms_performance_maintenance_and_repair_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_020",
+            "test_case_ids": [
+                "PERF_VNM_LVO_001",
+                "PERF_VNM_VNR_001",
+                "PERF_MRR_NSR_001",
+                "PERF_MRR_WFMA_001",
+                "PERF_MRR_WDA_001",
+                "PERF_MRR_ACC_001",
+                "PERF_MRR_REJ_001",
+                "PERF_MRR_REV_001",
+                "PERF_MRS_NSR_001",
+                "PERF_MRS_WFMA_001",
+                "PERF_MRS_WDA_001",
+                "PERF_MRS_ACC_001",
+                "PERF_MRS_REJ_001",
+                "PERF_MPR_PAY_001",
+                "PERF_MPR_RR_001",
+                "PERF_VMP_MP_001",
+                "PERF_VMP_AP_001",
+                "PERF_MQ_001",
+                "PERF_MP_001",
+                "PERF_VRL_001",
+                "PERF_MRT_MT_001",
+                "PERF_MRT_RT_001"
+            ],
+            "description": "VFC performance — Maintenance and Repair pages & workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "maintenance_and_repair",
+            "min_table_rows": 1,
+            "allow_no_data": false,
+            "pages": [
+                {
+                    "page_key": "vehicle_need_maintaining",
+                    "tab": "latest_vehicle_odometer",
+                    "check_label": "Vehicle need maintaining - Latest Vehicle Odometer Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "vehicle_need_maintaining",
+                    "tab": "vehicle_need_repair",
+                    "check_label": "Vehicle need maintaining - Vehicle Need Repair Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "not_send_request",
+                    "check_label": "M&R Request - Not Send Request Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "waiting_fleet_manager_approval",
+                    "check_label": "M&R Request - Waiting Fleet Manager Approval Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "waiting_director_approval",
+                    "check_label": "M&R Request - Waiting Director Approval Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "accepted",
+                    "check_label": "M&R Request - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "rejected",
+                    "check_label": "M&R Request - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_request",
+                    "tab": "revoked",
+                    "check_label": "M&R Request - Revoked Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_settlement",
+                    "tab": "not_send_request",
+                    "check_label": "Maintenance Settlement - Not Send Request Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_settlement",
+                    "tab": "waiting_fleet_manager_approval",
+                    "check_label": "Maintenance Settlement - Waiting Fleet Manager Approval Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_settlement",
+                    "tab": "waiting_director_approval",
+                    "check_label": "Maintenance Settlement - Waiting Director Approval Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_settlement",
+                    "tab": "accepted",
+                    "check_label": "Maintenance Settlement - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_settlement",
+                    "tab": "rejected",
+                    "check_label": "Maintenance Settlement - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_payment_request",
+                    "tab": "payment",
+                    "check_label": "M&R Payment Request - Payment Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_payment_request",
+                    "tab": "rejected_request",
+                    "check_label": "M&R Payment Request - Rejected Request Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "vehicle_mr_plan",
+                    "tab": "month_plan",
+                    "check_label": "Vehicle M&R Plan - Month Plan Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "vehicle_mr_plan",
+                    "tab": "annual_plan",
+                    "check_label": "Vehicle M&R Plan - Annual Plan Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "maintenance_quota",
+                    "check_label": "Maintenance quota Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "maintenance_place",
+                    "check_label": "Maintenance place Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "vehicle_repair_level",
+                    "check_label": "Vehicle Repair Level Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false,
+                    "min_table_rows": 1
+                },
+                {
+                    "page_key": "mr_type",
+                    "tab": "maintenance_type",
+                    "check_label": "M&R Type - Maintenance Type Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "mr_type",
+                    "tab": "repair_type",
+                    "check_label": "M&R Type - Repair Type Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_material_management_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_021",
+            "test_case_ids": [
+                "PERF_IM_NSR_001",
+                "PERF_IM_PND_001",
+                "PERF_IM_ACC_001",
+                "PERF_IM_REJ_001",
+                "PERF_EM_NSR_001",
+                "PERF_EM_PND_001",
+                "PERF_EM_ACC_001",
+                "PERF_EM_REJ_001",
+                "PERF_CM_001"
+            ],
+            "description": "VFC performance — Material Management pages & workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "material_management",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "import_material",
+                    "tab": "not_sent_request",
+                    "check_label": "Import Material - Not Sent Request Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "import_material",
+                    "tab": "pending",
+                    "check_label": "Import Material - Pending Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "import_material",
+                    "tab": "accepted",
+                    "check_label": "Import Material - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "import_material",
+                    "tab": "rejected",
+                    "check_label": "Import Material - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "export_material",
+                    "tab": "not_sent_request",
+                    "check_label": "Export Material - Not Sent Request Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "export_material",
+                    "tab": "pending",
+                    "check_label": "Export Material - Pending Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "export_material",
+                    "tab": "accepted",
+                    "check_label": "Export Material - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "export_material",
+                    "tab": "rejected",
+                    "check_label": "Export Material - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "closing_material",
+                    "check_label": "Closing material Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true,
+                    "min_table_rows": 1
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_accounting_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_022",
+            "test_case_ids": [
+                "PERF_AOC_CA_001",
+                "PERF_AOC_CKR_001",
+                "PERF_AOC_KMR_001",
+                "PERF_APR_PAY_001",
+                "PERF_APR_RS_001",
+                "PERF_FT_001",
+                "PERF_SOAL_001",
+                "PERF_RA_RA_001",
+                "PERF_RA_RKR_001",
+                "PERF_DA_001",
+                "PERF_UTR_ACC_001",
+                "PERF_PARAM_001",
+                "PERF_CRA_001",
+                "PERF_DAP_001",
+                "PERF_MFS_001",
+                "PERF_PD_001",
+                "PERF_FPR_001",
+                "PERF_USR_001",
+                "PERF_COD_001",
+                "PERF_REC_001"
+            ],
+            "description": "VFC performance — Accounting pages & workflow tabs",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "accounting",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "accrual_of_costs",
+                    "tab": "cost_accrual",
+                    "check_label": "Accrual Of Costs - Cost Accural Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "accrual_of_costs",
+                    "tab": "cost_kpi_reconciliation",
+                    "check_label": "Accrual Of Costs - Cost KPI Reconciliation Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "accrual_of_costs",
+                    "tab": "km_reconciliation",
+                    "check_label": "Accrual Of Costs - KM Reconciliation Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "accounting_payment_request",
+                    "tab": "payment",
+                    "check_label": "Payment Request - Payment Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "accounting_payment_request",
+                    "tab": "rejected_surcharge",
+                    "check_label": "Payment Request - Rejected Surcharge Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "fuel_transaction",
+                    "check_label": "Fuel Transaction Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "soa_list",
+                    "check_label": "SOA list Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "revenue_accrual",
+                    "tab": "revenue_accrual",
+                    "check_label": "Revenue Accural - Revenue Accural Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "revenue_accrual",
+                    "tab": "revenue_kpi_reconciliation",
+                    "check_label": "Revenue Accural - Revenue KPI Reconciliation Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "drivers_allowance",
+                    "check_label": "Driver's Allowance Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "unlock_trip_record",
+                    "check_label": "Unlock Trip Record Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "accounting_parameters",
+                    "check_label": "Parameters Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "cost_revenue_allocation",
+                    "check_label": "Cost / Revenue Allocation Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "driver_allowance_parameter",
+                    "check_label": "Driver Allowance Parameter Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "monthly_fuel_settlement",
+                    "check_label": "Monthly Fuel Settlement Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "partner_debit",
+                    "check_label": "Partner Debit Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "fuel_payment_request",
+                    "check_label": "Fuel Payment Request Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "unlock_surcharge_request",
+                    "check_label": "Unlock Surcharge Request Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "cod_clearing",
+                    "check_label": "COD Clearing Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": false
+                },
+                {
+                    "page_key": "accounting_receipts",
+                    "check_label": "Receipts Page",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_reporting_page_etms": [
+        {
+            "test_case_id": "PERF_VFC_023",
+            "test_case_ids": [
+                "PERF_REP_001"
+            ],
+            "description": "VFC performance — Reporting page (Download visible & enabled)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "reporting",
+            "min_table_rows": 0,
+            "pages": [
+                {
+                    "page_key": "reporting",
+                    "check_label": "Reporting Page",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_management_authorization_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_024",
+            "test_case_ids": [
+                "PERF_AUTH_UPD_001",
+                "PERF_AUTH_PND_001",
+                "PERF_AUTH_ACC_001",
+                "PERF_AUTH_REJ_001",
+                "PERF_AUTH_EXP_001",
+                "PERF_AUTH_REV_001"
+            ],
+            "description": "VFC performance — Management > Authorization workflow tabs (data or No Data)",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "management",
+            "min_table_rows": 1,
+            "allow_no_data": true,
+            "pages": [
+                {
+                    "page_key": "authorization",
+                    "tab": "updating",
+                    "check_label": "Authorization - Updating Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "authorization",
+                    "tab": "pending",
+                    "check_label": "Authorization - Pending Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "authorization",
+                    "tab": "accepted",
+                    "check_label": "Authorization - Accepted Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "authorization",
+                    "tab": "rejected",
+                    "check_label": "Authorization - Rejected Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "authorization",
+                    "tab": "expired",
+                    "check_label": "Authorization - Expired Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "authorization",
+                    "tab": "reversed",
+                    "check_label": "Authorization - Reversed Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                }
+            ]
+        }
+    ],
+    "test_vfc_etms_performance_system_pages_etms": [
+        {
+            "test_case_id": "PERF_VFC_025",
+            "test_case_ids": [
+                "PERF_SYS_UI_001",
+                "PERF_SYS_EMP_001",
+                "PERF_SYS_ROLE_001",
+                "PERF_SYS_ROLE_POR_001",
+                "PERF_SYS_PERM_001",
+                "PERF_SYS_PIN_001",
+                "PERF_SYS_UL_ETMS_001",
+                "PERF_SYS_UL_MOB_001",
+                "PERF_SYS_UL_BRV_001",
+                "PERF_SYS_UL_PET_001",
+                "PERF_SYS_MENU_001",
+                "PERF_SYS_GS_ADD_001",
+                "PERF_SYS_GS_BTN_001",
+                "PERF_SYS_AWC_AW_001",
+                "PERF_SYS_AWC_AO_001",
+                "PERF_SYS_AWC_AP_001"
+            ],
+            "description": "VFC performance — System pages, workflow tabs, Guide Style controls",
+            "module": "Performance",
+            "priority": "high",
+            "preconditions": "VFC login success + branch selected",
+            "branch": "VNHCM",
+            "suite": "system",
+            "min_table_rows": 1,
+            "allow_no_data": false,
+            "pages": [
+                {
+                    "page_key": "user_info",
+                    "check_label": "User Info Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "employee",
+                    "check_label": "Employee Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "role",
+                    "tab": "role",
+                    "check_label": "Role - Role Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "role",
+                    "tab": "permission_of_role",
+                    "check_label": "Role - Permission of Role Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "permission",
+                    "check_label": "Permission Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "permission_instruction",
+                    "check_label": "Permission Instruction Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "user_log",
+                    "tab": "etms_log",
+                    "check_label": "User Log - eTMS Log Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "user_log",
+                    "tab": "mobile_log",
+                    "check_label": "User Log - Mobile Log Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "user_log",
+                    "tab": "bravo_log",
+                    "check_label": "User Log - Bravo Log Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "user_log",
+                    "tab": "petrolimex_log",
+                    "check_label": "User Log - Petrolimex Log Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "menu",
+                    "check_label": "Menu Page",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "guide_style",
+                    "tab": "add_new",
+                    "check_label": "Guide Style - + Add new Button",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "guide_style",
+                    "tab": "button_style",
+                    "check_label": "Guide Style - Button style Button",
+                    "max_step_seconds": 10,
+                    "min_table_rows": 0
+                },
+                {
+                    "page_key": "approval_workflow_configuration",
+                    "tab": "approval_workflow",
+                    "check_label": "Approval Workflow Configuration - Approval Workflow Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "approval_workflow_configuration",
+                    "tab": "approval_object",
+                    "check_label": "Approval Workflow Configuration - Approval Object Tab",
+                    "max_step_seconds": 10
+                },
+                {
+                    "page_key": "approval_workflow_configuration",
+                    "tab": "approval_position",
+                    "check_label": "Approval Workflow Configuration - Approval Position Tab",
+                    "max_step_seconds": 10
+                }
+            ]
+        }
     ]
 }

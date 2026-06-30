@@ -58,6 +58,23 @@ _DEDICATED_PERF_PAGES: dict[str, str] = {
     "lcl_ftl_check_out": "7.Check Out Page",
     "lcl_ftl_check_in": "9.Check In Page",
     "lcl_ftl_unbag": "11.Unbag Page",
+    "vehicle_need_maintaining": "Vehicle need maintaining Page",
+    "mr_request": "M&R Request Page",
+    "maintenance_settlement": "Maintenance Settlement Page",
+    "mr_payment_request": "M&R Payment Request Page",
+    "vehicle_mr_plan": "Vehicle M&R Plan Page",
+    "mr_type": "M&R Type Page",
+    "import_material": "Import Material Page",
+    "export_material": "Export Material Page",
+    "accrual_of_costs": "Accrual Of Costs Page",
+    "accounting_payment_request": "Payment Request Page",
+    "revenue_accrual": "Revenue Accural Page",
+    "reporting": "Reporting Page",
+    "authorization": "Authorization Page",
+    "role": "Role Page",
+    "user_log": "User Log Page",
+    "guide_style": "Guide Style Page",
+    "approval_workflow_configuration": "Approval Workflow Configuration Page",
 }
 
 
@@ -154,6 +171,42 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
         return pages.etms_lcl_ftl_check_in_page
     if page_key == "lcl_ftl_unbag":
         return pages.etms_lcl_ftl_unbag_page
+    if page_key == "vehicle_need_maintaining":
+        return pages.etms_vehicle_need_maintaining_page
+    if page_key == "mr_request":
+        return pages.etms_mr_request_page
+    if page_key == "maintenance_settlement":
+        return pages.etms_maintenance_settlement_page
+    if page_key == "mr_payment_request":
+        return pages.etms_mr_payment_request_page
+    if page_key == "vehicle_mr_plan":
+        return pages.etms_vehicle_mr_plan_page
+    if page_key == "mr_type":
+        return pages.etms_mr_type_page
+    if page_key == "import_material":
+        return pages.etms_import_material_page
+    if page_key == "export_material":
+        return pages.etms_export_material_page
+    if page_key == "accrual_of_costs":
+        return pages.etms_accrual_of_costs_page
+    if page_key == "accounting_payment_request":
+        return pages.etms_accounting_payment_request_page
+    if page_key == "revenue_accrual":
+        return pages.etms_revenue_accrual_page
+    if page_key == "reporting":
+        return pages.etms_reporting_page
+    if page_key == "accounting_reporting":
+        return pages.etms_reporting_page
+    if page_key == "authorization":
+        return pages.etms_authorization_page
+    if page_key == "role":
+        return pages.etms_role_page
+    if page_key == "user_log":
+        return pages.etms_user_log_page
+    if page_key == "guide_style":
+        return pages.etms_guide_style_page
+    if page_key == "approval_workflow_configuration":
+        return pages.etms_approval_workflow_configuration_page
 
     raise KeyError(f"No PageManager resolver for performance page_key '{page_key}'")
 

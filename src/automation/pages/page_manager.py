@@ -44,6 +44,31 @@ from automation.pages.etms.etms_customer_service_pages import (
     EtmsLclShipmentManagementPage,
     EtmsSoaForOutsourcePage,
 )
+from automation.pages.etms.etms_management_pages import EtmsAuthorizationPage
+from automation.pages.etms.etms_system_pages import (
+    EtmsApprovalWorkflowConfigurationPage,
+    EtmsGuideStylePage,
+    EtmsSystemRolePage,
+    EtmsUserLogPage,
+)
+from automation.pages.etms.etms_material_pages import (
+    EtmsExportMaterialPage,
+    EtmsImportMaterialPage,
+)
+from automation.pages.etms.etms_accounting_pages import (
+    EtmsAccountingPaymentRequestPage,
+    EtmsAccrualOfCostsPage,
+    EtmsRevenueAccrualPage,
+)
+from automation.pages.etms.etms_reporting_page import EtmsReportingPage
+from automation.pages.etms.etms_maintenance_pages import (
+    EtmsMaintenanceSettlementPage,
+    EtmsMrPaymentRequestPage,
+    EtmsMrRequestPage,
+    EtmsMrTypePage,
+    EtmsVehicleMrPlanPage,
+    EtmsVehicleNeedMaintainingPage,
+)
 from automation.pages.etms.etms_operation_lcl_ftl_action_page import (
     EtmsLclFtlCheckInPage,
     EtmsLclFtlCheckOutPage,
@@ -102,6 +127,25 @@ class PageManager:
         self._etms_lcl_ftl_check_out_page: EtmsLclFtlCheckOutPage | None = None
         self._etms_lcl_ftl_check_in_page: EtmsLclFtlCheckInPage | None = None
         self._etms_lcl_ftl_unbag_page: EtmsLclFtlUnbagPage | None = None
+        self._etms_vehicle_need_maintaining_page: EtmsVehicleNeedMaintainingPage | None = None
+        self._etms_mr_request_page: EtmsMrRequestPage | None = None
+        self._etms_maintenance_settlement_page: EtmsMaintenanceSettlementPage | None = None
+        self._etms_mr_payment_request_page: EtmsMrPaymentRequestPage | None = None
+        self._etms_vehicle_mr_plan_page: EtmsVehicleMrPlanPage | None = None
+        self._etms_mr_type_page: EtmsMrTypePage | None = None
+        self._etms_import_material_page: EtmsImportMaterialPage | None = None
+        self._etms_export_material_page: EtmsExportMaterialPage | None = None
+        self._etms_accrual_of_costs_page: EtmsAccrualOfCostsPage | None = None
+        self._etms_accounting_payment_request_page: EtmsAccountingPaymentRequestPage | None = None
+        self._etms_revenue_accrual_page: EtmsRevenueAccrualPage | None = None
+        self._etms_accounting_reporting_page: EtmsReportingPage | None = None
+        self._etms_authorization_page: EtmsAuthorizationPage | None = None
+        self._etms_role_page: EtmsSystemRolePage | None = None
+        self._etms_user_log_page: EtmsUserLogPage | None = None
+        self._etms_guide_style_page: EtmsGuideStylePage | None = None
+        self._etms_approval_workflow_configuration_page: (
+            EtmsApprovalWorkflowConfigurationPage | None
+        ) = None
         self._etms_catalogue_menu_page: EtmsCatalogueMenuPage | None = None
         self._etms_catalogue_list_pages: dict[str, EtmsCatalogueListPage] = {}
         self._etms_administrative_units_page: EtmsAdministrativeUnitsPage | None = None
@@ -340,6 +384,123 @@ class PageManager:
         if self._etms_lcl_ftl_unbag_page is None:
             self._etms_lcl_ftl_unbag_page = EtmsLclFtlUnbagPage(self.page)
         return self._etms_lcl_ftl_unbag_page
+
+    @property
+    def etms_vehicle_need_maintaining_page(self) -> EtmsVehicleNeedMaintainingPage:
+        if self._etms_vehicle_need_maintaining_page is None:
+            self._etms_vehicle_need_maintaining_page = EtmsVehicleNeedMaintainingPage(
+                self.page
+            )
+        return self._etms_vehicle_need_maintaining_page
+
+    @property
+    def etms_mr_request_page(self) -> EtmsMrRequestPage:
+        if self._etms_mr_request_page is None:
+            self._etms_mr_request_page = EtmsMrRequestPage(self.page)
+        return self._etms_mr_request_page
+
+    @property
+    def etms_maintenance_settlement_page(self) -> EtmsMaintenanceSettlementPage:
+        if self._etms_maintenance_settlement_page is None:
+            self._etms_maintenance_settlement_page = EtmsMaintenanceSettlementPage(
+                self.page
+            )
+        return self._etms_maintenance_settlement_page
+
+    @property
+    def etms_mr_payment_request_page(self) -> EtmsMrPaymentRequestPage:
+        if self._etms_mr_payment_request_page is None:
+            self._etms_mr_payment_request_page = EtmsMrPaymentRequestPage(self.page)
+        return self._etms_mr_payment_request_page
+
+    @property
+    def etms_vehicle_mr_plan_page(self) -> EtmsVehicleMrPlanPage:
+        if self._etms_vehicle_mr_plan_page is None:
+            self._etms_vehicle_mr_plan_page = EtmsVehicleMrPlanPage(self.page)
+        return self._etms_vehicle_mr_plan_page
+
+    @property
+    def etms_mr_type_page(self) -> EtmsMrTypePage:
+        if self._etms_mr_type_page is None:
+            self._etms_mr_type_page = EtmsMrTypePage(self.page)
+        return self._etms_mr_type_page
+
+    @property
+    def etms_import_material_page(self) -> EtmsImportMaterialPage:
+        if self._etms_import_material_page is None:
+            self._etms_import_material_page = EtmsImportMaterialPage(self.page)
+        return self._etms_import_material_page
+
+    @property
+    def etms_export_material_page(self) -> EtmsExportMaterialPage:
+        if self._etms_export_material_page is None:
+            self._etms_export_material_page = EtmsExportMaterialPage(self.page)
+        return self._etms_export_material_page
+
+    @property
+    def etms_accrual_of_costs_page(self) -> EtmsAccrualOfCostsPage:
+        if self._etms_accrual_of_costs_page is None:
+            self._etms_accrual_of_costs_page = EtmsAccrualOfCostsPage(self.page)
+        return self._etms_accrual_of_costs_page
+
+    @property
+    def etms_accounting_payment_request_page(self) -> EtmsAccountingPaymentRequestPage:
+        if self._etms_accounting_payment_request_page is None:
+            self._etms_accounting_payment_request_page = EtmsAccountingPaymentRequestPage(
+                self.page
+            )
+        return self._etms_accounting_payment_request_page
+
+    @property
+    def etms_revenue_accrual_page(self) -> EtmsRevenueAccrualPage:
+        if self._etms_revenue_accrual_page is None:
+            self._etms_revenue_accrual_page = EtmsRevenueAccrualPage(self.page)
+        return self._etms_revenue_accrual_page
+
+    @property
+    def etms_reporting_page(self) -> EtmsReportingPage:
+        if self._etms_accounting_reporting_page is None:
+            self._etms_accounting_reporting_page = EtmsReportingPage(self.page)
+        return self._etms_accounting_reporting_page
+
+    @property
+    def etms_accounting_reporting_page(self) -> EtmsReportingPage:
+        """Backward-compatible alias for etms_reporting_page."""
+        return self.etms_reporting_page
+
+    @property
+    def etms_authorization_page(self) -> EtmsAuthorizationPage:
+        if self._etms_authorization_page is None:
+            self._etms_authorization_page = EtmsAuthorizationPage(self.page)
+        return self._etms_authorization_page
+
+    @property
+    def etms_role_page(self) -> EtmsSystemRolePage:
+        if self._etms_role_page is None:
+            self._etms_role_page = EtmsSystemRolePage(self.page)
+        return self._etms_role_page
+
+    @property
+    def etms_user_log_page(self) -> EtmsUserLogPage:
+        if self._etms_user_log_page is None:
+            self._etms_user_log_page = EtmsUserLogPage(self.page)
+        return self._etms_user_log_page
+
+    @property
+    def etms_guide_style_page(self) -> EtmsGuideStylePage:
+        if self._etms_guide_style_page is None:
+            self._etms_guide_style_page = EtmsGuideStylePage(self.page)
+        return self._etms_guide_style_page
+
+    @property
+    def etms_approval_workflow_configuration_page(
+        self,
+    ) -> EtmsApprovalWorkflowConfigurationPage:
+        if self._etms_approval_workflow_configuration_page is None:
+            self._etms_approval_workflow_configuration_page = (
+                EtmsApprovalWorkflowConfigurationPage(self.page)
+            )
+        return self._etms_approval_workflow_configuration_page
 
     @property
     def etms_catalogue_menu_page(self) -> EtmsCatalogueMenuPage:

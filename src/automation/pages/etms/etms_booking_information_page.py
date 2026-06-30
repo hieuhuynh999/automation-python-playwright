@@ -4,6 +4,11 @@ import time
 
 from automation.config import settings
 from automation.logging import log_method
+from automation.pages.etms.etms_catalogue_menu_page import (
+    _catalogue_submenu_link_by_label,
+    _sidebar_child_link,
+    _sidebar_link_by_href,
+)
 from automation.pages.etms.etms_catalogue_tabbed_list_page import (
     EtmsCatalogueTabConfig,
     EtmsCatalogueTabbedListPage,
@@ -50,6 +55,37 @@ class EtmsBookingInformationPage(EtmsCatalogueTabbedListPage):
     default_tab_key = DEFAULT_ETMS_BOOKING_INFORMATION_TAB
     tab_configs = ETMS_BOOKING_INFORMATION_TAB_CONFIGS
     _landing_tab_key = "goods_information"
+
+    def _menu_selectors(self) -> list[str]:
+        """Partner submenu leaf — scope under catPartners so sidebar click navigates."""
+        title = self.title
+        return list(
+            dict.fromkeys(
+                [
+                    f"#{self.menu_li_id} > a.nav-link",
+                    (
+                        "xpath=//li[@id='catPartners']"
+                        f"//li[@id='{self.menu_li_id}']//a[contains(@class,'nav-link')]"
+                    ),
+                    (
+                        f"xpath=//li[@id='{self.menu_li_id}']"
+                        f"//span[normalize-space()='{title}']"
+                        "/ancestor::a[contains(@class,'nav-link')][1]"
+                    ),
+                    _sidebar_child_link("Partner", title),
+                    _sidebar_link_by_href(self.page_hash),
+                    (
+                        "xpath=//a[contains(@class,'nav-link')]"
+                        f"[.//span[normalize-space()='{title}']]"
+                    ),
+                    _catalogue_submenu_link_by_label(title),
+                ]
+            )
+        )
+
+    def _navigate_to_page(self, tab_key: str | None = None) -> None:
+        self.open_partner_menu()
+        super()._navigate_to_page(tab_key)
 
     def list_table_selectors_for_tab(self, tab_key: str) -> list[str]:
         if tab_key == "shipment_note":

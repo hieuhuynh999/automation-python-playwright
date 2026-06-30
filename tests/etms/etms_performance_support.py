@@ -41,6 +41,12 @@ _DIRECT_SUITE_MENU_OPENERS: dict[str, Callable[[Any], None]] = {
     "operation_common": lambda nav_page: nav_page.open_operation_common_menu(),
     "operation_fcl": lambda nav_page: nav_page.open_operation_fcl_menu(),
     "operation_lcl_ftl": lambda nav_page: nav_page.open_operation_lcl_ftl_menu(),
+    "maintenance_and_repair": lambda nav_page: nav_page.open_maintenance_and_repair_menu(),
+    "material_management": lambda nav_page: nav_page.open_material_management_menu(),
+    "accounting": lambda nav_page: nav_page.open_accounting_menu(),
+    "reporting": lambda nav_page: nav_page.open_reporting_menu(),
+    "management": lambda nav_page: nav_page.open_management_menu(),
+    "system": lambda nav_page: nav_page.open_system_menu(),
 }
 
 

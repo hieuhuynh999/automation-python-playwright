@@ -98,6 +98,12 @@ _PERFORMANCE_MENU_SUITE_OPENERS: dict[str, Callable[[EtmsCatalogueMenuPage], Non
     "operation_common": _performance_menu_opener("open_operation_common_menu"),
     "operation_fcl": _performance_menu_opener("open_operation_fcl_menu"),
     "operation_lcl_ftl": _performance_menu_opener("open_operation_lcl_ftl_menu"),
+    "maintenance_and_repair": _performance_menu_opener("open_maintenance_and_repair_menu"),
+    "material_management": _performance_menu_opener("open_material_management_menu"),
+    "accounting": _performance_menu_opener("open_accounting_menu"),
+    "reporting": _performance_menu_opener("open_reporting_menu"),
+    "management": _performance_menu_opener("open_management_menu"),
+    "system": _performance_menu_opener("open_system_menu"),
 }
 
 
@@ -327,12 +333,7 @@ class EtmsPricingWorkflowListPage(EtmsCatalogueMenuPage):
         return self.find_visible(active_selectors) is not None
 
     def _wait_for_loading_overlay_hidden(self, timeout: int | None = None) -> None:
-        timeout = timeout or settings.browser_timeout
-        deadline = time.monotonic() + timeout / 1000
-        while time.monotonic() < deadline:
-            if self.find_visible(self.loading_overlay_selectors) is None:
-                return
-            self.page.wait_for_timeout(settings.polling_interval)
+        self._poll_until_overlay_hidden(timeout)
 
     def _wait_for_filter_tab_active(self, tab_label: str, timeout: int | None = None) -> bool:
         timeout = timeout or settings.tab_switch_timeout

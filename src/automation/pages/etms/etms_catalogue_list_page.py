@@ -369,6 +369,216 @@ OPERATION_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     ),
 }
 
+MAINTENANCE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "maintenance_quota": EtmsCatalogueListPageConfig(
+        page_key="maintenance_quota",
+        title="Maintenance quota",
+        page_hash="maintenance/main-maintenance-quota",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="maintenance_and_repair",
+        menu_parent_label="Maintenance and Repair",
+    ),
+    "maintenance_place": EtmsCatalogueListPageConfig(
+        page_key="maintenance_place",
+        title="Maintenance place",
+        page_hash="maintenance/main-vehicle-maintenance-place",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="maintenance_and_repair",
+        menu_parent_label="Maintenance and Repair",
+    ),
+    "vehicle_repair_level": EtmsCatalogueListPageConfig(
+        page_key="vehicle_repair_level",
+        title="Vehicle Repair Level",
+        page_hash="maintenance/main-vehicle-repair-level",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="maintenance_and_repair",
+        menu_parent_label="Maintenance and Repair",
+    ),
+}
+
+MATERIAL_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "closing_material": EtmsCatalogueListPageConfig(
+        page_key="closing_material",
+        title="Closing material",
+        page_hash="material/closing-material-management",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="material_management",
+        menu_parent_label="Material Management",
+    ),
+}
+
+ACCOUNTING_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "fuel_transaction": EtmsCatalogueListPageConfig(
+        page_key="fuel_transaction",
+        title="Fuel Transaction",
+        page_hash="accounting/fuel-transaction",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "soa_list": EtmsCatalogueListPageConfig(
+        page_key="soa_list",
+        title="SOA list",
+        page_hash="accounting/soa",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "drivers_allowance": EtmsCatalogueListPageConfig(
+        page_key="drivers_allowance",
+        title="Driver's Allowance",
+        page_hash="accounting/salary-driver",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "unlock_trip_record": EtmsCatalogueListPageConfig(
+        page_key="unlock_trip_record",
+        title="Unlock Trip Record",
+        page_hash="customer/unlock-trip-record",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "accounting_parameters": EtmsCatalogueListPageConfig(
+        page_key="accounting_parameters",
+        title="Parameters",
+        page_hash="accounting/sys-parameter",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "cost_revenue_allocation": EtmsCatalogueListPageConfig(
+        page_key="cost_revenue_allocation",
+        title="Cost / Revenue Allocation",
+        page_hash="accounting/cost-revenue-allocation",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "driver_allowance_parameter": EtmsCatalogueListPageConfig(
+        page_key="driver_allowance_parameter",
+        title="Driver Allowance Parameter",
+        page_hash="accounting/driver-allowance-parameter",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "monthly_fuel_settlement": EtmsCatalogueListPageConfig(
+        page_key="monthly_fuel_settlement",
+        title="Monthly Fuel Settlement",
+        page_hash="accounting/monthly-fuel-settlement",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "partner_debit": EtmsCatalogueListPageConfig(
+        page_key="partner_debit",
+        title="Partner Debit",
+        page_hash="accounting/partner-debit",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "fuel_payment_request": EtmsCatalogueListPageConfig(
+        page_key="fuel_payment_request",
+        title="Fuel Payment Request",
+        page_hash="accounting/fuel-payment-request",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "unlock_surcharge_request": EtmsCatalogueListPageConfig(
+        page_key="unlock_surcharge_request",
+        title="Unlock Surcharge Request",
+        page_hash="accounting/unlock-surcharge",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "cod_clearing": EtmsCatalogueListPageConfig(
+        page_key="cod_clearing",
+        title="COD Clearing",
+        page_hash="accounting/cod-clearing",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+    "accounting_receipts": EtmsCatalogueListPageConfig(
+        page_key="accounting_receipts",
+        title="Receipts",
+        page_hash="accounting/receipt",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="accounting",
+        menu_parent_label="Accounting",
+    ),
+}
+
+SYSTEM_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
+    "user_info": EtmsCatalogueListPageConfig(
+        page_key="user_info",
+        title="User Info",
+        page_hash="system/user-infor",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="system",
+        menu_parent_label="System",
+    ),
+    "employee": EtmsCatalogueListPageConfig(
+        page_key="employee",
+        title="Employee",
+        page_hash="system/employee",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="system",
+        menu_parent_label="System",
+    ),
+    "permission": EtmsCatalogueListPageConfig(
+        page_key="permission",
+        title="Permission",
+        page_hash="system/permission-list",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="system",
+        menu_parent_label="System",
+    ),
+    "permission_instruction": EtmsCatalogueListPageConfig(
+        page_key="permission_instruction",
+        title="Permission Instruction",
+        page_hash="system/permission-instruction",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="system",
+        menu_parent_label="System",
+    ),
+    "menu": EtmsCatalogueListPageConfig(
+        page_key="menu",
+        title="Menu",
+        page_hash="system/menu",
+        menu_li_id="",
+        list_column_headers=(),
+        catalogue_suite="system",
+        menu_parent_label="System",
+    ),
+}
+
 CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **TRANSPORT_NETWORK_LIST_PAGE_CONFIGS,
     **PARTNER_LIST_PAGE_CONFIGS,
@@ -378,6 +588,10 @@ CATALOGUE_LIST_PAGE_CONFIGS: dict[str, EtmsCatalogueListPageConfig] = {
     **CATALOGUE_MASTER_LIST_PAGE_CONFIGS,
     **CUSTOMER_SERVICE_LIST_PAGE_CONFIGS,
     **OPERATION_LIST_PAGE_CONFIGS,
+    **MAINTENANCE_LIST_PAGE_CONFIGS,
+    **MATERIAL_LIST_PAGE_CONFIGS,
+    **ACCOUNTING_LIST_PAGE_CONFIGS,
+    **SYSTEM_LIST_PAGE_CONFIGS,
 }
 
 
@@ -431,6 +645,14 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
             self.open_operation_fcl_menu()
         elif self._config.catalogue_suite == "operation_lcl_ftl":
             self.open_operation_lcl_ftl_menu()
+        elif self._config.catalogue_suite == "maintenance_and_repair":
+            self.open_maintenance_and_repair_menu()
+        elif self._config.catalogue_suite == "material_management":
+            self.open_material_management_menu()
+        elif self._config.catalogue_suite == "accounting":
+            self.open_accounting_menu()
+        elif self._config.catalogue_suite == "system":
+            self.open_system_menu()
         else:
             self.open_transport_network_menu()
 
@@ -467,7 +689,14 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
         return list(dict.fromkeys(selectors))
 
     def _list_title_selectors(self) -> list[str]:
-        return etms_page_title_selectors(self._config.title)
+        title = self._config.title
+        if self.page_key == "drivers_allowance":
+            return [
+                "xpath=//*[contains(@class,'page-title') and contains(normalize-space(),'Allowance')]",
+                "xpath=//h5[contains(normalize-space(),'Allowance')]",
+                *etms_page_title_selectors(title),
+            ]
+        return etms_page_title_selectors(title)
 
     _GENERIC_GRID_PAGE_KEYS = frozenset(
         {
@@ -489,6 +718,28 @@ class EtmsCatalogueListPage(EtmsCatalogueMenuPage):
             "lcl_ftl_consolidation",
             "lcl_ftl_transit",
             "lcl_ftl_delivery_run_sheet",
+            "maintenance_quota",
+            "maintenance_place",
+            "vehicle_repair_level",
+            "closing_material",
+            "fuel_transaction",
+            "soa_list",
+            "drivers_allowance",
+            "unlock_trip_record",
+            "accounting_parameters",
+            "cost_revenue_allocation",
+            "driver_allowance_parameter",
+            "monthly_fuel_settlement",
+            "partner_debit",
+            "fuel_payment_request",
+            "unlock_surcharge_request",
+            "cod_clearing",
+            "accounting_receipts",
+            "user_info",
+            "employee",
+            "permission",
+            "permission_instruction",
+            "menu",
         }
     )
 

@@ -17,6 +17,7 @@
    - [0.5 User Input Formats](#05-user-input-formats-ai-must-parse)
    - [0.6 AI Response Template](#06-ai-response-template-when-user-asks-automate-tc_xxx)
    - [0.7 Copy-Paste Skeletons](#07-copy-paste-skeletons-minimum-viable-code)
+   - [0.10 How to Write Any Test Case (AI Cookbook)](#010-how-to-write-any-test-case-ai-cookbook)
 1. [Quick Start for AI](#1-quick-start-for-ai)
 2. [Repository Map](#2-repository-map)
    - [2.1 Framework Architecture & Layers](#21-framework-architecture--layers)
@@ -40,6 +41,7 @@
 6. [How to Write a UI Test (Step-by-Step)](#6-how-to-write-a-ui-test-step-by-step)
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
    - [7.1 Common Components & Utils](#71-common-components--utils-when-to-use-what)
+   - [7.2 eTMS POM Factory — Suite Workflow Pages](#72-etms-pom-factory--suite-workflow-pages)
 8. [How to Write Test Data (JSON)](#8-how-to-write-test-data-json)
 9. [How to Write an API Test](#9-how-to-write-an-api-test)
 10. [How to Write a DB Test](#10-how-to-write-a-db-test)
@@ -54,6 +56,7 @@
 18. [Flaky Test Diagnosis & Fix](#18-flaky-test-diagnosis--fix)
 19. [Framework Architect Quick Reference](#19-framework-architect-quick-reference)
 20. [eTMS Performance Tests](#20-etms-performance-tests)
+   - [20.8 Step-by-Step — Add a New Performance Check](#208-step-by-step--add-a-new-performance-check)
 
 ---
 
@@ -67,6 +70,7 @@
 |-----|-------------|-------------|-----------|--------------|
 | **eFMS** | `settings.efms_base_url` | `tests/efms/` | `tests/testdata/dataTest-efms.json` | `src/automation/pages/efms/` |
 | **eTMS** | `settings.etms_base_url` | `tests/etms/` | `tests/testdata/dataTest-etms.json` | `src/automation/pages/etms/` |
+| **VFC eTMS** | `settings.etms_base_url` (VFC tenant) | `tests/etms/` | `tests/testdata/dataTest-vfc-etms.json` | Same `etms/` POMs + `login_vfc_etms` fixture |
 
 **Architecture in one line:** `Test → pages fixture → PageManager → {App}Page → Common Components (composed) → BasePage → Playwright`
 
@@ -89,6 +93,7 @@
 | 9 | **Reuse UI widgets via `pages/common/`** — ng-select, native select, SweetAlert; do not duplicate in each Page Object (Section 7.1) |
 | 10 | **Assertions in test files only** — Page Objects return `bool` / raise wait errors; use `assert` with messages in tests (Section 3.7) |
 | 11 | **Verify locators from live DOM** before committing new selectors — never guess (Section 3.9–3.10) |
+| 12 | **Performance tests** — thin test + JSON `pages[]` + POM `prepare_for_performance` / `run_performance_measurement` (Section 0.10, 20) |
 
 ### 0.3 Mandatory eight-step pipeline
 
@@ -141,6 +146,8 @@ Step 8  RUN & verify
 | **D — Single form / action** | One screen, fill + save + verify | FMS_BR_001/002 patterns | `fill_*_form(data)`, assert message |
 | **E — eTMS auth (login + branch)** | eTMS login / branch / home | `TestEtmsAuth` — Example B, Section 4.1 | `EtmsLoginPage` + `EtmsHomePage`; `NgSelectComponent` for branch |
 | **G — eTMS create + delete (single TC)** | One record create then delete same run | `TestEtmsCostOfRoute` — Section 5.15 | `login_etms` fixture; menu search; `action-btn` → Delete on row |
+| **H — eTMS performance (standard)** | Measure page/tab load time vs threshold | `TestEtmsPerformance` — Section 20 | JSON `pages[]` + `run_etms_performance_suite()`; **no assertions in test body** |
+| **I — VFC eTMS performance** | Same as H but VFC login + extended suites | `TestVfcEtmsPerformance` — Section 20 | `DataProvider.vfc_etms_cases()` + `login_vfc_etms` + `dataTest-vfc-etms.json` |
 | **F — New module page** | New sidebar screen | Example F — Section 13 | New POM + PageManager + extend menu base if under Commercial/Logistics/Services |
 
 **Precondition "Login success" (all eFMS tests except auth):**
@@ -296,6 +303,25 @@ File:      tests/efms/test_efms_booking_receipt.py
 Class:     TestEfmsBookingReceipt
 ```
 
+**Performance test skeleton (VFC eTMS):**
+
+```python
+@pytest.mark.parametrize(
+    "data",
+    DataProvider.vfc_etms_cases("test_vfc_etms_performance_{suite}_pages_etms"),
+)
+@pytest.mark.tc_id("PERF_VFC_XXX")
+def test_vfc_etms_performance_{suite}_pages(self, pages, data, login_vfc_etms):
+    run_etms_performance_suite(
+        suite="{suite}",
+        pages=pages,
+        data=data,
+        login_etms=login_vfc_etms,
+    )
+```
+
+Full cookbook: [Section 0.10](#010-how-to-write-any-test-case-ai-cookbook).
+
 ### 0.8 Extend vs create — decision in 30 seconds
 
 ```
@@ -328,6 +354,211 @@ uv run ruff check . && uv run ruff format .
 ```
 
 Complete checklist: [Section 17](#17-ai-checklist-before-submitting-code)
+
+### 0.10 How to Write Any Test Case (AI Cookbook)
+
+> **Goal:** A new AI agent reads **only this file** and can implement any test correctly. Follow the decision tree first, then copy the matching skeleton.
+
+#### Step 1 — Classify (30 seconds)
+
+```
+Manual TC measures page load time / threshold?
+  YES → Type H (standard eTMS) or Type I (VFC eTMS) — Section 20
+  NO  ↓
+
+Multiple menu items in one TC (navigation only)?
+  YES → Type B — JSON scenarios[] + MENU_ACTIONS
+  NO  ↓
+
+Create → update → delete same record across ordered tests?
+  YES → Type C — class variable + ordered test methods
+  NO  ↓
+
+Login / logout only?
+  YES → Type A or E (eTMS branch)
+  NO  ↓
+
+Single screen: fill form + save + verify message?
+  YES → Type D or G (eTMS create+delete in one TC)
+  NO  → Type F — new Page Object + test
+```
+
+#### Step 2 — Naming (mandatory)
+
+| Item | Formula | Example |
+|------|---------|---------|
+| TC_ID | From manual sheet | `COR_LP_001`, `PERF_VFC_022` |
+| Test function | `test_{tc_id_lower}_{scenario_slug}_{app}` | `test_cor_lp_001_create_cost_of_route_etms` |
+| JSON key | **Same as test function name** | `"test_cor_lp_001_create_cost_of_route_etms"` |
+| Test file | `tests/{app}/test_{app}_{module}.py` | `tests/etms/test_etms_cost_of_route.py` |
+| Test class | `Test{App}{Module}` PascalCase | `TestEtmsCostOfRoute` |
+| VFC perf JSON key | `test_vfc_etms_performance_{suite}_pages_etms` | `test_vfc_etms_performance_accounting_pages_etms` |
+
+**Suffix `_etms` / `_efms` on JSON keys is required** — `DataProvider` loads by exact key.
+
+#### Step 3 — Choose data file and fixtures
+
+| App / tenant | JSON file | DataProvider | Login fixture |
+|--------------|-----------|--------------|---------------|
+| eFMS | `dataTest-efms.json` | `DataProvider.efms_cases("...")` | `efms_account_password` + inline login |
+| eTMS | `dataTest-etms.json` | `DataProvider.etms_cases("...")` | `login_etms` |
+| VFC eTMS | `dataTest-vfc-etms.json` | `DataProvider.vfc_etms_cases("...")` | `login_vfc_etms` |
+
+#### Step 4 — Write the test file (patterns)
+
+**Pattern A — Functional data-driven (eTMS CRUD) — CANONICAL:**
+
+```python
+import pytest
+from tests.data_provider import DataProvider
+
+
+@pytest.mark.etms
+@pytest.mark.regression
+class TestEtmsCostOfRoute:
+    @pytest.mark.parametrize(
+        "data",
+        DataProvider.etms_cases("test_cor_lp_001_create_cost_of_route_etms"),
+    )
+    @pytest.mark.tc_id("COR_LP_001")
+    def test_cor_lp_001_create_cost_of_route_etms(
+        self, pages, data, login_etms,
+    ):
+        login_etms(data["branch"])
+        cor_page = pages.etms_cost_of_route_page
+
+        # Step 1: Open page via menu search
+        cor_page.open_via_menu_search(data["menu_search"])
+        assert cor_page.is_list_page_displayed()
+
+        # Step 2: Create record
+        cor_page.click_add_new()
+        assert cor_page.is_add_form_displayed()
+        cor_page.fill_route_mapping_fields(data)
+        cor_page.click_save()
+        cor_page.wait_for_save_success(data["expected_success_message"])
+
+        # Step 3: Delete and verify
+        cor_page.click_row_action_btn(data["route_code"], data["vehicle_type"])
+        cor_page.click_row_delete_button(data["route_code"], data["vehicle_type"])
+        cor_page.click_delete_confirm_ok()
+        assert cor_page.is_success_message_displayed(data["expected_delete_message"])
+```
+
+**Rules for functional tests:**
+- `# Step N` comment per manual step
+- `assert` only in test — Page Object returns `bool` or raises on wait failure
+- `login_etms(branch)` or `login_vfc_etms` fixture — never hardcode password
+- Cleanup in `try/finally` when create may succeed but delete may fail (Section 5.15)
+
+**Pattern B — Performance suite (thin test, fat JSON + POM) — CANONICAL:**
+
+```python
+@pytest.mark.parametrize(
+    "data",
+    DataProvider.vfc_etms_cases("test_vfc_etms_performance_accounting_pages_etms"),
+)
+@pytest.mark.tc_id("PERF_VFC_022")
+def test_vfc_etms_performance_accounting_pages(self, pages, data, login_vfc_etms):
+    """VFC login once → Accounting pages/tabs → assert all thresholds."""
+    run_etms_performance_suite(
+        suite="accounting",
+        pages=pages,
+        data=data,
+        login_etms=login_vfc_etms,
+    )
+```
+
+**Rules for performance tests:**
+- Test body = **one call** to `run_etms_performance_suite()` — no `assert`, no `page.locator()`
+- All pages/tabs/thresholds in JSON `pages[]`
+- Sub-check TC IDs go in JSON `test_case_ids[]` (not separate pytest methods)
+- Parent TC ID on `@pytest.mark.tc_id("PERF_VFC_022")`
+- Markers: `@pytest.mark.etms`, `@pytest.mark.performance`, `@pytest.mark.vfc_etms` (class-level `pytestmark`)
+
+#### Step 5 — JSON shape by test type
+
+**Functional row (minimal):**
+
+```json
+"test_cor_lp_001_create_cost_of_route_etms": [{
+    "test_case_id": "COR_LP_001",
+    "description": "Create Cost Of Route then delete",
+    "module": "Pricing",
+    "priority": "high",
+    "preconditions": "Login + branch selected",
+    "branch": "VNHCM",
+    "menu_search": "Cost Of Route",
+    "route_code": "RT001",
+    "vehicle_type": "20GP",
+    "expected_success_message": "Save successfully",
+    "expected_delete_message": "Delete successfully"
+}]
+```
+
+**Performance row (minimal):**
+
+```json
+"test_vfc_etms_performance_reporting_page_etms": [{
+    "test_case_id": "PERF_VFC_023",
+    "test_case_ids": ["PERF_REP_001"],
+    "description": "VFC Reporting — Download control enabled",
+    "module": "Performance",
+    "priority": "high",
+    "branch": "VNHCM",
+    "pages": [
+        {
+            "page_key": "reporting",
+            "check_label": "Reporting Page",
+            "max_step_seconds": 10
+        }
+    ]
+}]
+```
+
+**Performance multi-tab row:**
+
+```json
+{
+    "page_key": "authorization",
+    "tab": "pending",
+    "check_label": "Authorization - Pending Tab",
+    "max_step_seconds": 10,
+    "allow_no_data": true
+}
+```
+
+#### Step 6 — Page Object decision (extend vs create)
+
+| Screen type | Base class | Where to add |
+|-------------|------------|--------------|
+| Simple catalogue list | `EtmsCatalogueListPage` + config | `*_LIST_PAGE_CONFIGS` in `etms_catalogue_list_page.py` |
+| Tabbed catalogue (AU, Zone Code, BI) | `EtmsCatalogueTabbedListPage` | Dedicated page file |
+| Pricing workflow tabs (`ul.filter-tab`) | `EtmsPricingWorkflowListPage` subclass | `etms_pricing_workflow_list_page.py` |
+| CS / M&R / Material workflow | `EtmsCustomerServiceWorkflowPage` | `etms_*_pages.py` |
+| Accounting / System / Management | `EtmsSuiteWorkflowPage` + `EtmsInPageTabMixin` | `etms_accounting_pages.py`, `etms_system_pages.py`, … |
+| Download-ready (Reporting) | `EtmsDownloadControlPage` | `etms_reporting_page.py` |
+| Control-verify (Guide Style) | `EtmsPerformanceControlPage` | `etms_system_pages.py` |
+
+See [Section 7.2](#72-etms-pom-factory--suite-workflow-pages).
+
+#### Step 7 — Register and run
+
+```bash
+uv run pytest tests/etms/test_etms_cost_of_route.py --collect-only -q
+uv run pytest tests/etms/test_vfc_etms_performance.py -m "performance and vfc_etms" -v --browser chrome --browser-headless true
+```
+
+#### Anti-patterns (tests)
+
+| Wrong | Correct |
+|-------|---------|
+| `page.locator("...")` in test | `pages.etms_*_page.method()` |
+| `time.sleep(3)` | `wait_for_visible` / `wait_for_catalogue_idle` |
+| `assert` inside Page Object | `assert` in test with message |
+| New pytest method per perf sub-check | One method + JSON `pages[]` entries |
+| Hardcode `wait_for_timeout(5000)` | `settings.polling_interval` in polling loops only |
+| Duplicate `_menu_selectors` per suite | `etms_sidebar_menu_selectors(parent, labels, hash)` |
 
 ---
 
@@ -430,9 +661,21 @@ auotmation-techub/
 │   │       ├── etms_vehicle_part_type_page.py    # Vehicle > Vehicle Part Type tabs
 │   │       ├── etms_vehicle_type_page.py         # Vehicle > Vehicle Type tabs
 │   │       ├── etms_pricing_workflow_list_page.py # Pricing workflow filter-tabs (FCL/LCL/DIST/quotation list)
-│   │       ├── etms_pricing_report_page.py       # Pricing Report (form ready control)
+│   │       ├── etms_pricing_report_page.py       # extends EtmsDownloadControlPage
+│   │       ├── etms_download_control_page.py     # Download-ready performance base
+│   │       ├── etms_performance_control_page.py  # Control-ready performance base
+│   │       ├── etms_suite_workflow_page.py       # EtmsSuiteWorkflowPage + EtmsInPageTabMixin
+│   │       ├── etms_accounting_pages.py          # Accounting suite workflow
+│   │       ├── etms_system_pages.py              # System suite + Guide Style
+│   │       ├── etms_management_pages.py          # Management > Authorization
+│   │       ├── etms_reporting_page.py            # VFC top-level Reporting
+│   │       ├── etms_maintenance_pages.py         # M&R workflow pages
+│   │       ├── etms_material_pages.py            # Material management workflow
+│   │       ├── etms_operation_pages.py           # Operation workflow pages
+│   │       ├── etms_operation_lcl_ftl_action_page.py
 │   │       ├── etms_quotation_form_page.py       # Quotation create forms (Search ready control)
 │   │       ├── etms_customer_service_pages.py    # CS workflow pages (FCL/LCL/SOA tabs)
+│   │       ├── etms_vfc_login_page.py            # VFC tenant login
 │   │       └── etms_cost_of_route_page.py
 │   ├── performance/
 │   │   └── step_performance_tracker.py   # StepPerformanceTracker — measure + assert thresholds
@@ -465,7 +708,7 @@ auotmation-techub/
 │       ├── test_etms_cost_of_route.py  # COR_LP_001, COR_CP_001, TMS_COR_001
 │       ├── test_etms_performance.py    # Standard eTMS PERF — 6 catalogue suites
 │       ├── test_vfc_etms_auth.py       # VFC login smoke
-│       └── test_vfc_etms_performance.py # VFC PERF — 19 explicit methods (PERF_VFC_001–019)
+│       └── test_vfc_etms_performance.py # VFC PERF — 25 explicit methods (PERF_VFC_001–025)
 │
 ├── reports/                        # HTML report output (gitignored)
 ├── test-results/                   # Screenshots (gitignored)
@@ -662,6 +905,12 @@ Supporting layers (not in UI test path):
 | PERF_VFC_017 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_common_pages` | `dataTest-vfc-etms.json` |
 | PERF_VFC_018 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_fcl_pages` | `dataTest-vfc-etms.json` |
 | PERF_VFC_019 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_operation_lcl_ftl_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_020 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_maintenance_and_repair_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_021 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_material_management_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_022 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_accounting_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_023 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_reporting_page` | `dataTest-vfc-etms.json` |
+| PERF_VFC_024 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_management_authorization_pages` | `dataTest-vfc-etms.json` |
+| PERF_VFC_025 | Performance | High | `TestVfcEtmsPerformance.test_vfc_etms_performance_system_pages` | `dataTest-vfc-etms.json` |
 
 **Run by priority (auto-applied via `DataProvider.*_cases()`):**
 
@@ -673,7 +922,7 @@ uv run pytest -m login -v --browser chrome --browser-headless true      # all lo
 uv run pytest -m efms -v --browser chrome --browser-headless true       # eFMS only → RP launch efms-automation
 uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS only → RP launch etms-automation
 uv run pytest tests/etms/test_etms_performance.py -m performance -v --browser chrome --browser-headless true  # PERF_TN_001
-uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v --browser chrome --browser-headless false  # VFC PERF (19 suites, PERF_VFC_001–019)
+uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v --browser chrome --browser-headless true  # VFC PERF (25 suites, PERF_VFC_001–025, ~41 min headless)
 ```
 
 ---
@@ -2035,6 +2284,79 @@ def select_branch(self, branch_code: str) -> "EtmsLoginPage":
 | `wait_for_page_stable()` | `readyState === 'complete'` + `navigation_settle_ms` |
 | `current_url` (property) | Current page URL string |
 
+### 7.2 eTMS POM Factory — Suite Workflow Pages
+
+> **When to read:** Adding Accounting / System / Management / Reporting performance pages, or any new sidebar suite with workflow tabs.
+
+#### Inheritance diagram
+
+```text
+BasePage
+  └── EtmsCatalogueMenuPage          # sidebar navigation, wait_for_catalogue_idle(), _poll_until_overlay_hidden()
+        ├── EtmsCatalogueListPage    # generic list via *_LIST_PAGE_CONFIGS
+        ├── EtmsCatalogueTabbedListPage
+        ├── EtmsDownloadControlPage  # Reporting, Pricing Report — Download control ready
+        ├── EtmsPerformanceControlPage  # Guide Style — custom control ready
+        └── EtmsPricingWorkflowListPage   # ul.filter-tab workflow grids
+              └── EtmsCustomerServiceWorkflowPage
+                    └── EtmsSuiteWorkflowPage   # menu_parent_label + etms_sidebar_menu_selectors()
+                          ├── EtmsAccountingWorkflowPage   (parent: "Accounting")
+                          ├── EtmsSystemWorkflowPage         (parent: "System")
+                          └── EtmsManagementWorkflowPage     (parent: "Management")
+
+EtmsInPageTabMixin                   # in-page nav-tabs (not filter-tab)
+  + EtmsAccountingWorkflowPage  → EtmsAccountingInPageTabPage
+  + EtmsSystemWorkflowPage      → EtmsSystemInPageTabPage
+```
+
+#### Shared helpers (`etms_catalogue_menu_page.py`)
+
+| Helper | Purpose |
+|--------|---------|
+| `etms_sidebar_menu_selectors(parent_label, labels, page_hash)` | Scoped sidebar links under a parent section (Accounting, System, …) |
+| `etms_in_page_tab_selectors(tab_label)` | Locators for in-page tab links |
+| `is_etms_in_page_tab_active(page, tab_label)` | Check active class on in-page tab |
+| `wait_for_catalogue_idle()` | Wait until block-ui overlay gone — **raises** on timeout |
+| `_poll_until_overlay_hidden(timeout)` | Soft poll — returns `bool`, no raise |
+
+**Wait rule:** Use `wait_for_catalogue_idle()` + `wait_for_enabled()` for control pages. Use `_poll_until_overlay_hidden()` inside workflow list pages (delegated from `_wait_for_loading_overlay_hidden`). **Never** duplicate custom `while` + `wait_for_timeout` loops in feature pages.
+
+#### Suite workflow page template
+
+```python
+# etms_accounting_pages.py — minimal dedicated page
+class EtmsAccrualOfCostsPage(EtmsAccountingInPageTabPage):
+    page_key = "accrual_of_costs"
+    page_hash = "accounting/cost-accrual"
+    title = "Accrual Of Costs"
+    sidebar_menu_labels = ("Accrual Of Costs",)
+    default_workflow_tab = "cost_accrual"
+    page_workflow_tab_keys = ("cost_accrual", "cost_kpi_reconciliation", "km_reconciliation")
+```
+
+Parent class `EtmsAccountingWorkflowPage` sets `menu_parent_label = "Accounting"` and `_suite_tab_configs()` for extra tab keys — **do not** copy `_menu_selectors()` per page.
+
+#### Download / control performance pages
+
+| Class | File | Verify target |
+|-------|------|---------------|
+| `EtmsDownloadControlPage` | `etms_download_control_page.py` | Download button/span enabled |
+| `EtmsReportingPage` | `etms_reporting_page.py` | Top-level Reporting (VFC) |
+| `EtmsPricingReportPage` | `etms_pricing_report_page.py` | Pricing > Pricing Report |
+| `EtmsGuideStylePage` | `etms_system_pages.py` | `+ Add new`, `Button style` controls |
+| `EtmsPerformanceControlPage` | `etms_performance_control_page.py` | Base for custom controls |
+
+#### Files (do not register bases in PageManager)
+
+| File | Role |
+|------|------|
+| `etms_suite_workflow_page.py` | `EtmsSuiteWorkflowPage`, `EtmsInPageTabMixin`, `EtmsInPageTabWorkflowPage` |
+| `etms_accounting_pages.py` | Accounting workflow + in-page tab pages |
+| `etms_system_pages.py` | System workflow, Role, User Log, Guide Style, Approval |
+| `etms_management_pages.py` | Management > Authorization |
+| `etms_download_control_page.py` | Download-ready performance base |
+| `etms_performance_control_page.py` | Control-ready performance base |
+
 ---
 
 ## 8. How to Write Test Data (JSON)
@@ -3216,9 +3538,11 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 
 ## 20. eTMS Performance Tests
 
-> **TCs:** `PERF_TN_001` … `PERF_CAT_001` (standard eTMS catalogue) · VFC: `PERF_VFC_001`–`PERF_VFC_019` (`test_vfc_etms_performance.py`) — login once, measure configured pages/tabs, assert thresholds. Parent TC IDs are `PERF_VFC_*`; legacy sub-check IDs (`PERF_COR_*`, `PERF_UTI_001`, `PERF_FCL_TR_001`, …) remain in JSON `test_case_ids`.
+> **TCs:** `PERF_TN_001` … `PERF_CAT_001` (standard eTMS catalogue) · VFC: `PERF_VFC_001`–`PERF_VFC_025` (`test_vfc_etms_performance.py`) — login once, measure configured pages/tabs, assert thresholds. Parent TC IDs are `PERF_VFC_*`; legacy sub-check IDs (`PERF_COR_*`, `PERF_UTI_001`, `PERF_AOC_*`, …) remain in JSON `test_case_ids`.
 
-**VFC mirror:** `tests/etms/test_vfc_etms_performance.py` (`@pytest.mark.vfc_etms`) defines **19 explicit test methods** (`PERF_VFC_001` … `PERF_VFC_019`). Each calls `run_etms_performance_suite(suite=..., login_etms=login_vfc_etms)` and loads data from `dataTest-vfc-etms.json` via `DataProvider.vfc_etms_cases()`. Standard eTMS performance (`test_etms_performance.py`) uses the same helper with `login_etms` and `dataTest-etms.json` (6 catalogue suites only).
+**VFC mirror:** `tests/etms/test_vfc_etms_performance.py` (`@pytest.mark.vfc_etms`) defines **25 explicit test methods** (`PERF_VFC_001` … `PERF_VFC_025`). Each calls `run_etms_performance_suite(suite=..., login_etms=login_vfc_etms)` and loads data from `dataTest-vfc-etms.json` via `DataProvider.vfc_etms_cases()`. Standard eTMS performance (`test_etms_performance.py`) uses the same helper with `login_etms` and `dataTest-etms.json` (6 catalogue suites only).
+
+**AI: how to add a new performance check** → [Section 20.8](#208-step-by-step--add-a-new-performance-check) and [Section 0.10](#010-how-to-write-any-test-case-ai-cookbook).
 
 ### 20.1 Architecture (factory pattern)
 
@@ -3237,17 +3561,26 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
 | File | Role |
 |------|------|
 | `tests/etms/test_etms_performance.py` | Pytest class `@pytest.mark.performance` — 6 catalogue suites, `login_etms` |
-| `tests/etms/test_vfc_etms_performance.py` | VFC eTMS performance — 19 explicit methods (`PERF_VFC_001`–`019`), `login_vfc_etms` |
+| `tests/etms/test_vfc_etms_performance.py` | VFC eTMS performance — 25 explicit methods (`PERF_VFC_001`–`025`), `login_vfc_etms` |
 | `tests/etms/etms_performance_support.py` | `run_etms_performance_suite()` — dict-driven menu openers per `suite` key |
 | `tests/etms/etms_performance_registry.py` | `PERFORMANCE_PAGE_TARGETS` built from configs; `resolve_performance_page()`; `verify_performance_page_loaded()` |
 | `src/automation/pages/etms/etms_catalogue_list_page.py` | `CATALOGUE_LIST_PAGE_CONFIGS` + `EtmsCatalogueListPage` |
 | `src/automation/pages/etms/etms_catalogue_tabbed_list_page.py` | `EtmsCatalogueTabbedListPage` base + `EtmsCatalogueTabConfig` |
-| `src/automation/pages/etms/etms_catalogue_menu_page.py` | `open_catalogue_menu()` + catalogue/pricing/quotation/CS menu openers |
-| `src/automation/pages/etms/etms_pricing_workflow_list_page.py` | Pricing workflow filter-tabs (`EtmsPricingWorkflowListPage` + FCL/LCL/DIST/quotation list subclasses) |
-| `src/automation/pages/etms/etms_pricing_report_page.py` | Pricing Report — form ready via primary action button |
+| `src/automation/pages/etms/etms_catalogue_menu_page.py` | Menu openers + `etms_sidebar_menu_selectors()` + `wait_for_catalogue_idle()` |
+| `src/automation/pages/etms/etms_suite_workflow_page.py` | `EtmsSuiteWorkflowPage`, `EtmsInPageTabMixin` — factory for suite workflow pages |
+| `src/automation/pages/etms/etms_accounting_pages.py` | Accounting workflow + in-page tab pages (Accrual, Payment Request, Revenue) |
+| `src/automation/pages/etms/etms_system_pages.py` | System workflow, Role, User Log, Guide Style, Approval Workflow |
+| `src/automation/pages/etms/etms_management_pages.py` | Management > Authorization |
+| `src/automation/pages/etms/etms_download_control_page.py` | Download-ready performance base |
+| `src/automation/pages/etms/etms_performance_control_page.py` | Control-ready performance base (Guide Style pattern) |
+| `src/automation/pages/etms/etms_reporting_page.py` | VFC top-level Reporting (`EtmsDownloadControlPage`) |
+| `src/automation/pages/etms/etms_pricing_workflow_list_page.py` | Pricing workflow filter-tabs (`EtmsPricingWorkflowListPage` + subclasses) |
+| `src/automation/pages/etms/etms_pricing_report_page.py` | Pricing Report — extends `EtmsDownloadControlPage` |
 | `src/automation/pages/etms/etms_quotation_form_page.py` | Quotation create forms — `verify_performance_step()` on Search / ready control |
 | `src/automation/pages/etms/etms_customer_service_pages.py` | `EtmsCustomerServiceWorkflowPage` base + FCL/LCL/SOA workflow pages |
-| `src/automation/pages/etms/etms_operation_pages.py` | Operation > Common workflow pages (Unlock TR, Confirm ePOD) |
+| `src/automation/pages/etms/etms_operation_pages.py` | Operation > Common workflow pages |
+| `src/automation/pages/etms/etms_maintenance_pages.py` | Maintenance & Repair workflow pages |
+| `src/automation/pages/etms/etms_material_pages.py` | Material management workflow pages |
 | `src/automation/pages/etms/etms_operation_lcl_ftl_action_page.py` | Operation > LCL/FTL action pages (Check Out, Check In, Unbag) |
 | `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
 
@@ -3274,6 +3607,12 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
 | `operation_common` | Operation > Common | `open_operation_common_menu()` |
 | `operation_fcl` | Operation > FCL | `open_operation_fcl_menu()` |
 | `operation_lcl_ftl` | Operation > LCL/FTL | `open_operation_lcl_ftl_menu()` |
+| `maintenance_and_repair` | Maintenance & Repair | `open_maintenance_and_repair_menu()` |
+| `material_management` | Material Management | `open_material_management_menu()` |
+| `accounting` | Accounting | `open_accounting_menu()` |
+| `reporting` | Reporting (VFC top-level — **not** under Accounting) | `open_reporting_menu()` |
+| `management` | Management | `open_management_menu()` |
+| `system` | System | `open_system_menu()` |
 
 **Page resolution rules:**
 
@@ -3308,6 +3647,11 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
 | `lcl_ftl_transport_request_list`, `lcl_ftl_pickup_run_sheet`, … | `pages.etms_catalogue_list_page(page_key)` — `operation_lcl_ftl`, `menu_parent_label="Operation"` |
 | `unlock_transport_request`, `confirm_epod` | `pages.etms_unlock_transport_request_page` / `pages.etms_confirm_epod_page` |
 | `lcl_ftl_check_out`, `lcl_ftl_check_in`, `lcl_ftl_unbag` | `pages.etms_lcl_ftl_check_out_page` etc. (`EtmsOperationLclFtlActionPage` — ready control verify) |
+| `accrual_of_costs`, `accounting_payment_request`, `revenue_accrual` | `pages.etms_accrual_of_costs_page` etc. (`EtmsSuiteWorkflowPage` — Section 7.2) |
+| `reporting` | `pages.etms_reporting_page` (`EtmsDownloadControlPage` — VFC top-level) |
+| `authorization` | `pages.etms_authorization_page` (`EtmsManagementWorkflowPage`) |
+| `role`, `user_log`, `guide_style`, `approval_workflow_configuration` | `pages.etms_role_page`, `pages.etms_user_log_page`, `pages.etms_guide_style_page`, `pages.etms_approval_workflow_configuration_page` |
+| M&R / Material workflow keys | `pages.etms_*` via `etms_maintenance_pages.py` / `etms_material_pages.py` |
 
 Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_CONFIGS` + JSON `pages[]` — registry auto-builds target. **Do not** add a new PageManager property per page. Operation submenu pages under a top-level section should set `menu_parent_label` (e.g. `"Operation"`) so sidebar clicks stay scoped.
 
@@ -3460,7 +3804,7 @@ list_table_selectors = [
 | `EtmsCatalogueTabbedListPage` | Sidebar click → `_wait_tab_grid()` on **default tab** | Tab click → `_wait_tab_grid()` |
 | `EtmsPricingWorkflowListPage` | Sidebar click → `_wait_for_tab_content_loaded()` on **default workflow tab** | Workflow tab click → `_wait_for_tab_content_loaded()` |
 | `EtmsCustomerServiceWorkflowPage` | Same as workflow list; `table_selectors=None` for generic CS grids | Tab click → `_wait_for_tab_content_loaded()` with `allow_no_data` |
-| `EtmsQuotationFormPage` / `EtmsPricingReportPage` | Sidebar click → ready control visible | N/A |
+| `EtmsQuotationFormPage` / `EtmsDownloadControlPage` | Sidebar click → ready control visible | N/A |
 
 | Mode | Meaning |
 |------|---------|
@@ -3485,9 +3829,9 @@ list_table_selectors = [
 uv run pytest tests/etms/test_etms_performance.py -m performance -v \
   --browser chrome --browser-headless false --reportportal
 
-# VFC eTMS (16 suites — ~20 min full run headed)
+# VFC eTMS (25 suites — ~41 min full run headless)
 uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v \
-  --browser chrome --browser-headless false --reportportal
+  --browser chrome --browser-headless true --reportportal
 ```
 
 ### 20.7 Log format
@@ -3501,6 +3845,51 @@ Performance Check - Places Page Elapsed Time : 3.76s
 Threshold    : 10.00s
 Status       : PASS
 ```
+
+### 20.8 Step-by-Step — Add a New Performance Check
+
+Use this checklist when user asks to automate `PERF_VFC_XXX` or extend an existing suite.
+
+```
+1. IDENTIFY suite key
+   → Map menu path to `suite` string (Section 20.1 table)
+   → If new top-level menu: add opener in etms_catalogue_menu_page.py
+     AND register in etms_performance_support._DIRECT_SUITE_MENU_OPENERS
+
+2. IDENTIFY page_key
+   → Simple list? Add to *_LIST_PAGE_CONFIGS only (no new PageManager property)
+   → Workflow tabs (filter-tab)? Extend EtmsPricingWorkflowListPage or EtmsSuiteWorkflowPage
+   → In-page tabs? EtmsInPageTabMixin + suite workflow page (Section 7.2)
+   → Download control? Extend EtmsDownloadControlPage
+   → Custom control (buttons)? Extend EtmsPerformanceControlPage
+
+3. REGISTER page_key (if dedicated POM)
+   → Add to etms_performance_registry._DEDICATED_PERF_PAGES
+   → Add branch in resolve_performance_page()
+   → Add PageManager @property if new class
+
+4. ADD JSON (dataTest-vfc-etms.json or dataTest-etms.json)
+   → Key: test_vfc_etms_performance_{suite}_pages_etms (or existing key)
+   → pages[]: page_key, check_label, max_step_seconds (required per page)
+   → Optional: tab, allow_no_data, optional_tab, optional_page, min_table_rows
+   → test_case_ids[] for sub-check TC IDs
+
+5. ADD test method (only if new parent TC / new suite file)
+   → Copy pattern from test_vfc_etms_performance.py — ONE method per suite
+   → @pytest.mark.tc_id("PERF_VFC_XXX")
+   → run_etms_performance_suite(suite="...", login_etms=login_vfc_etms)
+
+6. RUN subset first
+   uv run pytest tests/etms/test_vfc_etms_performance.py::TestVfcEtmsPerformance::test_vfc_etms_performance_{suite}_pages -v --browser chrome --browser-headless false
+```
+
+**VFC-specific notes:**
+- Reporting is **top-level** sidebar (`suite: reporting`, hash `accounting/report`) — not Accounting submenu
+- `open_accounting_menu()` expanded check must **not** use `accounting/report` href (conflicts with Pricing Report)
+- Guide Style controls use `tab` key in JSON: `add_new`, `button_style` (not workflow tabs)
+- Role page: `page_key: role` with tabs `role`, `permission_of_role`
+- User Log: `allow_no_data: true` per tab optional
+- System User Info URL typo in app: `system/user-infor`
 
 ---
 
@@ -3600,4 +3989,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-25 | Catalogue master perf PERF_CAT_001 | Commodity/Driver/Vehicle suites*
+*Last updated: 2026-06-30 | VFC PERF 25/25 PASS | POM factory (EtmsSuiteWorkflowPage, EtmsDownloadControlPage) | Section 0.10 AI Cookbook*
