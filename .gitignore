@@ -6,6 +6,7 @@ logs/
 *.iml
 .DS_Store
 .env
+src/automation/config/environments.json
 .venv/
 __pycache__/
 *.py[cod]

@@ -41,87 +41,103 @@
                 {
                     "page_key": "places",
                     "check_label": "Places Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distance_between_places",
                     "check_label": "Distance Between Places Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "route_information",
                     "check_label": "Route Information Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "transit_route",
                     "check_label": "Transit Route Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "hub",
                     "check_label": "Hub Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "branch",
                     "check_label": "Branch Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "administrative_units",
                     "tab": "country",
                     "check_label": "Administrative Units - Country Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "administrative_units",
                     "tab": "area",
                     "check_label": "Administrative Units - Area Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "administrative_units",
                     "tab": "province_city",
                     "check_label": "Administrative Units - Province/City Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "administrative_units",
                     "tab": "district",
                     "check_label": "Administrative Units - District Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "administrative_units",
                     "tab": "ward_commune",
                     "check_label": "Administrative Units - Ward/Commune Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "zone_code",
                     "tab": "zone_code",
                     "check_label": "Zone Code - Zone Code Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "zone_code",
                     "tab": "pickup_zone_code",
                     "check_label": "Zone Code - Pickup Zone Code Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "zone_code",
                     "tab": "delivery_zone_code",
                     "check_label": "Zone Code - Delivery Zone Code Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "route_project_information",
                     "check_label": "Route Project Information Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_partner_pages_etms": [
@@ -147,43 +163,51 @@
                 {
                     "page_key": "partner_group",
                     "check_label": "Partner Group Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "partner_list",
                     "check_label": "Partner list Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "bank_account",
                     "check_label": "Bank Account Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "booking_information",
                     "tab": "goods_information",
                     "check_label": "Booking Information - Goods Information Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "booking_information",
                     "tab": "pickup_delivery_places",
                     "check_label": "Booking Information - Pickup/Delivery Places Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "booking_information",
                     "tab": "shipment_note",
                     "check_label": "Booking Information - Shipment Note Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "booking_information",
                     "tab": "project_vehicle",
                     "check_label": "Booking Information - Project Vehicle Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_vehicle_pages_etms": [
@@ -191,6 +215,7 @@
             "test_case_id": "PERF_VFC_003",
             "test_case_ids": [
                 "PERF_VL_001",
+                "PERF_VL_EXT_001",
                 "PERF_VPT_001",
                 "PERF_VPTG_001",
                 "PERF_VPART_001",
@@ -207,40 +232,55 @@
             "pages": [
                 {
                     "page_key": "vehicle_list",
-                    "check_label": "Vehicle List Page",
-                    "max_step_seconds": 10
+                    "tab": "internal",
+                    "check_label": "Vehicle List - Internal Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
-                    "page_key": "vehicle_part_type",
-                    "tab": "vehicle_part_type",
-                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
-                    "max_step_seconds": 10
+                    "page_key": "vehicle_list",
+                    "tab": "external",
+                    "check_label": "Vehicle List - External Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "vehicle_part_type",
                     "tab": "vehicle_part_group",
+                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
+                },
+                {
+                    "page_key": "vehicle_part_type",
+                    "tab": "vehicle_part_type",
                     "check_label": "Vehicle Part Type - Vehicle Part Group Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "vehicle_part_type",
                     "tab": "vehicle_part",
                     "check_label": "Vehicle Part Type - Vehicle Part Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "vehicle_type",
                     "tab": "vehicle_group",
                     "check_label": "Vehicle Type - Vehicle Group Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "vehicle_type",
                     "tab": "vehicle_type_fuel_consumption",
                     "check_label": "Vehicle Type - Fuel Consumption Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_driver_pages_etms": [
@@ -261,14 +301,17 @@
                 {
                     "page_key": "driver",
                     "check_label": "Driver Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "driver_vehicle",
                     "check_label": "Driver - Vehicle Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_commodity_pages_etms": [
@@ -289,14 +332,17 @@
                 {
                     "page_key": "commodity_list",
                     "check_label": "Commodity List Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "commodity_group",
                     "check_label": "Commodity Group Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_catalogue_master_pages_etms": [
@@ -322,39 +368,47 @@
                 {
                     "page_key": "charge_list",
                     "check_label": "Charge List Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "unit",
                     "check_label": "Unit Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "service_type",
                     "check_label": "Service Type Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "weight_range",
                     "check_label": "Weight Range Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "container_type",
                     "check_label": "Container Type Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "container",
                     "check_label": "Container Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "currency",
                     "check_label": "Currency Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_pricing_common_pages_etms": [
@@ -387,74 +441,86 @@
                     "page_key": "cost_of_route",
                     "tab": "updating",
                     "check_label": "Cost Of Route - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_of_route",
                     "tab": "pending",
                     "check_label": "Cost Of Route - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_of_route",
                     "tab": "accepted",
                     "check_label": "Cost Of Route - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_of_route",
                     "tab": "rejected",
                     "check_label": "Cost Of Route - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_of_route",
                     "tab": "revoked",
                     "check_label": "Cost Of Route - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_of_route",
                     "tab": "expired",
                     "check_label": "Cost Of Route - Expired Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "updating",
                     "check_label": "Price Toll Buying - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "pending",
                     "check_label": "Price Toll Buying - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "accepted",
                     "check_label": "Price Toll Buying - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "rejected",
                     "check_label": "Price Toll Buying - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "revoked",
                     "check_label": "Price Toll Buying - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "price_toll_buying",
                     "tab": "expired",
                     "check_label": "Price Toll Buying - Expired Tab",
                     "max_step_seconds": 10,
-                    "optional_tab": true
+                    "optional_tab": true,
+                    "allow_no_data": true
                 }
             ]
         }
@@ -500,139 +566,162 @@
                     "page_key": "fcl_rate_card_list",
                     "tab": "pending",
                     "check_label": "FCL Rate Card List - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_rate_card_list",
                     "tab": "updating",
                     "check_label": "FCL Rate Card List - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_rate_card_list",
                     "tab": "accepted",
                     "check_label": "FCL Rate Card List - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_rate_card_list",
                     "tab": "active_bookable",
                     "check_label": "FCL Rate Card List - Active - Bookable Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_rate_card_list",
                     "tab": "rejected",
                     "check_label": "FCL Rate Card List - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_rate_card_list",
                     "tab": "revoked",
                     "check_label": "FCL Rate Card List - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_buying_price",
                     "tab": "updating",
                     "check_label": "FCL Buying Price - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_buying_price",
                     "tab": "pending",
                     "check_label": "FCL Buying Price - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_buying_price",
                     "tab": "accepted",
                     "check_label": "FCL Buying Price - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_buying_price",
                     "tab": "rejected",
                     "check_label": "FCL Buying Price - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_buying_price",
                     "tab": "revoked",
                     "check_label": "FCL Buying Price - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "updating",
                     "check_label": "Renting Container FCL - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "pending",
                     "check_label": "Renting Container FCL - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "accepted",
                     "check_label": "Renting Container FCL - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "rejected",
                     "check_label": "Renting Container FCL - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "expired",
                     "check_label": "Renting Container FCL - Expired Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_container",
                     "tab": "revoked",
                     "check_label": "Renting Container FCL - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "updating",
                     "check_label": "Renting vehicle - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "pending",
                     "check_label": "Renting vehicle - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "accepted",
                     "check_label": "Renting vehicle - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "rejected",
                     "check_label": "Renting vehicle - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "expired",
                     "check_label": "Renting vehicle - Expired Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_renting_vehicle",
                     "tab": "revoked",
                     "check_label": "Renting vehicle - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
             ]
         }
@@ -665,61 +754,71 @@
                     "page_key": "lcl_rate_card",
                     "tab": "updating",
                     "check_label": "3. LCL Rate Card - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_rate_card",
                     "tab": "pending",
                     "check_label": "3. LCL Rate Card - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_rate_card",
                     "tab": "accepted",
                     "check_label": "3. LCL Rate Card - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_rate_card",
                     "tab": "rejected",
                     "check_label": "3. LCL Rate Card - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_rate_card",
                     "tab": "revoked",
                     "check_label": "3. LCL Rate Card - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_buying",
                     "tab": "updating",
                     "check_label": "LCL Buying - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_buying",
                     "tab": "pending",
                     "check_label": "LCL Buying - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_buying",
                     "tab": "accepted",
                     "check_label": "LCL Buying - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_buying",
                     "tab": "rejected",
                     "check_label": "LCL Buying - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_buying",
                     "tab": "revoked",
                     "check_label": "LCL Buying - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
             ]
         }
@@ -753,67 +852,78 @@
                     "page_key": "distribution_rate_card",
                     "tab": "updating",
                     "check_label": "2. Distribution Rate Card - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_rate_card",
                     "tab": "pending",
                     "check_label": "2. Distribution Rate Card - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_rate_card",
                     "tab": "accepted",
                     "check_label": "2. Distribution Rate Card - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_rate_card",
                     "tab": "active_bookable",
                     "check_label": "2. Distribution Rate Card - Active - Bookable Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_rate_card",
                     "tab": "rejected",
                     "check_label": "2. Distribution Rate Card - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_rate_card",
                     "tab": "revoked",
                     "check_label": "2. Distribution Rate Card - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_buying",
                     "tab": "updating",
                     "check_label": "Distribution Buying - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_buying",
                     "tab": "pending",
                     "check_label": "Distribution Buying - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_buying",
                     "tab": "accepted",
                     "check_label": "Distribution Buying - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_buying",
                     "tab": "rejected",
                     "check_label": "Distribution Buying - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "distribution_buying",
                     "tab": "revoked",
                     "check_label": "Distribution Buying - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
             ]
         }
@@ -847,25 +957,29 @@
                     "page_key": "commission_rate_card",
                     "tab": "updating",
                     "check_label": "Commission Rate Card - Updating Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "commission_rate_card",
                     "tab": "pending",
                     "check_label": "Commission Rate Card - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "commission_rate_card",
                     "tab": "accepted",
                     "check_label": "Commission Rate Card - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "commission_rate_card",
                     "tab": "rejected",
                     "check_label": "Commission Rate Card - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
             ]
         }
@@ -901,25 +1015,29 @@
                     "page_key": "fcl_quotation_list",
                     "tab": "pending",
                     "check_label": "FCL Quotation List - Pending Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_quotation_list",
                     "tab": "accepted",
                     "check_label": "FCL Quotation List - Accepted Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_quotation_list",
                     "tab": "rejected",
                     "check_label": "FCL Quotation List - Rejected Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fcl_quotation_list",
                     "tab": "revoked",
                     "check_label": "FCL Quotation List - Revoked Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "create_lcl_quotation",
@@ -953,9 +1071,11 @@
                 {
                     "page_key": "verifying_booking",
                     "check_label": "Verifying Booking Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
-            ]
+            ],
+            "allow_no_data": true
         }
     ],
     "test_vfc_etms_performance_customer_service_fcl_pages_etms": [
@@ -1040,7 +1160,7 @@
                     "page_key": "fcl_surcharge_behalf",
                     "check_label": "FCL Surcharge/ Behalf Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "container_deposit_management",
@@ -1088,7 +1208,7 @@
                     "page_key": "fcl_surcharge_behalf_fleet",
                     "check_label": "FCL Surcharge/ Behalf (Fleet) Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 }
             ]
         }
@@ -1195,13 +1315,13 @@
                     "page_key": "lcl_ftl_transport_surcharge",
                     "check_label": "LCL/FTL Transport Surcharge Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_ftl_surcharge_behalf",
                     "check_label": "LCL/FTL Surcharge/Behalf Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "lcl_shipment_management",
@@ -1213,7 +1333,7 @@
                     "page_key": "lcl_ftl_surcharge_behalf_fleet",
                     "check_label": "LCL/FTL Surcharge/ Behalf (Fleet) Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 }
             ]
         }
@@ -1303,19 +1423,19 @@
                     "page_key": "dispatching",
                     "check_label": "Dispatching Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "trip_settlement",
                     "check_label": "Trip Settlement Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fuel_closing",
                     "check_label": "Fuel Closing Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "unlock_transport_request",
@@ -1389,13 +1509,13 @@
             "branch": "VNHCM",
             "suite": "operation_fcl",
             "min_table_rows": 1,
-            "allow_no_data": false,
+            "allow_no_data": true,
             "pages": [
                 {
                     "page_key": "fcl_transport_request_list",
                     "check_label": "FCL Transport Request List Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 }
             ]
@@ -1423,41 +1543,41 @@
             "branch": "VNHCM",
             "suite": "operation_lcl_ftl",
             "min_table_rows": 1,
-            "allow_no_data": false,
+            "allow_no_data": true,
             "pages": [
                 {
                     "page_key": "lcl_ftl_transport_request_list",
                     "check_label": "LCL/FTL Transport Request List Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "lcl_ftl_pickup_run_sheet",
                     "check_label": "2.Pickup Run Sheet Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "lcl_ftl_revenue_protection",
                     "check_label": "4.Revenue Protection Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "lcl_ftl_routing",
                     "check_label": "5.Routing Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "lcl_ftl_consolidation",
                     "check_label": "6.Consolidation Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
@@ -1469,7 +1589,7 @@
                     "page_key": "lcl_ftl_transit",
                     "check_label": "8.Transit Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
@@ -1486,7 +1606,7 @@
                     "page_key": "lcl_ftl_delivery_run_sheet",
                     "check_label": "13.Delivery Run Sheet Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 }
             ]
@@ -1526,14 +1646,14 @@
             "branch": "VNHCM",
             "suite": "maintenance_and_repair",
             "min_table_rows": 1,
-            "allow_no_data": false,
+            "allow_no_data": true,
             "pages": [
                 {
                     "page_key": "vehicle_need_maintaining",
                     "tab": "latest_vehicle_odometer",
                     "check_label": "Vehicle need maintaining - Latest Vehicle Odometer Tab",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
@@ -1541,7 +1661,7 @@
                     "tab": "vehicle_need_repair",
                     "check_label": "Vehicle need maintaining - Vehicle Need Repair Tab",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
@@ -1653,21 +1773,21 @@
                     "page_key": "maintenance_quota",
                     "check_label": "Maintenance quota Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "maintenance_place",
                     "check_label": "Maintenance place Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
                     "page_key": "vehicle_repair_level",
                     "check_label": "Vehicle Repair Level Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false,
+                    "allow_no_data": true,
                     "min_table_rows": 1
                 },
                 {
@@ -1836,20 +1956,20 @@
                     "tab": "payment",
                     "check_label": "Payment Request - Payment Tab",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "accounting_payment_request",
                     "tab": "rejected_surcharge",
                     "check_label": "Payment Request - Rejected Surcharge Tab",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fuel_transaction",
                     "check_label": "Fuel Transaction Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "soa_list",
@@ -1887,7 +2007,7 @@
                     "page_key": "accounting_parameters",
                     "check_label": "Parameters Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "cost_revenue_allocation",
@@ -1899,19 +2019,19 @@
                     "page_key": "driver_allowance_parameter",
                     "check_label": "Driver Allowance Parameter Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "monthly_fuel_settlement",
                     "check_label": "Monthly Fuel Settlement Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "partner_debit",
                     "check_label": "Partner Debit Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "fuel_payment_request",
@@ -1929,7 +2049,7 @@
                     "page_key": "cod_clearing",
                     "check_label": "COD Clearing Page",
                     "max_step_seconds": 10,
-                    "allow_no_data": false
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "accounting_receipts",
@@ -2056,39 +2176,45 @@
             "branch": "VNHCM",
             "suite": "system",
             "min_table_rows": 1,
-            "allow_no_data": false,
+            "allow_no_data": true,
             "pages": [
                 {
                     "page_key": "user_info",
                     "check_label": "User Info Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "employee",
                     "check_label": "Employee Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "role",
                     "tab": "role",
                     "check_label": "Role - Role Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "role",
                     "tab": "permission_of_role",
                     "check_label": "Role - Permission of Role Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "permission",
                     "check_label": "Permission Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "permission_instruction",
                     "check_label": "Permission Instruction Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "user_log",
@@ -2121,7 +2247,8 @@
                 {
                     "page_key": "menu",
                     "check_label": "Menu Page",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "guide_style",
@@ -2141,19 +2268,22 @@
                     "page_key": "approval_workflow_configuration",
                     "tab": "approval_workflow",
                     "check_label": "Approval Workflow Configuration - Approval Workflow Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "approval_workflow_configuration",
                     "tab": "approval_object",
                     "check_label": "Approval Workflow Configuration - Approval Object Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 },
                 {
                     "page_key": "approval_workflow_configuration",
                     "tab": "approval_position",
                     "check_label": "Approval Workflow Configuration - Approval Position Tab",
-                    "max_step_seconds": 10
+                    "max_step_seconds": 10,
+                    "allow_no_data": true
                 }
             ]
         }

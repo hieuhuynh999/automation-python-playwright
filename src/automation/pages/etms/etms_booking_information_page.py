@@ -137,8 +137,17 @@ class EtmsBookingInformationPage(EtmsCatalogueTabbedListPage):
             return
         self._activate_tab(tab_key)
 
-    def _wait_tab_grid(self, tab_key: str, min_rows: int) -> None:
+    def _wait_tab_grid(
+        self,
+        tab_key: str,
+        min_rows: int,
+        *,
+        allow_no_data: bool = False,
+    ) -> None:
         if tab_key == "shipment_note":
+            count = self._count_shipment_note_items()
+            if allow_no_data and count == 0:
+                return
             self._wait_shipment_note_items(min_rows)
             return
         config = self._tab_config(tab_key)
@@ -151,15 +160,27 @@ class EtmsBookingInformationPage(EtmsCatalogueTabbedListPage):
             list(config.list_column_headers),
             table_selectors=table_selectors,
         )
-        self.list_grid.wait_for_data_rows(
-            min_rows=min_rows,
-            table_selectors=table_selectors,
-        )
+        if allow_no_data:
+            self.list_grid.wait_for_data_rows_or_no_data(
+                min_rows=min_rows,
+                table_selectors=table_selectors,
+            )
+        else:
+            self.list_grid.wait_for_data_rows(
+                min_rows=min_rows,
+                table_selectors=table_selectors,
+            )
 
     def count_data_rows_for_tab(self, tab_key: str) -> int:
         if tab_key == "shipment_note":
             return self._count_shipment_note_items()
         return super().count_data_rows_for_tab(tab_key)
+
+    def has_no_data_for_tab(self, tab_key: str) -> bool:
+        if tab_key == "shipment_note":
+            return self._count_shipment_note_items() == 0
+        table_selectors = self.list_table_selectors_for_tab(tab_key)
+        return self.list_grid.is_no_data_displayed(table_selectors=table_selectors)
 
     @log_method("Click Booking Information menu")
     def click_menu(

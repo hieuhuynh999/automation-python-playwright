@@ -47,6 +47,7 @@ from automation.pages.etms.etms_quotation_form_page import (
 from automation.pages.etms.etms_vfc_login_page import EtmsVfcLoginPage
 from automation.pages.etms.etms_vehicle_part_type_page import EtmsVehiclePartTypePage
 from automation.pages.etms.etms_vehicle_type_page import EtmsVehicleTypePage
+from automation.pages.etms.etms_vehicle_list_page import EtmsVehicleListPage
 from automation.pages.etms.etms_zone_code_page import EtmsZoneCodePage
 
 __all__ = [
@@ -83,6 +84,7 @@ __all__ = [
     "EtmsVfcLoginPage",
     "EtmsVehiclePartTypePage",
     "EtmsVehicleTypePage",
+    "EtmsVehicleListPage",
     "EtmsZoneCodePage",
     "PARTNER_LIST_PAGE_CONFIGS",
     "TRANSPORT_NETWORK_LIST_PAGE_CONFIGS",

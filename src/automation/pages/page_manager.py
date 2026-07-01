@@ -35,6 +35,7 @@ from automation.pages.etms import (
     EtmsVfcLoginPage,
     EtmsVehiclePartTypePage,
     EtmsVehicleTypePage,
+    EtmsVehicleListPage,
     EtmsZoneCodePage,
 )
 from automation.pages.etms.etms_customer_service_pages import (
@@ -153,6 +154,7 @@ class PageManager:
         self._etms_zone_code_page: EtmsZoneCodePage | None = None
         self._etms_vehicle_part_type_page: EtmsVehiclePartTypePage | None = None
         self._etms_vehicle_type_page: EtmsVehicleTypePage | None = None
+        self._etms_vehicle_list_page: EtmsVehicleListPage | None = None
         self._etms_home_page: EtmsHomePage | None = None
         self._etms_login_page: EtmsLoginPage | None = None
         self._etms_vfc_login_page: EtmsVfcLoginPage | None = None
@@ -566,6 +568,12 @@ class PageManager:
         if self._etms_vehicle_type_page is None:
             self._etms_vehicle_type_page = EtmsVehicleTypePage(self.page)
         return self._etms_vehicle_type_page
+
+    @property
+    def etms_vehicle_list_page(self) -> EtmsVehicleListPage:
+        if self._etms_vehicle_list_page is None:
+            self._etms_vehicle_list_page = EtmsVehicleListPage(self.page)
+        return self._etms_vehicle_list_page
 
     @property
     def etms_login_page(self) -> EtmsLoginPage:

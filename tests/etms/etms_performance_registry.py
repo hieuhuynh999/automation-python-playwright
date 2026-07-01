@@ -108,6 +108,8 @@ def resolve_performance_page(pages: PageManager, page_key: str) -> Any:
         raise KeyError(f"Unknown performance page_key '{page_key}'. Known: {known}")
 
     if page_key in CATALOGUE_LIST_PAGE_CONFIGS:
+        if page_key == "vehicle_list":
+            return pages.etms_vehicle_list_page
         return pages.etms_catalogue_list_page(page_key)
     if page_key == "administrative_units":
         return pages.etms_administrative_units_page

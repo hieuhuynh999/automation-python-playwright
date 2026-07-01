@@ -1,0 +1,24 @@
+{
+  "UAT": {
+    "efms_base_url": "https://uat-efms.logtechub.com/",
+    "etms_base_url": "https://staging-itllog-etms.logtechub.com/en/#/app/default/home",
+    "vfc_etms_base_url": "https://staging-vfc-etms.logtechub.com/en/#/app/default/home",
+    "efms_account_username": "your-efms-user",
+    "efms_account_password": "your-efms-password",
+    "etms_account_username": "your-etms-user",
+    "etms_account_password": "your-etms-password",
+    "vfc_etms_account_username": "your-vfc-user",
+    "vfc_etms_account_password": "your-vfc-password"
+  },
+  "DEV": {
+    "efms_base_url": "https://uat-efms.logtechub.com/",
+    "etms_base_url": "https://staging-itllog-etms.logtechub.com/en/#/app/default/home",
+    "vfc_etms_base_url": "https://test-vfc-etms.logtechub.com/en/#/",
+    "efms_account_username": "your-efms-user",
+    "efms_account_password": "your-efms-password",
+    "etms_account_username": "your-etms-user",
+    "etms_account_password": "your-etms-password",
+    "vfc_etms_account_username": "your-vfc-user",
+    "vfc_etms_account_password": "your-vfc-password"
+  }
+}

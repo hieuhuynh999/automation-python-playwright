@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from automation.config import get_settings
+from automation.config import get_settings, reset_settings
 from automation.logging import logger
 from automation.reporting.reportportal_support import (
     apply_reportportal_display_names,
@@ -59,7 +59,7 @@ def _apply_reportportal_session(
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
     load_dotenv_for_reportportal()
-    get_settings.cache_clear()
+    reset_settings()
     configure_pytest_reruns(config)
     apply_reportportal_patches()
     _apply_reportportal_session(config)

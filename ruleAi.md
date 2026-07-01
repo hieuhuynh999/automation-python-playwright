@@ -22,6 +22,7 @@
 2. [Repository Map](#2-repository-map)
    - [2.1 Framework Architecture & Layers](#21-framework-architecture--layers)
    - [2.2 Implemented Test Inventory](#22-implemented-test-inventory)
+   - [2.3 Framework Factory Architecture (POM)](#23-framework-factory-architecture-pom)
 3. [Architecture Rules (MUST follow)](#3-architecture-rules-must-follow)
    - [3.6 Wait & Timing Strategy](#36-wait--timing-strategy-no-hard-coded-waits)
    - [3.7 Assertions (Tests Only)](#37-assertions-tests-only)
@@ -42,6 +43,7 @@
 7. [How to Write a Page Object](#7-how-to-write-a-page-object)
    - [7.1 Common Components & Utils](#71-common-components--utils-when-to-use-what)
    - [7.2 eTMS POM Factory — Suite Workflow Pages](#72-etms-pom-factory--suite-workflow-pages)
+   - [7.3 PageManager & Component Factory](#73-pagemanager--component-factory)
 8. [How to Write Test Data (JSON)](#8-how-to-write-test-data-json)
 9. [How to Write an API Test](#9-how-to-write-an-api-test)
 10. [How to Write a DB Test](#10-how-to-write-a-db-test)
@@ -70,7 +72,7 @@
 |-----|-------------|-------------|-----------|--------------|
 | **eFMS** | `settings.efms_base_url` | `tests/efms/` | `tests/testdata/dataTest-efms.json` | `src/automation/pages/efms/` |
 | **eTMS** | `settings.etms_base_url` | `tests/etms/` | `tests/testdata/dataTest-etms.json` | `src/automation/pages/etms/` |
-| **VFC eTMS** | `settings.etms_base_url` (VFC tenant) | `tests/etms/` | `tests/testdata/dataTest-vfc-etms.json` | Same `etms/` POMs + `login_vfc_etms` fixture |
+| **VFC eTMS** | `settings.vfc_etms_base_url` | `tests/etms/` | `tests/testdata/dataTest-vfc-etms.json` | Same `etms/` POMs + `login_vfc_etms` fixture |
 
 **Architecture in one line:** `Test → pages fixture → PageManager → {App}Page → Common Components (composed) → BasePage → Playwright`
 
@@ -83,8 +85,8 @@
 | # | Rule |
 |---|------|
 | 1 | Tests use **`pages` fixture only** — never `page.locator()` in tests |
-| 2 | **Passwords in `.env` only** — inject `efms_account_password` / `etms_account_password` fixture |
-| 3 | **URLs in Page Objects only** — via `settings.efms_base_url` / `settings.etms_base_url` |
+| 2 | **Passwords in `.env` / `environments.json` only** — inject `efms_account_password` / `etms_account_password` / `vfc_etms_account_password` fixture |
+| 3 | **URLs in Page Objects only** — via `settings.efms_base_url` / `settings.etms_base_url` / `settings.vfc_etms_base_url` (loaded by `ENV` — Section 2.3) |
 | 4 | **One manual Step = one `@log_method` Page Object method** + `# Step N` comment in test |
 | 5 | **JSON key = test function name exactly** (e.g. `"test_smk_auth_001_login_success_efms"`) |
 | 6 | **Search existing code first** — extend Page Objects before creating new files (Section 16) |
@@ -618,7 +620,10 @@ auotmation-techub/
 ├── conftest.py                     # Early hooks — load .env, auto-enable ReportPortal
 ├── src/automation/                 # Framework package (import as `automation`)
 │   ├── config/
-│   │   ├── settings.py             # Pydantic Settings — all env config
+│   │   ├── settings.py             # Settings + SettingsFactory — runtime from .env
+│   │   ├── environment_profiles.py # Load environments.json by ENV (UAT, DEV, …)
+│   │   ├── environments.example.json # Template — copy to environments.json locally
+│   │   ├── environments.json       # Per-env URLs + accounts (gitignored — local copy)
 │   │   └── secret_redaction.py     # Redact passwords in pytest/RP failure output
 │   ├── logging/
 │   │   ├── logger.py               # Loguru file logger
@@ -658,6 +663,7 @@ auotmation-techub/
 │   │       ├── etms_administrative_units_page.py # TN > Administrative Units tabs
 │   │       ├── etms_zone_code_page.py            # TN > Zone Code tabs
 │   │       ├── etms_booking_information_page.py  # Partner > Booking Information tabs
+│   │       ├── etms_vehicle_list_page.py         # Vehicle > Vehicle List — Internal / External tabs
 │   │       ├── etms_vehicle_part_type_page.py    # Vehicle > Vehicle Part Type tabs
 │   │       ├── etms_vehicle_type_page.py         # Vehicle > Vehicle Type tabs
 │   │       ├── etms_pricing_workflow_list_page.py # Pricing workflow filter-tabs (FCL/LCL/DIST/quotation list)
@@ -742,7 +748,8 @@ auotmation-techub/
 | App | Base URL setting | PageManager properties | Test data file |
 |-----|-----------------|-------------------------|----------------|
 | eFMS | `settings.efms_base_url` | `efms_login_page`, `efms_home_page`, commercial pages (`efms_agent_page`, `efms_customer_page`, `efms_work_order_page`, `efms_booking_receipt_page`), logistics pages (`efms_job_management_page`, `efms_custom_clearance_page`, `efms_trucking_inland_page`), `efms_services_documentation_page` | `dataTest-efms.json` |
-| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_catalogue_menu_page`, `etms_catalogue_list_page(page_key)`, `etms_administrative_units_page`, `etms_zone_code_page` | `dataTest-etms.json` |
+| eTMS | `settings.etms_base_url` | `etms_login_page`, `etms_home_page`, `etms_cost_of_route_page`, `etms_catalogue_menu_page`, `etms_catalogue_list_page(page_key)`, `etms_administrative_units_page`, `etms_zone_code_page`, `etms_vfc_login_page` | `dataTest-etms.json` |
+| VFC eTMS | `settings.vfc_etms_base_url` | Same eTMS POMs + `login_vfc_etms` fixture | `dataTest-vfc-etms.json` |
 
 **eFMS Page Object responsibilities:**
 
@@ -773,7 +780,8 @@ auotmation-techub/
 | `EtmsCatalogueTabbedListPage` | `etms/etms_catalogue_tabbed_list_page.py` | Base for tabbed catalogue screens — **internal base** |
 | `EtmsAdministrativeUnitsPage` | `etms/etms_administrative_units_page.py` | TN > Administrative Units — tabs: Country (landing), Area, Province/City, District, Ward/Commune |
 | `EtmsZoneCodePage` | `etms/etms_zone_code_page.py` | TN > Zone Code — tabs: Zone Code (landing), Pickup Zone Code, Delivery Zone Code |
-| `EtmsBookingInformationPage` | `etms/etms_booking_information_page.py` | Partner > Booking Information — tabs: Goods Information (landing), Pickup/Delivery Places, Shipment Note, Project Vehicle |
+| `EtmsBookingInformationPage` | `etms/etms_booking_information_page.py` | Partner > Booking Information — tabs: Goods Information (landing), Pickup/Delivery Places, Shipment Note, Project Vehicle; `has_no_data_for_tab()` for Shipment Note empty |
+| `EtmsVehicleListPage` | `etms/etms_vehicle_list_page.py` | Vehicle > Vehicle List — tabs: **Internal** (landing), **External** |
 | `EtmsVehiclePartTypePage` | `etms/etms_vehicle_part_type_page.py` | Vehicle > Vehicle Part Type — tabs: Vehicle Part Type (landing), Vehicle Part Group, Vehicle Part |
 | `EtmsVehicleTypePage` | `etms/etms_vehicle_type_page.py` | Vehicle > Vehicle Type — tabs: Vehicle Group (landing), Vehicle Type - Fuel Consumption |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
@@ -787,9 +795,14 @@ auotmation-techub/
 | `SwalModalComponent` | `common/swal_modal_component.py` | SweetAlert2 popup |
 | `ListGridComponent` | `common/list_grid_component.py` | HTML table / ngx-datatable — scoped headers + `wait_for_data_rows()` / `count_data_rows()` |
 
-**Default UAT URLs (settings defaults):**
-- eFMS: `https://uat-efms.logtechub.com/`
-- eTMS: `https://staging-itllog-etms.logtechub.com/en/#/app/default/home`
+**Environment URLs (`environments.json` + `ENV` in `.env`):**
+
+| `ENV` | eFMS | eTMS | VFC eTMS |
+|-------|------|------|----------|
+| `UAT` | `uat-efms` | `staging-itllog-etms` | `staging-vfc-etms` |
+| `DEV` | `uat-efms` | `staging-itllog-etms` | `test-vfc-etms` |
+
+Switch environment: set **one** active line `ENV=UAT` or `ENV=DEV` in `.env` (do not leave two `ENV=` lines — dotenv uses the last one). Optional per-field override in `.env`: `VFC_ETMS_BASE_URL`, `*_ACCOUNT_*`. Full factory flow → [Section 2.3](#23-framework-factory-architecture-pom).
 
 ### 2.1 Framework Architecture & Layers
 
@@ -824,8 +837,12 @@ auotmation-techub/
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
-│  Playwright sync API + Settings (Pydantic) + Logging (Loguru) │
+│  Playwright sync API + SettingsFactory + Logging (Loguru)     │
 └─────────────────────────────────────────────────────────────┘
+
+Config layer (loaded before tests):
+  .env (ENV, browser, timeouts, RP) + environments.json (URLs/accounts per ENV)
+  → SettingsFactory.get_cached() → settings proxy
 
 Supporting layers (not in UI test path):
   utils/     → pure helpers (text, dates) — no browser
@@ -846,7 +863,7 @@ Supporting layers (not in UI test path):
 | Principle | Implementation |
 |-----------|----------------|
 | Separation of concerns | Tests orchestrate; Page Objects own selectors and actions |
-| Single source of config | `settings.py` + `.env` — no magic numbers in code |
+| Single source of config | `SettingsFactory` + `.env` + `environments.json` — no hardcoded URLs in `settings.py` (Section 2.3) |
 | Data-driven | JSON metadata + `DataProvider`; credentials in `.env` only |
 | Observability | `@log_method` step logs → HTML report + console + `logs/automation.log` |
 | Failure diagnostics | Screenshot on failure (`test-results/screenshots/`) |
@@ -872,7 +889,7 @@ Supporting layers (not in UI test path):
 | PERF_PT_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_partner_pages` | `tests/etms/test_etms_performance.py` |
 | PERF_PG_001 … PERF_BI_PV_001 | Performance | High | (sub-checks inside PERF_PT_001) | `dataTest-etms.json` → `pages[]` |
 | PERF_VH_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_vehicle_pages` | `tests/etms/test_etms_performance.py` |
-| PERF_VL_001 … PERF_VTFC_001 | Performance | High | (sub-checks inside PERF_VH_001) | `dataTest-etms.json` → `pages[]` |
+| PERF_VL_001 … PERF_VTFC_001 | Performance | High | (sub-checks inside PERF_VH_001 / `PERF_VFC_003`) | `dataTest-etms.json` / `dataTest-vfc-etms.json` → `pages[]` |
 | PERF_DL_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_driver_pages` | `tests/etms/test_etms_performance.py` |
 | PERF_DRV_001 … PERF_DRVV_001 | Performance | High | (sub-checks inside PERF_DL_001) | `dataTest-etms.json` → `pages[]` |
 | PERF_CM_001 | Performance | High | `TestEtmsPerformance.test_etms_performance_commodity_pages` | `tests/etms/test_etms_performance.py` |
@@ -924,6 +941,197 @@ uv run pytest -m etms -v --browser chrome --browser-headless true         # eTMS
 uv run pytest tests/etms/test_etms_performance.py -m performance -v --browser chrome --browser-headless true  # PERF_TN_001
 uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v --browser chrome --browser-headless true  # VFC PERF (25 suites, PERF_VFC_001–025, ~41 min headless)
 ```
+
+### 2.3 Framework Factory Architecture (POM)
+
+> **Canonical reference** for all factory patterns in this repo. AI must follow these layers — do not bypass factories with direct `new Page(page)` or hardcoded URLs.
+
+#### Factory stack (top → bottom)
+
+```text
+Test
+  → DataProvider.*_cases()              # JSON test data factory
+  → pages fixture → PageManager         # lazy Page Object factory
+  → resolve_performance_page()          # performance registry (test layer only)
+  → EtmsCatalogueListPage(page_key)     # config-driven catalogue factory
+  → ListGridComponent / NgSelectComponent  # widget composition (inside POM)
+  → settings proxy → SettingsFactory    # config factory (.env + environments.json)
+```
+
+#### 1) Config factory — `src/automation/config/`
+
+| File | Class / function | Role |
+|------|------------------|------|
+| `settings.py` | `Settings` | Pydantic model — runtime fields from `.env`; profile fields start empty |
+| `settings.py` | `SettingsFactory` | `create()` → new instance; `get_cached()` → `@lru_cache`; `reset()` → clear cache |
+| `settings.py` | `get_settings()`, `reset_settings()` | Facade for tests / ReportPortal hooks |
+| `settings.py` | `settings` (`_SettingsProxy`) | Module accessor — `from automation.config import settings` |
+| `environment_profiles.py` | `PROFILE_FIELDS`, `PROFILE_FIELD_DEFAULTS` | Field registry + empty defaults for override detection |
+| `environment_profiles.py` | `resolve_environment_profile(env)` | Read `environments.json` key (`UAT`, `DEV`, …) |
+| `environment_profiles.py` | `apply_environment_profile(settings)` | Merge profile; **skip** fields already set in `.env`/OS (`is not` default) |
+| `environment_profiles.py` | `available_environments()`, `clear_environment_profile_cache()` | List env keys; clear JSON cache on `SettingsFactory.reset()` |
+| `environments.example.json` | — | Committed template — copy to `environments.json` (gitignored) |
+| `environments.json` | — | Local per-env URLs + accounts (never commit) |
+| `config/__init__.py` | re-exports | `Settings`, `SettingsFactory`, `get_settings`, `reset_settings`, `settings` |
+
+**Load order:**
+
+```text
+1. Pydantic reads .env + OS environment variables
+2. @model_validator calls apply_environment_profile(settings.env)
+3. Missing profile fields filled from environments.json[ENV]
+4. Validation error if any PROFILE_FIELDS still empty
+```
+
+**`.env` rules:**
+
+```env
+# CORRECT — one active ENV line, comment on separate line
+ENV=UAT
+# ENV=DEV
+
+# WRONG — two active ENV= lines (dotenv uses LAST value → silent wrong env)
+ENV=UAT
+ENV=DEV
+```
+
+**Import pattern (Page Objects, tests):**
+
+```python
+from automation.config import settings
+
+self.open_url(settings.vfc_etms_base_url)   # VFC login
+self.open_url(settings.etms_base_url)       # standard eTMS
+self.open_url(settings.efms_base_url)       # eFMS
+```
+
+**Session reset** (after `.env` change mid-process):
+
+```python
+from automation.config import reset_settings
+reset_settings()  # called in tests/conftest_reportportal.py pytest_configure
+```
+
+#### 2) Page factory — `PageManager` (`page_manager.py`)
+
+| Pattern | Implementation | When to use |
+|---------|----------------|-------------|
+| Lazy `@property` | `if self._x is None: self._x = XPage(self.page)` | Dedicated screens (login, home, workflow pages) |
+| Parametric factory | `etms_catalogue_list_page(page_key: str)` | Generic catalogue list pages — **one method, many screens** |
+| Alias delegates | `etms_transport_network_list_page`, `etms_partner_list_page`, `etms_places_page` | Backward compatibility → `etms_catalogue_list_page(page_key)` |
+
+**Rules:**
+
+- Tests **always** use `pages` fixture — never `EtmsLoginPage(page)` directly
+- **Never register** base menu classes (`EfmsCommercialMenuPage`, `EtmsCatalogueMenuPage`, `EtmsSuiteWorkflowPage`, …)
+- New generic list page → add config dict entry + JSON — **no** new `@property` on PageManager (Section 20.1)
+
+```python
+# CORRECT
+pages.etms_catalogue_list_page("places").click_menu()
+pages.etms_vehicle_list_page.confirm_grid_loaded()  # dedicated tabbed page
+
+# WRONG
+EtmsCatalogueListPage(page, "places")  # bypasses PageManager
+```
+
+#### 3) Catalogue list factory — `etms_catalogue_list_page.py`
+
+| Artifact | Role |
+|----------|------|
+| `EtmsCatalogueListPageConfig` (frozen dataclass) | `page_key`, `title`, `page_hash`, `menu_li_id`, `list_column_headers`, `catalogue_suite` |
+| `*_LIST_PAGE_CONFIGS` dicts | Grouped by domain (TN, Partner, Vehicle, Driver, …) |
+| `CATALOGUE_LIST_PAGE_CONFIGS` | Merged registry — single lookup table |
+| `EtmsCatalogueListPage(page, page_key)` | Behavior driven by config — no subclass per list page |
+
+**Factory chain:**
+
+```text
+PageManager.etms_catalogue_list_page("places")
+  → EtmsCatalogueListPage(page, "places")
+  → CATALOGUE_LIST_PAGE_CONFIGS["places"]
+  → lazy ListGridComponent per page_key
+```
+
+#### 4) Tabbed / workflow factories (eTMS POM)
+
+| Factory | File | Dedicated PageManager property? |
+|---------|------|--------------------------------|
+| `EtmsCatalogueTabbedListPage` + tab configs | `etms_catalogue_tabbed_list_page.py` | Yes for AU, Zone Code, BI, Vehicle List, VPT, VT |
+| `EtmsSuiteWorkflowPage` + `EtmsInPageTabMixin` | `etms_suite_workflow_page.py` | Yes for leaf workflow pages only |
+| `EtmsPricingWorkflowListPage` + tab configs | `etms_pricing_workflow_list_page.py` | Yes for pricing workflow subclasses |
+| `EtmsQuotationFormPage` subclasses | `etms_quotation_form_page.py` | Yes — `create_fcl/lcl/distribution_quotation` |
+
+Details: [Section 7.2](#72-etms-pom-factory--suite-workflow-pages), [Section 7.3](#73-pagemanager--component-factory).
+
+#### 5) Performance registry factory — `tests/etms/`
+
+| File | Function | Role |
+|------|----------|------|
+| `etms_performance_registry.py` | `build_performance_page_targets()` | Auto-build from `_DEDICATED_PERF_PAGES` + `CATALOGUE_LIST_PAGE_CONFIGS` |
+| `etms_performance_registry.py` | `resolve_performance_page(pages, page_key)` | Map `page_key` → PageManager accessor |
+| `etms_performance_registry.py` | `verify_performance_page_loaded()` | Post-load verification (URL + grid/control) |
+| `etms_performance_support.py` | `run_etms_performance_suite()` | Suite menu openers + measurement loop |
+
+**Critical rule:** `vehicle_list` → `pages.etms_vehicle_list_page` **before** generic catalogue branch.
+
+#### 6) Data factory — `tests/data_provider.py`
+
+| Method | Maps to JSON |
+|--------|--------------|
+| `DataProvider.efms_cases(test_method)` | `dataTest-efms.json` |
+| `DataProvider.etms_cases(test_method)` | `dataTest-etms.json` |
+| `DataProvider.vfc_etms_cases(test_method)` | `dataTest-vfc-etms.json` |
+
+JSON key **must equal** test function name. Auto-applies `priority` → pytest markers and `test_case_id` → `@pytest.mark.tc_id`.
+
+#### 7) Fixture factories — `tests/conftest.py` + app conftest
+
+| Fixture | Returns | Pattern |
+|---------|---------|---------|
+| `pages` | `PageManager(page)` | **Mandatory** test entry point |
+| `login_efms` | `Callable[[company], None]` | Closure — login + dashboard ready |
+| `login_etms` | `Callable[[branch], None]` | Closure — eTMS login + branch |
+| `login_vfc_etms` | `Callable[[branch], None]` | Closure — VFC login via `etms_vfc_login_page` |
+| `efms_account_password` / `etms_account_password` / `vfc_etms_account_password` | `str` | From `settings` — skip if missing |
+
+#### 8) Component composition (NOT factories on PageManager)
+
+| Component | Compose inside | PageManager? |
+|-----------|------------------|--------------|
+| `ListGridComponent` | Catalogue / workflow list pages | **No** |
+| `NgSelectComponent` | Login, forms, ng-select fields | **No** |
+| `NativeSelectComponent` | eFMS company select | **No** |
+| `SwalModalComponent` | Delete confirm dialogs | **No** |
+
+#### POM compliance matrix
+
+| Pattern | Allowed in tests? | Register in PageManager? |
+|---------|-------------------|--------------------------|
+| `pages.*` | **Yes** | — |
+| `settings.*` | Yes (username only) | — |
+| `DataProvider.*_cases()` | Yes | — |
+| `resolve_performance_page()` | Via `run_etms_performance_suite` only | — |
+| `EtmsCatalogueListPage(page, key)` | **No** | Internal to PageManager |
+| `NgSelectComponent` / `ListGridComponent` | **No** | **No** |
+| Base menu / workflow base classes | **No** | **No** |
+
+#### Run by environment
+
+```bash
+# Setup (once per machine)
+copy src\automation\config\environments.example.json src\automation\config\environments.json
+
+# VFC performance — full suite (25 tests, ~40 min headed)
+uv run pytest tests/etms/test_vfc_etms_performance.py::TestVfcEtmsPerformance \
+  -v -m "performance and vfc_etms" --reportportal \
+  --browser chrome --browser-headless false
+
+# .env: ENV=UAT  → staging-vfc-etms
+# .env: ENV=DEV  → test-vfc-etms (verified 25/25 PASS)
+```
+
+**Do not** pass `--reportportal` without `RP_API_KEY` in `.env` — flag is ignored. Use `--no-reportportal` to skip locally.
 
 ---
 
@@ -1544,12 +1752,13 @@ Map each column to automation as follows:
 
 ### 5.2 TestData_ID → credential mapping (NEVER put passwords in JSON)
 
-`TestData_ID` is a **logical name** for a credential set. Credentials always come from environment variables.
+`TestData_ID` is a **logical name** for a credential set. Credentials come from `environments.json` (via `ENV` in `.env`) with optional per-field override in `.env`.
 
-| TestData_ID | Username source | Password source | .env keys |
-|-------------|-----------------|-----------------|-----------|
-| `LOGIN_ADMIN` (eFMS) | `settings.efms_username` | `efms_account_password` fixture | `EFMS_ACCOUNT_USERNAME`, `EFMS_ACCOUNT_PASSWORD` |
-| eTMS login | `settings.etms_username` | `etms_account_password` fixture | `ETMS_ACCOUNT_USERNAME`, `ETMS_ACCOUNT_PASSWORD` |
+| TestData_ID | Username source | Password source | Resolved via |
+|-------------|-----------------|-----------------|--------------|
+| `LOGIN_ADMIN` (eFMS) | `settings.efms_username` | `efms_account_password` fixture | `environments.json[ENV]` or `EFMS_ACCOUNT_*` in `.env` |
+| eTMS login | `settings.etms_username` | `etms_account_password` fixture | `environments.json[ENV]` or `ETMS_ACCOUNT_*` in `.env` |
+| VFC eTMS login | `settings.vfc_etms_username` | `vfc_etms_account_password` fixture | `environments.json[ENV]` or `VFC_ETMS_ACCOUNT_*` in `.env` |
 
 Legacy fallback (eFMS only): `ACCOUNT_USERNAME`, `ACCOUNT_PASSWORD` when `EFMS_ACCOUNT_*` is not set.
 
@@ -2307,6 +2516,23 @@ BasePage
 EtmsInPageTabMixin                   # in-page nav-tabs (not filter-tab)
   + EtmsAccountingWorkflowPage  → EtmsAccountingInPageTabPage
   + EtmsSystemWorkflowPage      → EtmsSystemInPageTabPage
+
+EtmsCatalogueTabbedListPage          # catalogue in-page tabs (nav-tabs)
+  ├── EtmsAdministrativeUnitsPage
+  ├── EtmsZoneCodePage
+  ├── EtmsBookingInformationPage
+  ├── EtmsVehicleListPage            # Internal / External
+  ├── EtmsVehiclePartTypePage
+  └── EtmsVehicleTypePage
+```
+
+**Catalogue tabbed list pages** extend `EtmsCatalogueTabbedListPage` directly (not `EtmsSuiteWorkflowPage`). Registry resolves `vehicle_list` via `pages.etms_vehicle_list_page` — **not** `etms_catalogue_list_page("vehicle_list")`.
+
+```text
+BasePage
+  └── EtmsCatalogueMenuPage
+        └── EtmsCatalogueTabbedListPage
+              └── EtmsVehicleListPage   # page_key vehicle_list — tab internal (default), external
 ```
 
 #### Shared helpers (`etms_catalogue_menu_page.py`)
@@ -2356,6 +2582,70 @@ Parent class `EtmsAccountingWorkflowPage` sets `menu_parent_label = "Accounting"
 | `etms_management_pages.py` | Management > Authorization |
 | `etms_download_control_page.py` | Download-ready performance base |
 | `etms_performance_control_page.py` | Control-ready performance base |
+| `etms_vehicle_list_page.py` | Vehicle List — Internal / External in-page tabs |
+| `etms_booking_information_page.py` | Partner BI tabs + Shipment Note card items |
+
+> **Full factory map:** [Section 2.3](#23-framework-factory-architecture-pom) · **PageManager patterns:** [Section 7.3](#73-pagemanager--component-factory)
+
+### 7.3 PageManager & Component Factory
+
+> **When to read:** Registering a new page, choosing between dedicated `@property` vs `etms_catalogue_list_page(page_key)`, or composing widgets.
+
+#### PageManager lazy property template
+
+```python
+@property
+def etms_example_page(self) -> EtmsExamplePage:
+    if self._etms_example_page is None:
+        self._etms_example_page = EtmsExamplePage(self.page)
+    return self._etms_example_page
+```
+
+Use for: login, home, dedicated tabbed pages, workflow leaf pages, quotation forms.
+
+#### Parametric catalogue factory template
+
+```python
+def etms_catalogue_list_page(self, page_key: str) -> EtmsCatalogueListPage:
+    if page_key not in self._etms_catalogue_list_pages:
+        self._etms_catalogue_list_pages[page_key] = EtmsCatalogueListPage(
+            self.page, page_key,
+        )
+    return self._etms_catalogue_list_pages[page_key]
+```
+
+Use for: any screen fully described by `EtmsCatalogueListPageConfig` in `CATALOGUE_LIST_PAGE_CONFIGS`.
+
+#### Decision tree — dedicated property vs config factory
+
+```
+New eTMS list/grid page?
+  YES → In-page tabs (nav-tabs) with distinct verify per tab?
+          YES → EtmsCatalogueTabbedListPage subclass + PageManager @property
+          NO  → Workflow filter-tabs (ul.filter-tab)?
+                  YES → EtmsPricingWorkflowListPage / EtmsSuiteWorkflowPage subclass + @property
+                  NO  → Add entry to *_LIST_PAGE_CONFIGS only (no new @property)
+  NO  → Form / download / control page?
+          YES → Dedicated POM + @property (EtmsQuotationFormPage, EtmsDownloadControlPage, …)
+```
+
+#### Component composition rules
+
+```python
+# Inside Page Object — lazy component cache (preferred for grids)
+@property
+def list_grid(self) -> ListGridComponent:
+    if not hasattr(self, "_list_grid_places"):
+        self._list_grid_places = ListGridComponent(
+            self, self._config.list_column_headers, f"{self._config.title} grid",
+        )
+    return self._list_grid_places
+
+# Inline NgSelectComponent for one-off fields — OK in method or uncached @property
+NgSelectComponent(self, self.branch_selectors, "Branch select").select_option_by_text(branch)
+```
+
+**Never** expose components on `PageManager`. Tests call Page Object methods only.
 
 ---
 
@@ -2450,8 +2740,10 @@ from tests.data_provider import DataProvider
 | `page` | function | **avoid in tests** | Raw Playwright Page |
 | `pages` | function | **always use this** | `PageManager` instance |
 | `efms_account_password` | function | eFMS login tests — skips if `EFMS_ACCOUNT_PASSWORD` missing |
-| `etms_account_password` | function | eTMS login tests — skips if `ETMS_ACCOUNT_PASSWORD` missing |
+| `etms_account_password` | function | eTMS login tests — skips if password missing in settings |
+| `vfc_etms_account_password` | function | VFC eTMS login — skips if `vfc_etms_account_password` missing |
 | `login_etms` | function | `tests/etms/conftest.py` — login + branch + dashboard ready; call `login_etms(data["branch"])` |
+| `login_vfc_etms` | function | `tests/etms/conftest.py` — VFC login + branch; call `login_vfc_etms(data["branch"])` |
 
 ### Markers — two sources
 
@@ -2589,6 +2881,8 @@ uv run playwright install --with-deps chrome msedge
 
 # Setup env (once)
 copy .env.example .env   # Windows
+# Copy src/automation/config/environments.json (gitignored) — set UAT/DEV URLs + accounts
+# .env: ENV=UAT  (staging) or ENV=DEV  (test-vfc-etms) — ONE active ENV= line only
 # Local without ReportPortal (even when RP_API_KEY is in .env)
 uv run pytest tests/etms/ -m etms -v --no-reportportal
 
@@ -3367,6 +3661,7 @@ Before finishing any automation task, verify:
 
 ```
 [ ] Read Section 0 — classified test type (A–F) and followed 8-step pipeline
+[ ] ENV set correctly in .env (one `ENV=` line) — URLs from environments.json (Section 2.3)
 [ ] Searched existing Page Objects / BasePage / fixtures — reused before creating (Section 16)
 [ ] No hard-coded waits — all timing from settings or condition-based waits (Section 3.6)
 [ ] Dashboard verify uses dashboard_ready_selectors (headless-safe), not h3 is_visible alone
@@ -3503,7 +3798,7 @@ CI safety net: `TEST_RERUNS=1` (default) via `pytest-rerunfailures` — fixes mu
 
 ### 19.1 Fixed stack
 
-Python 3.12+ · `playwright.sync_api` · pytest · pytest-html · ReportPortal · Pydantic `settings` · JSON `DataProvider` · **no** Allure · **no** `infra/` unless requested.
+Python 3.12+ · `playwright.sync_api` · pytest · pytest-html · ReportPortal · `SettingsFactory` + `environments.json` · JSON `DataProvider` · **no** Allure · **no** `infra/` unless requested.
 
 ### 19.2 Layer map
 
@@ -3546,6 +3841,8 @@ Pure helpers: src/automation/utils/ (no Playwright imports)
 
 ### 20.1 Architecture (factory pattern)
 
+> **Config + Page factories:** [Section 2.3](#23-framework-factory-architecture-pom) · **Suite workflow POM:** [Section 7.2](#72-etms-pom-factory--suite-workflow-pages)
+
 ```text
 test_etms_performance.py  OR  test_vfc_etms_performance.py
   → etms_performance_support.run_etms_performance_suite(suite=...)    # preferred entry (injects suite key)
@@ -3582,6 +3879,8 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
 | `src/automation/pages/etms/etms_maintenance_pages.py` | Maintenance & Repair workflow pages |
 | `src/automation/pages/etms/etms_material_pages.py` | Material management workflow pages |
 | `src/automation/pages/etms/etms_operation_lcl_ftl_action_page.py` | Operation > LCL/FTL action pages (Check Out, Check In, Unbag) |
+| `src/automation/config/settings.py` | `SettingsFactory` — runtime + profile merge (Section 2.3) |
+| `src/automation/config/environment_profiles.py` | `environments.json` loader by `ENV` |
 | `src/automation/performance/step_performance_tracker.py` | Timing + summary log (`time.monotonic()`) |
 
 **Suite → catalogue submenu (JSON `suite` field):**
@@ -3623,7 +3922,7 @@ test_etms_performance.py  OR  test_vfc_etms_performance.py
 | `administrative_units` | `pages.etms_administrative_units_page` |
 | `zone_code` | `pages.etms_zone_code_page` |
 | `booking_information` | `pages.etms_booking_information_page` |
-| `vehicle_list` | `pages.etms_catalogue_list_page("vehicle_list")` |
+| `vehicle_list` | `pages.etms_vehicle_list_page` (`EtmsCatalogueTabbedListPage` — tabs `internal`, `external`) |
 | `vehicle_part_type` | `pages.etms_vehicle_part_type_page` |
 | `vehicle_type` | `pages.etms_vehicle_type_page` |
 | `driver` | `pages.etms_catalogue_list_page("driver")` |
@@ -3657,7 +3956,9 @@ Adding a **new generic list page:** add one entry to the relevant `*_LIST_PAGE_C
 
 **Note:** `5.Routing` under Operation > LCL/FTL uses hash `customer/lcl-routing` on VFC (not `operation/lcl/routing`).
 
-Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBookingInformationPage`, `EtmsVehiclePartTypePage`, `EtmsVehicleTypePage` (catalogue tabbed). Pricing workflow: `EtmsPricingWorkflowListPage` subclasses (`EtmsCostOfRouteWorkflowPage`, FCL/LCL pages). All other catalogue list pages use `EtmsCatalogueListPage` + config.
+Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBookingInformationPage`, `EtmsVehicleListPage`, `EtmsVehiclePartTypePage`, `EtmsVehicleTypePage` (catalogue tabbed). Pricing workflow: `EtmsPricingWorkflowListPage` subclasses (`EtmsCostOfRouteWorkflowPage`, FCL/LCL pages). All other catalogue list pages use `EtmsCatalogueListPage` + config.
+
+**`resolve_performance_page()` rule:** when `page_key == "vehicle_list"`, return `pages.etms_vehicle_list_page` before the generic `CATALOGUE_LIST_PAGE_CONFIGS` branch.
 
 **Tabbed pages:** use optional JSON field `"tab"` (e.g. `"area"`, `"pickup_zone_code"`, `"pending"`). `etms_performance_support` passes `tab_key` to `prepare_for_performance()` / `run_performance_measurement()` and `verify_performance_page_loaded()`. One `page_key` may appear multiple times in `pages[]` — one entry per tab.
 
@@ -3666,6 +3967,7 @@ Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBooki
 | `administrative_units` | `country`, `area`, `province_city`, `district`, `ward_commune` | `PERF_AU_COUNTRY_001`, `PERF_AU_AREA_001`, `PERF_AU_PC_001`, `PERF_AU_DIST_001`, `PERF_AU_WC_001` |
 | `zone_code` | `zone_code`, `pickup_zone_code`, `delivery_zone_code` | `PERF_ZC_001`, `PERF_ZC_PICKUP_001`, `PERF_ZC_DELIVERY_001` |
 | `booking_information` | `goods_information`, `pickup_delivery_places`, `shipment_note`, `project_vehicle` | `PERF_BI_GI_001`, `PERF_BI_PDP_001`, `PERF_BI_SN_001`, `PERF_BI_PV_001` |
+| `vehicle_list` | `internal` (landing), `external` | `PERF_VL_001`, `PERF_VL_EXT_001` |
 | `vehicle_part_type` | `vehicle_part_type`, `vehicle_part_group`, `vehicle_part` | `PERF_VPT_001`, `PERF_VPTG_001`, `PERF_VPART_001` |
 | `vehicle_type` | `vehicle_group`, `vehicle_type_fuel_consumption` | `PERF_VG_001`, `PERF_VTFC_001` |
 | `cost_of_route`, `price_toll_buying` | `updating`, `pending`, `accepted`, `rejected`, `revoked`, `expired` (optional on VFC) | `PERF_COR_*`, `PERF_PTB_*` |
@@ -3684,11 +3986,13 @@ Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBooki
 
 Tab `vehicle_part_type` on `vehicle_part_type` is the **landing tab** — POM skips tab click after navigate; other VPT tabs call `_activate_tab()`.
 
+Tab `internal` on `vehicle_list` is the **landing tab** — POM skips tab click after navigate; **External** tab requires `_activate_tab()`. Both tabs: `min_table_rows >= 1` or `"No Data"` when `allow_no_data: true`.
+
 Tab `vehicle_group` on `vehicle_type` is the **landing tab** — same skip-click pattern; Fuel Consumption tab requires `_activate_tab()`.
 
 Tab `goods_information` on `booking_information` is the **landing tab** — POM skips tab click after navigate; other BI tabs call `_activate_tab()`.
 
-Tab `shipment_note` counts card items via `//div[@class='row same-height-wrapper']//span[text()='Edit']` (min 1 item).
+Tab `shipment_note` counts card items via `//div[@class='row same-height-wrapper']//span[text()='Edit']`. With `allow_no_data: true`, zero items pass via `has_no_data_for_tab("shipment_note")`.
 
 Tab `country` on `administrative_units` is the **landing tab** — POM skips tab click after navigate; other AU tabs call `_activate_tab()`.
 
@@ -3739,8 +4043,8 @@ Tab `zone_code` on page `zone_code` is the **landing tab** — same skip-click p
 - `min_table_rows` optional per page (defaults to root).
 - `tab` optional — tab key for multi-tab POMs (`administrative_units`, `zone_code`, `booking_information`).
 - `suite` optional for TN wrapper (defaults `transport_network`); required per suite: `partner`, `vehicle`, `driver`, `commodity`, `catalogue_master`, `pricing_common`, `pricing_fcl`, `pricing_lcl`, `pricing_distribution`, `pricing_report`, `quotation`, `customer_service_common`, `customer_service_fcl`, `customer_service_lcl_ftl`, `customer_service_soa_outsource`, `operation_common`, `operation_fcl`, `operation_lcl_ftl`. VFC tests inject `suite` via `run_etms_performance_suite()` — JSON may omit it.
-- `allow_no_data` optional (root or per page) — pass verification when grid shows empty state `"No Data"` (used on VFC pricing suites).
-- `optional_tab` optional per page — skip timed step when tab absent on VFC UI.
+- `allow_no_data` optional (root or per page) — pass when **≥1 data row** **or** grid empty state `"No Data"` is visible. **VFC default:** all grid `pages[]` entries use `"allow_no_data": true` except form/control pages (`create_*_quotation`, `pricing_report`, `lcl_shipment_management`, `guide_style`, LCL/FTL action pages).
+- `optional_tab` optional per page — skip timed step when tab absent on UI (`optional_tab_keys` on workflow POM + `optional_tab: true` in JSON).
 - `optional_page` optional per page — skip step when sidebar link not visible (scoped via `menu_parent_label` when set).
 - `min_table_rows` defaults to `1` (at least one data row). Grid pages on VFC Operation suites use `min_table_rows: 1` unless overridden per page.
 
@@ -3768,14 +4072,14 @@ Action pages (no row count — `verify_performance_step` on ready control): `7.C
 
 ### 20.3 Verification layers (not URL-only)
 
-Timed step (`run_performance_measurement`) ends when grid data or allowed empty state is displayed. After the timer, `verify_performance_page_loaded()` re-checks URL + `count_data_rows()` and logs `[PERF VERIFY]`.
+Timed step (`run_performance_measurement`) ends when grid data or allowed empty state is displayed. After the timer, `verify_performance_page_loaded()` re-checks URL + row count (or `has_no_data_for_tab()` / `has_no_data_display`) and logs `[PERF VERIFY]`.
 
 Full verification (inside `_wait_tab_grid` / `_wait_for_list_grid`):
 
 1. URL hash (`page.page_hash` or `page_hash_for_tab(tab_key)`)
-2. Page title visible (`h3` or `.page-title`)
+2. Page title visible (`h3` or `.page-title`) — skipped on `lcl_shipment_management` when title absent but ready control visible
 3. Column headers (`list_grid.verify_column_headers(..., table_selectors=...)`)
-4. Data rows (`list_grid.wait_for_data_rows(..., table_selectors=...)`)
+4. Data rows (`wait_for_data_rows`) **or** `wait_for_data_rows_or_no_data` when `allow_no_data=True`
 
 ### 20.4 List grid scoping (mandatory)
 
@@ -3801,7 +4105,7 @@ list_table_selectors = [
 | POM base | First step (default tab or list page) | Later tabs / same screen |
 |----------|--------------------------------------|---------------------------|
 | `EtmsCatalogueListPage` | Sidebar click → `_wait_for_list_grid()` | N/A (one row per page) |
-| `EtmsCatalogueTabbedListPage` | Sidebar click → `_wait_tab_grid()` on **default tab** | Tab click → `_wait_tab_grid()` |
+| `EtmsCatalogueTabbedListPage` | Sidebar click → `_wait_tab_grid(..., allow_no_data=...)` on **default tab** | Tab click → `_wait_tab_grid(..., allow_no_data=...)` |
 | `EtmsPricingWorkflowListPage` | Sidebar click → `_wait_for_tab_content_loaded()` on **default workflow tab** | Workflow tab click → `_wait_for_tab_content_loaded()` |
 | `EtmsCustomerServiceWorkflowPage` | Same as workflow list; `table_selectors=None` for generic CS grids | Tab click → `_wait_for_tab_content_loaded()` with `allow_no_data` |
 | `EtmsQuotationFormPage` / `EtmsDownloadControlPage` | Sidebar click → ready control visible | N/A |
@@ -3829,9 +4133,12 @@ list_table_selectors = [
 uv run pytest tests/etms/test_etms_performance.py -m performance -v \
   --browser chrome --browser-headless false --reportportal
 
-# VFC eTMS (25 suites — ~41 min full run headless)
+# VFC eTMS (25 suites — ~40 min headed; set VFC_ETMS_BASE_URL in .env)
 uv run pytest tests/etms/test_vfc_etms_performance.py -m performance -v \
-  --browser chrome --browser-headless true --reportportal
+  --browser chrome --browser-headless false --reportportal
+
+# Windows when uv trampoline fails:
+# $env:PYTHONPATH="src"; .venv\Scripts\python.exe -m pytest tests/etms/test_vfc_etms_performance.py::TestVfcEtmsPerformance -v --browser chrome --browser-headless false -m "performance and vfc_etms"
 ```
 
 ### 20.7 Log format
@@ -3858,8 +4165,9 @@ Use this checklist when user asks to automate `PERF_VFC_XXX` or extend an existi
 
 2. IDENTIFY page_key
    → Simple list? Add to *_LIST_PAGE_CONFIGS only (no new PageManager property)
+   → Catalogue in-page tabs (nav-tabs)? Extend EtmsCatalogueTabbedListPage — e.g. `EtmsVehicleListPage` (tabs `internal`, `external`)
    → Workflow tabs (filter-tab)? Extend EtmsPricingWorkflowListPage or EtmsSuiteWorkflowPage
-   → In-page tabs? EtmsInPageTabMixin + suite workflow page (Section 7.2)
+   → In-page tabs under Accounting/System? EtmsInPageTabMixin + suite workflow page (Section 7.2)
    → Download control? Extend EtmsDownloadControlPage
    → Custom control (buttons)? Extend EtmsPerformanceControlPage
 
@@ -3882,6 +4190,15 @@ Use this checklist when user asks to automate `PERF_VFC_XXX` or extend an existi
 6. RUN subset first
    uv run pytest tests/etms/test_vfc_etms_performance.py::TestVfcEtmsPerformance::test_vfc_etms_performance_{suite}_pages -v --browser chrome --browser-headless false
 ```
+
+**Example — Vehicle List tabs (`PERF_VFC_003`):**
+
+```json
+{ "page_key": "vehicle_list", "tab": "internal", "check_label": "Vehicle List - Internal Tab", "max_step_seconds": 10, "allow_no_data": true },
+{ "page_key": "vehicle_list", "tab": "external", "check_label": "Vehicle List - External Tab", "max_step_seconds": 10, "allow_no_data": true }
+```
+
+Registry: `resolve_performance_page` → `pages.etms_vehicle_list_page` (dedicated POM, not catalogue list factory).
 
 **VFC-specific notes:**
 - Reporting is **top-level** sidebar (`suite: reporting`, hash `accounting/report`) — not Accounting submenu
@@ -3989,4 +4306,4 @@ Legacy fallback in code (`settings.account_username` / `settings.account_passwor
 
 ---
 
-*Last updated: 2026-06-30 | VFC PERF 25/25 PASS | POM factory (EtmsSuiteWorkflowPage, EtmsDownloadControlPage) | Section 0.10 AI Cookbook*
+*Last updated: 2026-07-01 | VFC PERF 25/25 PASS on test-vfc-etms | EtmsVehicleListPage (Internal/External) | allow_no_data VFC grids | POM factory Section 7.2*
