@@ -782,7 +782,7 @@ auotmation-techub/
 | `EtmsZoneCodePage` | `etms/etms_zone_code_page.py` | TN > Zone Code — tabs: Zone Code (landing), Pickup Zone Code, Delivery Zone Code |
 | `EtmsBookingInformationPage` | `etms/etms_booking_information_page.py` | Partner > Booking Information — tabs: Goods Information (landing), Pickup/Delivery Places, Shipment Note, Project Vehicle; `has_no_data_for_tab()` for Shipment Note empty |
 | `EtmsVehicleListPage` | `etms/etms_vehicle_list_page.py` | Vehicle > Vehicle List — tabs: **Internal** (landing), **External** |
-| `EtmsVehiclePartTypePage` | `etms/etms_vehicle_part_type_page.py` | Vehicle > Vehicle Part Type — tabs: Vehicle Part Type (landing), Vehicle Part Group, Vehicle Part |
+| `EtmsVehiclePartTypePage` | `etms/etms_vehicle_part_type_page.py` | Vehicle > Vehicle Part Type — tabs: **Vehicle Part Group** (landing), Vehicle Part Type, Vehicle Part |
 | `EtmsVehicleTypePage` | `etms/etms_vehicle_type_page.py` | Vehicle > Vehicle Type — tabs: Vehicle Group (landing), Vehicle Type - Fuel Consumption |
 | `EtmsCostOfRoutePage` | `etms/etms_cost_of_route_page.py` | Cost Of Route: menu search, Choose Route popup, surcharge generate, save, delete (COR_LP_001) |
 
@@ -3968,7 +3968,7 @@ Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBooki
 | `zone_code` | `zone_code`, `pickup_zone_code`, `delivery_zone_code` | `PERF_ZC_001`, `PERF_ZC_PICKUP_001`, `PERF_ZC_DELIVERY_001` |
 | `booking_information` | `goods_information`, `pickup_delivery_places`, `shipment_note`, `project_vehicle` | `PERF_BI_GI_001`, `PERF_BI_PDP_001`, `PERF_BI_SN_001`, `PERF_BI_PV_001` |
 | `vehicle_list` | `internal` (landing), `external` | `PERF_VL_001`, `PERF_VL_EXT_001` |
-| `vehicle_part_type` | `vehicle_part_type`, `vehicle_part_group`, `vehicle_part` | `PERF_VPT_001`, `PERF_VPTG_001`, `PERF_VPART_001` |
+| `vehicle_part_type` | `vehicle_part_group`, `vehicle_part_type`, `vehicle_part` | `PERF_VPTG_001`, `PERF_VPT_001`, `PERF_VPART_001` |
 | `vehicle_type` | `vehicle_group`, `vehicle_type_fuel_consumption` | `PERF_VG_001`, `PERF_VTFC_001` |
 | `cost_of_route`, `price_toll_buying` | `updating`, `pending`, `accepted`, `rejected`, `revoked`, `expired` (optional on VFC) | `PERF_COR_*`, `PERF_PTB_*` |
 | `fcl_rate_card_list` | `pending`, `updating`, `accepted`, `active_bookable`, `rejected`, `revoked` | `PERF_FRCL_*` |
@@ -3984,7 +3984,7 @@ Dedicated screens: `EtmsAdministrativeUnitsPage`, `EtmsZoneCodePage`, `EtmsBooki
 
 **Form / ready-control pages** (no workflow tabs): `create_fcl_quotation`, `create_lcl_quotation`, `create_distribution_quotation` (`ready_control_label`: Search); `pricing_report`; `lcl_shipment_management` (View Report). Timed step ends when ready control is visible/enabled.
 
-Tab `vehicle_part_type` on `vehicle_part_type` is the **landing tab** — POM skips tab click after navigate; other VPT tabs call `_activate_tab()`.
+Tab `vehicle_part_group` on `vehicle_part_type` is the **landing tab** — POM skips tab click after navigate; Vehicle Part Type and Vehicle Part tabs call `_activate_tab()`.
 
 Tab `internal` on `vehicle_list` is the **landing tab** — POM skips tab click after navigate; **External** tab requires `_activate_tab()`. Both tabs: `min_table_rows >= 1` or `"No Data"` when `allow_no_data: true`.
 
@@ -4191,14 +4191,18 @@ Use this checklist when user asks to automate `PERF_VFC_XXX` or extend an existi
    uv run pytest tests/etms/test_vfc_etms_performance.py::TestVfcEtmsPerformance::test_vfc_etms_performance_{suite}_pages -v --browser chrome --browser-headless false
 ```
 
-**Example — Vehicle List tabs (`PERF_VFC_003`):**
+**Example — Vehicle suite tabs (`PERF_VFC_003`) — same pattern as Partner BI (`PERF_VFC_002`):**
 
 ```json
 { "page_key": "vehicle_list", "tab": "internal", "check_label": "Vehicle List - Internal Tab", "max_step_seconds": 10, "allow_no_data": true },
-{ "page_key": "vehicle_list", "tab": "external", "check_label": "Vehicle List - External Tab", "max_step_seconds": 10, "allow_no_data": true }
+{ "page_key": "vehicle_list", "tab": "external", "check_label": "Vehicle List - External Tab", "max_step_seconds": 10, "allow_no_data": true },
+{ "page_key": "vehicle_part_type", "tab": "vehicle_part_group", "check_label": "Vehicle Part Type - Vehicle Part Group Tab", "max_step_seconds": 10, "allow_no_data": true },
+{ "page_key": "vehicle_part_type", "tab": "vehicle_part_type", "check_label": "Vehicle Part Type - Vehicle Part Type Tab", "max_step_seconds": 10, "allow_no_data": true },
+{ "page_key": "vehicle_part_type", "tab": "vehicle_part", "check_label": "Vehicle Part Type - Vehicle Part Tab", "max_step_seconds": 10, "allow_no_data": true }
 ```
 
-Registry: `resolve_performance_page` → `pages.etms_vehicle_list_page` (dedicated POM, not catalogue list factory).
+- `vehicle_list` → `pages.etms_vehicle_list_page` (landing tab `internal` — skip click)
+- `vehicle_part_type` → `pages.etms_vehicle_part_type_page` (landing tab `vehicle_part_group` — skip click; POM `_landing_tab_key`)
 
 **VFC-specific notes:**
 - Reporting is **top-level** sidebar (`suite: reporting`, hash `accounting/report`) — not Accounting submenu

@@ -237,8 +237,8 @@
             "test_case_id": "PERF_VH_001",
             "test_case_ids": [
                 "PERF_VL_001",
-                "PERF_VPT_001",
                 "PERF_VPTG_001",
+                "PERF_VPT_001",
                 "PERF_VPART_001",
                 "PERF_VG_001",
                 "PERF_VTFC_001"
@@ -258,14 +258,14 @@
                 },
                 {
                     "page_key": "vehicle_part_type",
-                    "tab": "vehicle_part_type",
-                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
+                    "tab": "vehicle_part_group",
+                    "check_label": "Vehicle Part Type - Vehicle Part Group Tab",
                     "max_step_seconds": 10
                 },
                 {
                     "page_key": "vehicle_part_type",
-                    "tab": "vehicle_part_group",
-                    "check_label": "Vehicle Part Type - Vehicle Part Group Tab",
+                    "tab": "vehicle_part_type",
+                    "check_label": "Vehicle Part Type - Vehicle Part Type Tab",
                     "max_step_seconds": 10
                 },
                 {

@@ -24,7 +24,7 @@ ETMS_VEHICLE_PART_TYPE_TAB_CONFIGS: dict[str, EtmsCatalogueTabConfig] = {
     ),
 }
 
-DEFAULT_ETMS_VEHICLE_PART_TYPE_TAB = "vehicle_part_type"
+DEFAULT_ETMS_VEHICLE_PART_TYPE_TAB = "vehicle_part_group"
 
 
 class EtmsVehiclePartTypePage(EtmsCatalogueTabbedListPage):
@@ -36,7 +36,7 @@ class EtmsVehiclePartTypePage(EtmsCatalogueTabbedListPage):
     menu_li_id = "catVehiclePartType"
     default_tab_key = DEFAULT_ETMS_VEHICLE_PART_TYPE_TAB
     tab_configs = ETMS_VEHICLE_PART_TYPE_TAB_CONFIGS
-    _landing_tab_key = "vehicle_part_type"
+    _landing_tab_key = "vehicle_part_group"
 
     def list_table_selectors_for_tab(self, tab_key: str) -> list[str]:
         config = self._tab_config(tab_key)
